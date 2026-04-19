@@ -1,16 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
   <defs>
-    <linearGradient id="r-vest" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#4c5a6c"/><stop offset="1" stop-color="#2a3342"/>
+    <linearGradient id="r-cloak" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a98560"/><stop offset="1" stop-color="#4a3420"/>
+    </linearGradient>
+    <linearGradient id="r-cloak-inner" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a3420"/><stop offset="1" stop-color="#2a1c10"/>
+    </linearGradient>
+    <linearGradient id="r-sand" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d4b07c"/><stop offset="1" stop-color="#8a6a40"/>
+    </linearGradient>
+    <linearGradient id="r-sand-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#9c7a4c"/><stop offset="1" stop-color="#5a3f22"/>
     </linearGradient>
     <linearGradient id="r-helmet" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#2c3648"/><stop offset="1" stop-color="#141a26"/>
+      <stop offset="0" stop-color="#b08a58"/><stop offset="1" stop-color="#5a3f22"/>
     </linearGradient>
     <linearGradient id="r-skin" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="#dfae89"/><stop offset="1" stop-color="#a87a56"/>
-    </linearGradient>
-    <linearGradient id="r-pants" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#3a4556"/><stop offset="1" stop-color="#1f2836"/>
     </linearGradient>
     <linearGradient id="r-gun" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="#4a382a"/><stop offset="1" stop-color="#1a0e06"/>
@@ -22,143 +28,167 @@
     </radialGradient>
   </defs>
   <rect width="96" height="128" fill="#1b2331"/>
-  <ellipse cx="48" cy="118" rx="22" ry="4" fill="#000" opacity=".45"/>
+  <ellipse cx="48" cy="118" rx="26" ry="4" fill="#000" opacity=".45"/>
 
-  <!-- LEGS -->
-  <path d="M36 78 Q36 110 40 112 L46 112 Q47 96 47 78 Z" fill="url(#r-pants)"/>
-  <path d="M60 78 Q60 110 56 112 L50 112 Q49 96 49 78 Z" fill="url(#r-pants)"/>
-  <!-- knee pads -->
-  <path d="M37 94 Q42 92 46 94 L46 100 Q42 102 37 100 Z" fill="#1a2230"/>
-  <path d="M59 94 Q54 92 50 94 L50 100 Q54 102 59 100 Z" fill="#1a2230"/>
+  <!-- BACK CLOAK (widest, behind everything) -->
+  <path d="M16 32 Q12 40 12 56 L8 100 Q10 116 20 118 L32 118 L36 80 L36 40 Q30 32 24 30 Q18 30 16 32 Z"
+        fill="url(#r-cloak)"/>
+  <path d="M80 32 Q84 40 84 56 L88 100 Q86 116 76 118 L64 118 L60 80 L60 40 Q66 32 72 30 Q78 30 80 32 Z"
+        fill="url(#r-cloak)"/>
+  <!-- back cloak center panel showing between shoulders -->
+  <path d="M36 30 Q48 34 60 30 L62 80 Q48 86 34 80 Z" fill="url(#r-cloak-inner)" opacity=".6"/>
+  <!-- tattered hem on back cloak -->
+  <path d="M8 110 L14 118 L20 110 L26 118 L32 110 L32 118 L8 118 Z" fill="#1b2331"/>
+  <path d="M64 110 L70 118 L76 110 L82 118 L88 110 L88 118 L64 118 Z" fill="#1b2331"/>
+  <!-- cloak folds -->
+  <path d="M18 40 Q18 80 22 116" fill="none" stroke="#4a3420" stroke-width="1.2"/>
+  <path d="M28 40 Q26 80 28 116" fill="none" stroke="#4a3420" stroke-width="1"/>
+  <path d="M78 40 Q78 80 74 116" fill="none" stroke="#4a3420" stroke-width="1.2"/>
+  <path d="M68 40 Q70 80 68 116" fill="none" stroke="#4a3420" stroke-width="1"/>
+
+  <!-- LEGS (behind torso, in front of cloak back) -->
+  <path d="M36 78 Q36 110 40 112 L46 112 Q47 96 47 78 Z" fill="url(#r-sand-dark)"/>
+  <path d="M60 78 Q60 110 56 112 L50 112 Q49 96 49 78 Z" fill="url(#r-sand-dark)"/>
+  <!-- pant fold shadow -->
+  <path d="M40 82 L40 108" stroke="#4a3220" stroke-width="0.6" opacity=".6"/>
+  <path d="M56 82 L56 108" stroke="#4a3220" stroke-width="0.6" opacity=".6"/>
+  <!-- knee pads (leather) -->
+  <path d="M37 94 Q42 92 46 94 L46 100 Q42 102 37 100 Z" fill="#3a2414"/>
+  <path d="M59 94 Q54 92 50 94 L50 100 Q54 102 59 100 Z" fill="#3a2414"/>
+  <rect x="39" y="95" width="2" height="4" fill="#5a3a20"/>
+  <rect x="55" y="95" width="2" height="4" fill="#5a3a20"/>
   <!-- boots -->
-  <path d="M36 108 Q36 113 40 114 L47 114 L47 108 Z" fill="#0d1119"/>
-  <path d="M60 108 Q60 113 56 114 L49 114 L49 108 Z" fill="#0d1119"/>
-  <!-- laces -->
-  <path d="M38 110 L45 110 M38 112 L45 112" stroke="#3a4556" stroke-width="0.7"/>
-  <path d="M51 110 L58 110 M51 112 L58 112" stroke="#3a4556" stroke-width="0.7"/>
+  <path d="M36 108 Q36 113 40 114 L47 114 L47 108 Z" fill="#1a0f06"/>
+  <path d="M60 108 Q60 113 56 114 L49 114 L49 108 Z" fill="#1a0f06"/>
+  <path d="M38 110 L45 110 M38 112 L45 112" stroke="#3a2414" stroke-width="0.7"/>
+  <path d="M51 110 L58 110 M51 112 L58 112" stroke="#3a2414" stroke-width="0.7"/>
 
-  <!-- BELT + thigh holster strap -->
-  <path d="M28 74 L68 74 L68 80 L28 80 Z" fill="#1a1e24"/>
-  <rect x="45" y="74" width="6" height="6" fill="#2c3648"/>
+  <!-- BELT + thigh holster -->
+  <path d="M28 74 L68 74 L68 80 L28 80 Z" fill="#2a1c10"/>
+  <rect x="45" y="74" width="6" height="6" fill="#5a3f22"/>
   <rect x="46.5" y="75.5" width="3" height="3" fill="#7cc4ff"/>
-  <!-- leg holster with pistol grip -->
-  <path d="M58 80 L66 80 L66 96 L58 96 Z" fill="#1a1e24"/>
-  <path d="M60 82 L64 82 L64 92 L60 92 Z" fill="#2c3648"/>
-  <path d="M61 84 L63 84 L63 90 L61 90 Z" fill="#0d1119"/>
+  <!-- leg holster -->
+  <path d="M58 80 L66 80 L66 96 L58 96 Z" fill="#2a1c10"/>
+  <path d="M60 82 L64 82 L64 92 L60 92 Z" fill="#5a3f22"/>
+  <path d="M61 84 L63 84 L63 90 L61 90 Z" fill="#1a0f06"/>
 
-  <!-- TORSO vest -->
-  <path d="M22 38 Q22 34 26 34 L70 34 Q74 34 74 38 L74 74 Q74 78 70 78 L26 78 Q22 78 22 74 Z" fill="url(#r-vest)"/>
-  <!-- vest collar shading -->
-  <path d="M26 34 L70 34 L70 36 L26 36 Z" fill="#5a6a7e" opacity=".5"/>
-  <!-- chest plate -->
-  <path d="M34 44 L62 44 L62 66 L48 72 L34 66 Z" fill="#232c39"/>
-  <path d="M34 44 L62 44 L62 46 L34 46 Z" fill="#3a4556"/>
+  <!-- TORSO vest (sand) -->
+  <path d="M22 38 Q22 34 26 34 L70 34 Q74 34 74 38 L74 74 Q74 78 70 78 L26 78 Q22 78 22 74 Z" fill="url(#r-sand)"/>
+  <!-- vest highlight -->
+  <path d="M26 34 L70 34 L70 36 L26 36 Z" fill="#e8cf9e" opacity=".5"/>
+  <!-- chest plate (slightly darker sand) -->
+  <path d="M34 44 L62 44 L62 66 L48 72 L34 66 Z" fill="url(#r-sand-dark)"/>
+  <path d="M34 44 L62 44 L62 46 L34 46 Z" fill="#b08a58"/>
+  <!-- plate stitching -->
+  <path d="M36 50 L60 50 M36 58 L60 58" stroke="#3a2414" stroke-width="0.4" opacity=".6"/>
   <!-- sigils on chest plate -->
   <circle cx="41" cy="52" r="2" fill="#7cc4ff"/><circle cx="41" cy="52" r="0.8" fill="#eaf6ff"/>
   <circle cx="55" cy="52" r="2" fill="#7cc4ff"/><circle cx="55" cy="52" r="0.8" fill="#eaf6ff"/>
-  <path d="M44 58 L52 58 L48 65 Z" fill="#ff9a3c"/>
-  <path d="M46 58.5 L50 58.5 L48 62 Z" fill="#fff4c0"/>
+  <path d="M44 58 L52 58 L48 65 Z" fill="#7cc4ff"/>
+  <path d="M46 58.5 L50 58.5 L48 62 Z" fill="#eaf6ff"/>
 
   <!-- chest rig / mag pouches -->
-  <rect x="27" y="48" width="5" height="10" rx="1" fill="#1a1e24"/>
-  <rect x="27" y="60" width="5" height="10" rx="1" fill="#1a1e24"/>
-  <rect x="64" y="48" width="5" height="10" rx="1" fill="#1a1e24"/>
-  <rect x="64" y="60" width="5" height="10" rx="1" fill="#1a1e24"/>
-  <path d="M28 50 L31 50 M28 53 L31 53" stroke="#3a4556" stroke-width="0.6"/>
-  <path d="M65 50 L68 50 M65 53 L68 53" stroke="#3a4556" stroke-width="0.6"/>
-  <path d="M28 62 L31 62 M28 65 L31 65" stroke="#3a4556" stroke-width="0.6"/>
-  <path d="M65 62 L68 62 M65 65 L68 65" stroke="#3a4556" stroke-width="0.6"/>
+  <rect x="27" y="48" width="5" height="10" rx="1" fill="#3a2414"/>
+  <rect x="27" y="60" width="5" height="10" rx="1" fill="#3a2414"/>
+  <rect x="64" y="48" width="5" height="10" rx="1" fill="#3a2414"/>
+  <rect x="64" y="60" width="5" height="10" rx="1" fill="#3a2414"/>
+  <path d="M28 50 L31 50 M28 53 L31 53" stroke="#5a3a20" stroke-width="0.6"/>
+  <path d="M65 50 L68 50 M65 53 L68 53" stroke="#5a3a20" stroke-width="0.6"/>
+  <path d="M28 62 L31 62 M28 65 L31 65" stroke="#5a3a20" stroke-width="0.6"/>
+  <path d="M65 62 L68 62 M65 65 L68 65" stroke="#5a3a20" stroke-width="0.6"/>
 
-  <!-- shoulder sigil patch -->
-  <path d="M21 42 L31 42 L31 50 L21 50 Z" fill="#1a1e24"/>
-  <path d="M26 43.6 L29 46.6 L26 49.6 L23 46.6 Z" fill="#7cc4ff"/>
-  <path d="M26 45.4 L28 46.6 L26 47.8 L24 46.6 Z" fill="#eaf6ff"/>
+  <!-- FRONT CLOAK PANELS (draped over shoulders) -->
+  <path d="M18 34 Q20 30 30 32 L34 36 L32 60 Q30 66 26 64 Q18 62 16 50 Z"
+        fill="url(#r-cloak)"/>
+  <path d="M78 34 Q76 30 66 32 L62 36 L64 60 Q66 66 70 64 Q78 62 80 50 Z"
+        fill="url(#r-cloak)"/>
+  <!-- front cloak fold lines -->
+  <path d="M22 36 Q22 50 26 62" fill="none" stroke="#4a3420" stroke-width="0.8"/>
+  <path d="M74 36 Q74 50 70 62" fill="none" stroke="#4a3420" stroke-width="0.8"/>
+  <!-- rune clasp on left shoulder -->
+  <circle cx="28" cy="36" r="2.6" fill="#2a1c10"/>
+  <circle cx="28" cy="36" r="1.6" fill="#7cc4ff"/>
+  <circle cx="28" cy="36" r="0.7" fill="#eaf6ff"/>
+
+  <!-- shoulder sigil patch (visible just below cloak edge) -->
+  <path d="M32 50 L38 50 L38 56 L32 56 Z" fill="#3a2414"/>
+  <path d="M35 51 L37 53 L35 55 L33 53 Z" fill="#7cc4ff"/>
 
   <!-- NECK -->
   <rect x="42" y="30" width="12" height="6" fill="#a87a56"/>
-  <path d="M42 30 L54 30 L54 32 L42 32 Z" fill="#8a5f40"/>
+  <!-- shemagh / scarf wrap at neck -->
+  <path d="M38 32 Q48 36 58 32 L58 38 Q48 42 38 38 Z" fill="#c6a473"/>
+  <path d="M40 34 L56 34 M40 36 L56 36" stroke="#8a6a40" stroke-width="0.5" opacity=".7"/>
 
   <!-- HEAD -->
   <ellipse cx="48" cy="24" rx="12" ry="13" fill="url(#r-skin)"/>
-  <!-- jawline shadow -->
   <path d="M38 26 Q48 36 58 26 L58 28 Q48 38 38 28 Z" fill="#8a5f40" opacity=".6"/>
-  <!-- stubble -->
   <path d="M40 30 Q48 33 56 30 L56 32 Q48 35 40 32 Z" fill="#2a1f16" opacity=".35"/>
-  <!-- mouth -->
   <path d="M44 29 L52 29" stroke="#4a2e1c" stroke-width="0.8" stroke-linecap="round"/>
-  <!-- eyes -->
   <ellipse cx="43" cy="23" rx="2.2" ry="1.5" fill="#eaf6ff"/>
   <ellipse cx="53" cy="23" rx="2.2" ry="1.5" fill="#eaf6ff"/>
   <circle cx="43.5" cy="23" r="1.1" fill="#1a2230"/>
   <circle cx="53.5" cy="23" r="1.1" fill="#1a2230"/>
-  <!-- brow -->
   <path d="M40 20 L46 19" stroke="#2a1f16" stroke-width="1.2" stroke-linecap="round"/>
   <path d="M50 19 L56 20" stroke="#2a1f16" stroke-width="1.2" stroke-linecap="round"/>
-  <!-- ear -->
   <path d="M36 22 Q34 24 36 26" fill="none" stroke="#8a5f40" stroke-width="1"/>
 
-  <!-- HELMET -->
+  <!-- HELMET (sand) -->
   <path d="M33 22 Q33 6 48 6 Q63 6 63 22 L63 26 L33 26 Z" fill="url(#r-helmet)"/>
-  <path d="M33 22 L63 22 L63 26 L33 26 Z" fill="#0d1119"/>
-  <!-- front ridge -->
-  <path d="M35 20 Q48 10 61 20" fill="none" stroke="#3a4556" stroke-width="0.8"/>
-  <!-- side rail -->
-  <rect x="32" y="16" width="2" height="6" fill="#3a4556"/>
-  <rect x="62" y="16" width="2" height="6" fill="#3a4556"/>
+  <path d="M33 22 L63 22 L63 26 L33 26 Z" fill="#3a2414"/>
+  <path d="M35 20 Q48 10 61 20" fill="none" stroke="#c6a473" stroke-width="0.8"/>
+  <rect x="32" y="16" width="2" height="6" fill="#5a3f22"/>
+  <rect x="62" y="16" width="2" height="6" fill="#5a3f22"/>
   <!-- helmet rune emblem -->
-  <circle cx="48" cy="14" r="3.6" fill="#0d1119"/>
+  <circle cx="48" cy="14" r="3.6" fill="#2a1c10"/>
   <circle cx="48" cy="14" r="2.4" fill="#7cc4ff"/>
   <path d="M48 11.6 L48 16.4 M45.6 14 L50.4 14" stroke="#eaf6ff" stroke-width="0.7"/>
   <!-- NVG mount folded up -->
-  <rect x="44" y="7" width="8" height="2" rx="0.5" fill="#141a26"/>
-  <rect x="46" y="5" width="4" height="3" rx="0.5" fill="#141a26"/>
+  <rect x="44" y="7" width="8" height="2" rx="0.5" fill="#3a2414"/>
+  <rect x="46" y="5" width="4" height="3" rx="0.5" fill="#3a2414"/>
   <circle cx="48" cy="6.5" r="1" fill="#7cc4ff"/>
-  <!-- chin strap -->
-  <path d="M36 24 L38 32 M60 24 L58 32" stroke="#1a1e24" stroke-width="1"/>
-  <rect x="37" y="30" width="22" height="2" fill="#1a1e24"/>
+  <!-- chin strap hidden behind scarf -->
 
-  <!-- ARMS -->
-  <path d="M18 42 Q16 43 16 46 L18 66 Q18 70 22 70 L26 68 L26 40 Z" fill="url(#r-vest)"/>
-  <path d="M78 42 Q80 43 80 46 L78 66 Q78 70 74 70 L70 68 L70 40 Z" fill="url(#r-vest)"/>
-  <!-- bicep bands -->
-  <rect x="16" y="50" width="10" height="3" fill="#1a1e24"/>
-  <rect x="70" y="50" width="10" height="3" fill="#1a1e24"/>
-  <!-- gloves -->
-  <path d="M14 64 Q12 66 14 70 L22 72 Q24 70 22 66 Z" fill="#1a1e24"/>
-  <path d="M82 64 Q84 66 82 70 L74 72 Q72 70 74 66 Z" fill="#1a1e24"/>
-  <path d="M15 66 L21 70 M15 68 L21 70" stroke="#3a4556" stroke-width="0.5"/>
-  <path d="M81 66 L75 70 M81 68 L75 70" stroke="#3a4556" stroke-width="0.5"/>
+  <!-- HOOD (pulled partially back behind head) -->
+  <path d="M28 14 Q24 26 26 38 L32 32 L32 16 Q30 12 28 14 Z" fill="url(#r-cloak)"/>
+  <path d="M68 14 Q72 26 70 38 L64 32 L64 16 Q66 12 68 14 Z" fill="url(#r-cloak)"/>
+  <path d="M26 26 Q24 32 26 36" fill="none" stroke="#4a3420" stroke-width="0.8"/>
+  <path d="M70 26 Q72 32 70 36" fill="none" stroke="#4a3420" stroke-width="0.8"/>
+
+  <!-- ARMS (sand sleeves) -->
+  <path d="M18 42 Q16 43 16 46 L18 66 Q18 70 22 70 L26 68 L26 40 Z" fill="url(#r-sand)"/>
+  <path d="M78 42 Q80 43 80 46 L78 66 Q78 70 74 70 L70 68 L70 40 Z" fill="url(#r-sand)"/>
+  <!-- bicep bands (darker) -->
+  <rect x="16" y="50" width="10" height="3" fill="#3a2414"/>
+  <rect x="70" y="50" width="10" height="3" fill="#3a2414"/>
+  <!-- forearm wraps -->
+  <path d="M16 58 L26 58 M16 62 L26 62" stroke="#8a6a40" stroke-width="0.6"/>
+  <path d="M70 58 L80 58 M70 62 L80 62" stroke="#8a6a40" stroke-width="0.6"/>
+  <!-- gloves (dark leather) -->
+  <path d="M14 64 Q12 66 14 70 L22 72 Q24 70 22 66 Z" fill="#2a1c10"/>
+  <path d="M82 64 Q84 66 82 70 L74 72 Q72 70 74 66 Z" fill="#2a1c10"/>
+  <path d="M15 66 L21 70 M15 68 L21 70" stroke="#5a3f22" stroke-width="0.5"/>
+  <path d="M81 66 L75 70 M81 68 L75 70" stroke="#5a3f22" stroke-width="0.5"/>
 
   <!-- RIFLE: Runeweave Carbine -->
-  <!-- stock -->
   <path d="M8 62 L18 62 L18 70 L8 72 Z" fill="url(#r-gun)"/>
   <path d="M10 64 L16 64" stroke="#1a0e06" stroke-width="0.5"/>
-  <!-- receiver body -->
   <path d="M18 62 L60 62 L60 70 L18 70 Z" fill="url(#r-gun)"/>
-  <!-- picatinny rail top -->
   <rect x="22" y="60" width="34" height="2" fill="#1a0e06"/>
   <path d="M23 60 L23 62 M27 60 L27 62 M31 60 L31 62 M35 60 L35 62 M39 60 L39 62 M43 60 L43 62 M47 60 L47 62 M51 60 L51 62 M55 60 L55 62" stroke="#3a2618" stroke-width="0.4"/>
-  <!-- scope -->
   <rect x="30" y="55" width="14" height="6" rx="1" fill="#141a26"/>
   <circle cx="43" cy="58" r="2.4" fill="#0d1119"/>
   <circle cx="43" cy="58" r="1.4" fill="#7cc4ff"/>
   <circle cx="43" cy="58" r="0.5" fill="#eaf6ff"/>
-  <!-- magazine -->
   <path d="M34 70 L42 70 L41 82 L35 82 Z" fill="#141a26"/>
   <path d="M35 72 L41 72" stroke="#3a4556" stroke-width="0.5"/>
-  <!-- trigger guard -->
   <path d="M42 70 Q46 74 50 70" fill="none" stroke="#1a0e06" stroke-width="1.4"/>
-  <!-- foregrip -->
   <path d="M50 70 L54 70 L54 76 L50 76 Z" fill="#141a26"/>
-  <!-- barrel -->
   <rect x="60" y="64" width="22" height="4" fill="url(#r-gun)"/>
-  <!-- rune engravings on barrel -->
   <path d="M62 65 L64 67 L66 65" fill="none" stroke="#7cc4ff" stroke-width="0.6"/>
   <path d="M68 65 L70 67 L72 65" fill="none" stroke="#7cc4ff" stroke-width="0.6"/>
   <path d="M74 65 L76 67 L78 65" fill="none" stroke="#7cc4ff" stroke-width="0.6"/>
-  <!-- front sight -->
   <rect x="66" y="60" width="2" height="4" fill="#1a0e06"/>
-  <!-- muzzle with rune core -->
   <rect x="82" y="64" width="4" height="4" fill="#1a0e06"/>
   <circle cx="86" cy="66" r="6" fill="url(#r-rune)"/>
   <circle cx="86" cy="66" r="2.8" fill="#eaf6ff"/>
