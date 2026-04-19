@@ -1,85 +1,91 @@
 # Sprite Style Exploration
 
-You picked **Option B — Flat vector**. The full player squad now reads as a single **desert scout unit**: sand palette, weathered leather, matching scout cloaks across all four classes, and a shared runic-blue unit sigil on every pauldron patch. Each class keeps its own silhouette and tag-color accent (runic / draconic / fae / alchemical) through specialist gear.
+Full roster rebuilt to match the bone-white operator reference: carved ivory plate with ornamental engraving (crown / scroll / butterfly motifs), fur-edged shoulder mantles, full-face bone masks with visor lenses, heavy weathering, and dark tactical undersuit / weapons in stark contrast. Each class keeps its own silhouette and tag color as a small accent on specialist gear.
 
 ---
 
-## Desert Scout Unit (4 classes)
+## Desert Scout Unit — bone-operator aesthetic
 
 ### Ranger · Kestrel — Runeweave Carbine (runic blue)
 
 <p>
-  <img src="public/styles/flat/soldier.svg" width="240" alt="Ranger Kestrel"/>
+  <img src="public/styles/flat/soldier.svg" width="260" alt="Ranger Kestrel"/>
 </p>
 
-Scout: sand uniform with full flowing hooded cloak, shemagh scarf, leather kneepads, carbine with scope and runic-blue muzzle core.
+Scout mask with wide goggle visor, ridged brow crest, carved scout emblem, respirator vent. Fur mantle collar. Bone chest plate with engraved crown sigil (runic-blue gem centered). Suppressed modern carbine.
 
 ### Warden · Brannock — Dragonmaw Autocannon (draconic orange)
 
 <p>
-  <img src="public/styles/flat/soldier_warden.svg" width="240" alt="Warden Brannock"/>
+  <img src="public/styles/flat/soldier_warden.svg" width="260" alt="Warden Brannock"/>
 </p>
 
-Bulwark: sand-plated heavy armor weathered by sun and dust, short shoulder mantle cape (practical for heavy kit), hanging tabard bearing the squad sigil, spiked pauldrons, full crested helm. Draconic-orange kept only to ember accents (chest insignia, rivets, knee gems, muzzle core) and the helm's visor points.
+Heavy bone skull helm with crown-spike ridge, forehead sigil, twin draconic visor lenses, chin respirator. Oversized scalloped pauldrons with bone horns. Layered ornate chest plate with a large engraved crown sigil (ember gem). Bone tabard hanging over the hips. Bone gauntlets with ember knuckle studs.
 
 ### Mystic · Seraphine — Arclight Marksman (fae violet + runic blue)
 
 <p>
-  <img src="public/styles/flat/soldier_mystic.svg" width="240" alt="Mystic Seraphine"/>
+  <img src="public/styles/flat/soldier_mystic.svg" width="260" alt="Mystic Seraphine"/>
 </p>
 
-Marksman: sand-colored long scout robe replacing the violet coat, fae violet surviving only in the trim, rune-gem buttons, circlet, and ocular monocle. Full scout cloak around the shoulders (clasp in violet), silver swiftstep greaves, silver braid, pointed ear. Rifle keeps its runic-blue muzzle and rune coils.
+Slim ornate mask with butterfly/scarab-wing forehead engraving, temple scrolls, violet-lens slit visor, delicate chin point. Silver circlet with fae gems above the mask. Flowing bone-fur cloak trailing to the ground, fae-violet trim along the edges, ornate scarf draped over the shoulders. Slim bone plate with filigree swirls. Suppressed sniper with copper-rune coils.
 
 ### Sapper · Orin — Hexbore Scattergun (alchemical green)
 
 <p>
-  <img src="public/styles/flat/soldier_sapper.svg" width="240" alt="Sapper Orin"/>
+  <img src="public/styles/flat/soldier_sapper.svg" width="260" alt="Sapper Orin"/>
 </p>
 
-Demolitions: sand canvas vest over sand cargo pants, short desert poncho with fringed hem (distinct from the Ranger's long cloak), Oakheart Helm wrapped in sand cloth, goggles pushed up to the brow, gas-mask hose around the neck. Alchemical green kept only on vial bandolier, goggle lenses, scattergun side-vial, and muzzle glow. Four Embercore Orbs (draconic orange) still glow on the belt as utility grenades.
+Bone mask with twin round alchemical-green goggle lenses and a prominent **respirator canister** at the mouth, dual hoses running to the shoulders. Fur mantle. Utility belt loaded with four **Embercore Orbs** (glowing orange) + tool pouches. Alchemical-vial bandolier crosses a shotgun-shell bandolier over the bone chest plate. Tactical double-barrel scattergun with side alchemical vial and green muzzle glow. The grimiest of the four — heavier weathering streaks.
 
 ---
 
 ## Unit identity
 
-Every soldier now shares:
-- **Base palette:** sand `#c6a473` → `#5a3f22` with weathered leather `#3a2414`
-- **Scout cloak:** sand/umber gradient `#a98560` → `#4a3420` (Ranger full hooded, Mystic full hooded, Warden shoulder mantle, Sapper short utility poncho)
-- **Squad sigil:** small runic-blue diamond patch on the left shoulder across all classes
-- **Desert scarf / cloth wrap** at the neck or helmet
+Shared across all four:
+- **Bone-white carved plate** (`#f0ead8` → `#4a3e28`) with weathering streaks and engraved filigree
+- **Dark tactical undersuit** (`#2a251e` → `#0a0806`) at joints and neck
+- **Fur-edged shoulder mantle** in desert tones (`#d4c8b0` → `#3a3020`) with zig-zag shaggy edge
+- **Cream scarf / shemagh** tucked under the mask
+- **Full-face bone mask** with visor lens + respirator / mouth vent
+- **NVG/rangefinder mount** on top of every helmet
+- **Runic-blue squad sigil** (small diamond) carved into both pauldrons
+- **Dark modern tactical weapons** with suppressors / optics, and a class-tag muzzle-core glow
 
-Class tag color lives only in **specialist gear** so it never overpowers the unit read:
+Class tag color appears only on:
 
-| Class  | Tag            | Visible only on                                |
-|--------|----------------|------------------------------------------------|
-| Ranger | Runic blue     | helmet emblem, chest sigils, carbine muzzle     |
-| Warden | Draconic orange| visor dots, chest insignia, rivets, muzzle      |
-| Mystic | Fae violet     | cloak clasp, coat trim, monocle, circlet gems   |
-| Sapper | Alchemical green | chest sigil, bandolier vials, goggle lenses, scattergun muzzle |
+| Class  | Tag              | Class-specific accents                                             |
+|--------|------------------|---------------------------------------------------------------------|
+| Ranger | Runic blue       | chest sigil gem, visor sensor, carbine muzzle                       |
+| Warden | Draconic orange  | visor lenses, crown-sigil gem, knuckle studs, autocannon muzzle     |
+| Mystic | Fae violet       | visor lens, crest gem, sigil gem, circlet, cloak trim, pauldron gem |
+| Sapper | Alchemical green | both goggle lenses, filter glow, chest sigil gem, scattergun muzzle |
 
-(Note: The **weapon's own tag** can be independent — Seraphine's Arclight Marksman is runic, so its rune coils and muzzle core are blue even though she's a fae class.)
+(Independent weapon-tag rule: the Mystic's Arclight Marksman is a *runic* weapon, so its coil wraps and muzzle core remain runic-blue even though she's a fae class.)
 
 ---
 
 ## Enemies
 
 ### Wraith Raider
-<p><img src="public/styles/flat/enemy.svg" width="240" alt="Wraith Raider"/></p>
+<p><img src="public/styles/flat/enemy.svg" width="240"/></p>
 
 ### Gutter Troll
-<p><img src="public/styles/flat/enemy_troll.svg" width="240" alt="Gutter Troll"/></p>
+<p><img src="public/styles/flat/enemy_troll.svg" width="240"/></p>
+
+(Enemies not yet re-skinned to match the bone-operator direction — they'll be updated next pass so the squad reads heroic against a distinct enemy silhouette.)
 
 ## Tiles
-<p><img src="public/styles/flat/tiles.svg" width="480" alt="Flat vector tiles"/></p>
+<p><img src="public/styles/flat/tiles.svg" width="480"/></p>
 
 ---
 
 ## Next steps once you confirm the squad
 
-1. Swap the placeholder rectangles in `PixiStage.tsx` for these SVGs (load via `Assets.load()`, depth-sort on `g.x + g.y`).
-2. Add idle bob + aim-at-target variants per character.
-3. Second tile biome (sand-ruin oasis / desert shrine) reusing the same tile family so the map matches the unit.
-4. Additional enemy archetypes to fit a desert setting (e.g. *Sand Wraith*, *Glass Scarab*).
+1. Re-skin enemies (Wraith, Troll) to be visually distinct from the squad — darker tones, cruder armor, no carved filigree.
+2. Swap the placeholder rectangles in `PixiStage.tsx` for these SVGs.
+3. Add idle bob + aim-at-target variants per character.
+4. Second tile biome (sand-ruin oasis) matching the unit.
 
 ---
 

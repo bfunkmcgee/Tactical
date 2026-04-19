@@ -1,25 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
   <defs>
-    <linearGradient id="wd-plate" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#c6a473"/><stop offset="1" stop-color="#5a3f22"/>
+    <linearGradient id="wd-bone" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f0ead8"/><stop offset="1" stop-color="#8a7e66"/>
     </linearGradient>
-    <linearGradient id="wd-plate-dark" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#8a6a40"/><stop offset="1" stop-color="#3a2614"/>
+    <linearGradient id="wd-bone-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b8ad95"/><stop offset="1" stop-color="#4a3e28"/>
     </linearGradient>
-    <linearGradient id="wd-steel" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#9c7a4c"/><stop offset="1" stop-color="#3a2614"/>
+    <linearGradient id="wd-fur" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d4c8b0"/><stop offset="1" stop-color="#3a3020"/>
     </linearGradient>
-    <linearGradient id="wd-helmet" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#b08a58"/><stop offset="1" stop-color="#3a2614"/>
+    <linearGradient id="wd-scarf" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8dfc4"/><stop offset="1" stop-color="#7a6e52"/>
     </linearGradient>
-    <linearGradient id="wd-cloak" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#a98560"/><stop offset="1" stop-color="#4a3420"/>
-    </linearGradient>
-    <linearGradient id="wd-cloak-inner" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#4a3420"/><stop offset="1" stop-color="#2a1c10"/>
-    </linearGradient>
-    <linearGradient id="wd-tabard" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#c6a473"/><stop offset="1" stop-color="#7a5a34"/>
+    <linearGradient id="wd-under" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a251e"/><stop offset="1" stop-color="#0a0806"/>
     </linearGradient>
     <radialGradient id="wd-ember" cx=".5" cy=".5" r=".5">
       <stop offset="0" stop-color="#fff4c0"/>
@@ -28,158 +22,209 @@
     </radialGradient>
   </defs>
   <rect width="96" height="128" fill="#1b2331"/>
-  <ellipse cx="48" cy="120" rx="26" ry="4.5" fill="#000" opacity=".5"/>
+  <ellipse cx="48" cy="120" rx="28" ry="5" fill="#000" opacity=".55"/>
 
-  <!-- SHOULDER MANTLE / short cape (back) - practical for heavy armor -->
-  <path d="M8 32 Q8 44 12 58 L10 66 L20 64 L28 34 Q20 28 12 28 Q8 28 8 32 Z" fill="url(#wd-cloak)"/>
-  <path d="M88 32 Q88 44 84 58 L86 66 L76 64 L68 34 Q76 28 84 28 Q88 28 88 32 Z" fill="url(#wd-cloak)"/>
-  <!-- mantle center back -->
-  <path d="M28 34 L68 34 L66 62 L30 62 Z" fill="url(#wd-cloak-inner)"/>
-  <!-- mantle ragged edges -->
-  <path d="M10 64 L14 68 L18 60 Z" fill="#1b2331"/>
-  <path d="M86 64 L82 68 L78 60 Z" fill="#1b2331"/>
-  <!-- cloak folds -->
-  <path d="M12 34 Q14 50 16 62" fill="none" stroke="#4a3420" stroke-width="1"/>
-  <path d="M84 34 Q82 50 80 62" fill="none" stroke="#4a3420" stroke-width="1"/>
-
-  <!-- LEGS with plated greaves -->
-  <path d="M34 80 Q32 110 38 114 L46 114 L47 80 Z" fill="url(#wd-steel)"/>
-  <path d="M62 80 Q64 110 58 114 L50 114 L49 80 Z" fill="url(#wd-steel)"/>
-  <!-- greave bands (leather) -->
-  <rect x="35" y="88" width="11" height="3" fill="#3a2414"/>
-  <rect x="50" y="88" width="11" height="3" fill="#3a2414"/>
-  <rect x="35" y="98" width="11" height="3" fill="#3a2414"/>
-  <rect x="50" y="98" width="11" height="3" fill="#3a2414"/>
-  <!-- knee plate -->
-  <path d="M35 92 Q41 90 46 92 L46 98 Q41 100 35 98 Z" fill="url(#wd-plate)"/>
-  <path d="M61 92 Q55 90 50 92 L50 98 Q55 100 61 98 Z" fill="url(#wd-plate)"/>
-  <circle cx="40.5" cy="95" r="1.3" fill="#ff9a3c"/>
-  <circle cx="55.5" cy="95" r="1.3" fill="#ff9a3c"/>
-  <!-- armored boots -->
-  <path d="M32 110 L48 110 L48 116 L34 118 Q32 115 32 110 Z" fill="#1a0f06"/>
-  <path d="M64 110 L48 110 L48 116 L62 118 Q64 115 64 110 Z" fill="#1a0f06"/>
-
-  <!-- TABARD / cloth panel hanging from belt over front armor -->
-  <path d="M36 74 L60 74 L64 116 L32 116 Z" fill="url(#wd-tabard)"/>
-  <!-- tabard weathering -->
-  <path d="M38 80 L62 80" stroke="#8a6a40" stroke-width="0.4" opacity=".6"/>
-  <path d="M34 100 L62 100" stroke="#8a6a40" stroke-width="0.4" opacity=".6"/>
-  <!-- tabard unit insignia (runic blue shared) -->
-  <path d="M44 86 L52 86 L52 94 L44 94 Z" fill="#3a2414"/>
-  <path d="M48 87 L51 91 L48 93 L45 91 Z" fill="#7cc4ff"/>
-  <path d="M48 89 L49.5 91 L48 92 L46.5 91 Z" fill="#eaf6ff"/>
+  <!-- HANGING TABARD / bone-plated loincloth (long, behind legs) -->
+  <path d="M32 76 L64 76 L68 118 L28 118 Z" fill="url(#wd-bone)"/>
+  <!-- tabard central engraved crown sigil -->
+  <path d="M40 88 L48 82 L56 88 L54 94 L42 94 Z" fill="none" stroke="#5a4a30" stroke-width="0.7"/>
+  <path d="M44 86 L44 92 M48 82 L48 92 M52 86 L52 92" stroke="#5a4a30" stroke-width="0.5"/>
+  <path d="M42 94 Q48 96 54 94" fill="none" stroke="#5a4a30" stroke-width="0.5"/>
+  <path d="M38 100 Q48 102 58 100" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
+  <!-- tabard scalloped segments -->
+  <path d="M28 102 L68 102" stroke="#6a5a40" stroke-width="0.5"/>
+  <path d="M28 108 L68 108" stroke="#6a5a40" stroke-width="0.5"/>
   <!-- tabard torn hem -->
-  <path d="M32 116 L36 114 L40 116 L44 112 L48 116 L52 114 L56 116 L60 112 L64 116" fill="none" stroke="#5a3f22" stroke-width="0.6"/>
+  <path d="M28 118 L32 112 L36 118 L40 112 L44 118 L48 112 L52 118 L56 112 L60 118 L64 112 L68 118" fill="none" stroke="#5a4a30" stroke-width="0.5"/>
+  <!-- weathering on tabard -->
+  <path d="M34 96 L38 100" stroke="#6a5a40" stroke-width="0.3" opacity=".6"/>
+  <path d="M58 98 L62 102" stroke="#6a5a40" stroke-width="0.3" opacity=".6"/>
+
+  <!-- LEGS: dark undersuit + bone greaves (bulky) -->
+  <path d="M32 76 Q30 108 38 114 L46 114 L48 76 Z" fill="url(#wd-under)"/>
+  <path d="M64 76 Q66 108 58 114 L50 114 L48 76 Z" fill="url(#wd-under)"/>
+  <!-- bone greaves (layered) -->
+  <path d="M32 86 L46 86 L46 96 L34 96 Z" fill="url(#wd-bone)"/>
+  <path d="M64 86 L50 86 L50 96 L62 96 Z" fill="url(#wd-bone)"/>
+  <path d="M33 90 L45 90 M33 94 L45 94" stroke="#6a5a40" stroke-width="0.4"/>
+  <path d="M51 90 L63 90 M51 94 L63 94" stroke="#6a5a40" stroke-width="0.4"/>
+  <!-- knee plate (layered bone) -->
+  <path d="M34 98 Q40 96 46 98 L46 106 Q40 108 34 106 Z" fill="url(#wd-bone-dark)"/>
+  <path d="M62 98 Q56 96 50 98 L50 106 Q56 108 62 106 Z" fill="url(#wd-bone-dark)"/>
+  <!-- engraved detail on kneepad -->
+  <path d="M38 101 L42 101 M38 104 L42 104" stroke="#5a4a30" stroke-width="0.4"/>
+  <path d="M54 101 L58 101 M54 104 L58 104" stroke="#5a4a30" stroke-width="0.4"/>
+  <!-- shin plates -->
+  <path d="M34 108 L46 108 L45 114 L35 114 Z" fill="url(#wd-bone)"/>
+  <path d="M62 108 L50 108 L51 114 L61 114 Z" fill="url(#wd-bone)"/>
+  <!-- grime on shins -->
+  <path d="M36 110 L42 113" stroke="#5a4a30" stroke-width="0.4" opacity=".7"/>
+  <path d="M54 110 L60 113" stroke="#5a4a30" stroke-width="0.4" opacity=".7"/>
+  <!-- heavy tactical boots -->
+  <path d="M32 114 L48 114 L48 118 L36 120 Q32 117 32 114 Z" fill="#0a0806"/>
+  <path d="M64 114 L48 114 L48 118 L60 120 Q64 117 64 114 Z" fill="#0a0806"/>
 
   <!-- BELT -->
-  <path d="M20 74 L76 74 L76 82 L20 82 Z" fill="#2a1c10"/>
-  <!-- buckle -->
-  <rect x="42" y="72" width="12" height="12" fill="url(#wd-plate)"/>
-  <circle cx="48" cy="78" r="3" fill="#ff9a3c"/>
-  <circle cx="48" cy="78" r="1.2" fill="#fff4c0"/>
+  <path d="M24 72 L72 72 L72 80 L24 80 Z" fill="#1a1410"/>
+  <!-- buckle (bone with ember core) -->
+  <rect x="42" y="70" width="12" height="12" fill="url(#wd-bone-dark)"/>
+  <circle cx="48" cy="76" r="3" fill="#ff9a3c"/>
+  <circle cx="48" cy="76" r="1.2" fill="#fff4c0"/>
 
-  <!-- TORSO: heavy plate (sand) -->
-  <path d="M18 38 Q16 34 22 32 L74 32 Q80 34 78 38 L78 74 Q78 78 74 78 L22 78 Q18 78 18 74 Z" fill="url(#wd-steel)"/>
-  <!-- front chest plate -->
-  <path d="M28 40 L68 40 Q70 40 70 42 L70 68 L48 76 L26 68 L26 42 Q26 40 28 40 Z" fill="url(#wd-plate)"/>
-  <!-- plate ridge -->
-  <path d="M48 40 L48 74" stroke="#3a2414" stroke-width="1"/>
-  <path d="M28 50 L68 50" stroke="#3a2414" stroke-width="0.6" opacity=".6"/>
-  <path d="M30 60 L66 60" stroke="#3a2414" stroke-width="0.6" opacity=".6"/>
-  <!-- draconic insignia (class tag) -->
-  <path d="M48 46 L54 52 L48 56 L42 52 Z" fill="#ff9a3c"/>
-  <path d="M48 48 L52 52 L48 54 L44 52 Z" fill="#fff4c0"/>
-  <circle cx="48" cy="52" r="1" fill="#8a3010"/>
-  <!-- rivets -->
-  <circle cx="30" cy="42" r="0.9" fill="#ff9a3c"/>
-  <circle cx="66" cy="42" r="0.9" fill="#ff9a3c"/>
-  <circle cx="30" cy="72" r="0.9" fill="#ff9a3c"/>
-  <circle cx="66" cy="72" r="0.9" fill="#ff9a3c"/>
-  <!-- sand weathering scratches -->
-  <path d="M32 60 L40 64" stroke="#3a2414" stroke-width="0.3" opacity=".6"/>
-  <path d="M56 58 L64 62" stroke="#3a2414" stroke-width="0.3" opacity=".6"/>
+  <!-- TORSO: massive bone plate with scalloped layers -->
+  <path d="M18 36 Q16 32 22 30 L74 30 Q80 32 78 36 L78 72 Q78 76 74 76 L22 76 Q18 76 18 72 Z" fill="url(#wd-under)"/>
+  <!-- upper plate -->
+  <path d="M22 38 L74 38 Q76 38 76 40 L76 54 L48 60 L20 54 L20 40 Q20 38 22 38 Z" fill="url(#wd-bone)"/>
+  <!-- middle plate -->
+  <path d="M22 54 L74 54 L74 66 L48 70 L22 66 Z" fill="url(#wd-bone)"/>
+  <!-- belly plate (scalloped) -->
+  <path d="M26 66 L70 66 L70 76 L48 80 L26 76 Z" fill="url(#wd-bone)"/>
+  <!-- plate separations -->
+  <path d="M20 54 L76 54" stroke="#6a5a40" stroke-width="0.8"/>
+  <path d="M22 66 L74 66" stroke="#6a5a40" stroke-width="0.8"/>
+  <!-- LARGE CENTRAL CROWN SIGIL (heavy warden emblem) -->
+  <path d="M36 42 L40 38 L44 42 L48 36 L52 42 L56 38 L60 42 L58 50 L38 50 Z" fill="none" stroke="#5a4a30" stroke-width="0.8"/>
+  <path d="M40 40 L40 48 M44 42 L44 48 M48 38 L48 48 M52 42 L52 48 M56 40 L56 48" stroke="#5a4a30" stroke-width="0.5"/>
+  <path d="M38 50 Q48 52 58 50" fill="none" stroke="#5a4a30" stroke-width="0.6"/>
+  <!-- draconic orange gem in crown center -->
+  <circle cx="48" cy="44" r="1.6" fill="#ff9a3c"/>
+  <circle cx="48" cy="44" r="0.8" fill="#fff4c0"/>
+  <!-- filigree on middle plate -->
+  <path d="M28 58 Q48 62 68 58" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
+  <path d="M32 62 Q48 64 64 62" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
+  <!-- filigree on belly plate -->
+  <path d="M32 70 Q48 74 64 70" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
+  <!-- rivets on plate edges -->
+  <circle cx="24" cy="42" r="0.9" fill="#6a5a40"/>
+  <circle cx="72" cy="42" r="0.9" fill="#6a5a40"/>
+  <circle cx="24" cy="52" r="0.9" fill="#6a5a40"/>
+  <circle cx="72" cy="52" r="0.9" fill="#6a5a40"/>
+  <circle cx="26" cy="64" r="0.9" fill="#6a5a40"/>
+  <circle cx="70" cy="64" r="0.9" fill="#6a5a40"/>
+  <circle cx="30" cy="74" r="0.9" fill="#6a5a40"/>
+  <circle cx="66" cy="74" r="0.9" fill="#6a5a40"/>
+  <!-- weathering streaks -->
+  <path d="M26 44 L30 48" stroke="#6a5a40" stroke-width="0.3" opacity=".6"/>
+  <path d="M66 44 L70 48" stroke="#6a5a40" stroke-width="0.3" opacity=".6"/>
+  <path d="M32 58 L36 62" stroke="#5a4a30" stroke-width="0.3" opacity=".6"/>
+  <path d="M60 58 L64 62" stroke="#5a4a30" stroke-width="0.3" opacity=".6"/>
 
-  <!-- PAULDRONS (oversized shoulder plates, sand) -->
-  <path d="M10 36 Q8 52 18 54 L26 50 L28 36 Q24 32 14 32 Q10 32 10 36 Z" fill="url(#wd-plate)"/>
-  <path d="M86 36 Q88 52 78 54 L70 50 L68 36 Q72 32 82 32 Q86 32 86 36 Z" fill="url(#wd-plate)"/>
-  <path d="M12 38 Q12 50 22 52" fill="none" stroke="#3a2414" stroke-width="1"/>
-  <path d="M84 38 Q84 50 74 52" fill="none" stroke="#3a2414" stroke-width="1"/>
-  <!-- pauldron spikes -->
-  <path d="M12 32 L10 26 L8 32 Z" fill="#3a2414"/>
-  <path d="M20 32 L18 26 L16 32 Z" fill="#3a2414"/>
-  <path d="M84 32 L86 26 L88 32 Z" fill="#3a2414"/>
-  <path d="M76 32 L78 26 L80 32 Z" fill="#3a2414"/>
-  <!-- pauldron insignia (runic unit sigil on left, draconic on right) -->
-  <circle cx="16" cy="44" r="2.4" fill="#3a2414"/>
-  <path d="M16 42 L18 44 L16 46 L14 44 Z" fill="#7cc4ff"/>
-  <circle cx="80" cy="44" r="2.4" fill="#ff9a3c"/>
-  <circle cx="80" cy="44" r="1" fill="#fff4c0"/>
+  <!-- OVERSIZED PAULDRONS with scalloped bone layers -->
+  <path d="M8 36 Q6 52 18 54 L26 50 L28 34 Q22 30 12 30 Q8 30 8 36 Z" fill="url(#wd-bone)"/>
+  <path d="M88 36 Q90 52 78 54 L70 50 L68 34 Q74 30 84 30 Q88 30 88 36 Z" fill="url(#wd-bone)"/>
+  <!-- pauldron scallop lines -->
+  <path d="M10 42 Q18 46 26 42" fill="none" stroke="#6a5a40" stroke-width="0.6"/>
+  <path d="M10 48 Q18 52 26 48" fill="none" stroke="#6a5a40" stroke-width="0.6"/>
+  <path d="M86 42 Q78 46 70 42" fill="none" stroke="#6a5a40" stroke-width="0.6"/>
+  <path d="M86 48 Q78 52 70 48" fill="none" stroke="#6a5a40" stroke-width="0.6"/>
+  <!-- carved spikes (bone horns) -->
+  <path d="M10 30 L8 22 L12 30 Z" fill="url(#wd-bone-dark)"/>
+  <path d="M20 30 L18 22 L22 30 Z" fill="url(#wd-bone-dark)"/>
+  <path d="M86 30 L88 22 L84 30 Z" fill="url(#wd-bone-dark)"/>
+  <path d="M76 30 L78 22 L74 30 Z" fill="url(#wd-bone-dark)"/>
+  <!-- pauldron engraving (runic squad sigil + draconic accent) -->
+  <circle cx="16" cy="40" r="2.2" fill="#3a3020"/>
+  <path d="M16 38 L18 40 L16 42 L14 40 Z" fill="#7cc4ff"/>
+  <circle cx="80" cy="40" r="2.2" fill="#3a3020"/>
+  <circle cx="80" cy="40" r="1.2" fill="#ff9a3c"/>
+  <circle cx="80" cy="40" r="0.5" fill="#fff4c0"/>
 
-  <!-- NECK gorget -->
-  <rect x="40" y="24" width="16" height="10" fill="url(#wd-steel)"/>
-  <rect x="40" y="28" width="16" height="2" fill="#0d1119"/>
-  <!-- desert scarf tucked behind gorget -->
-  <path d="M34 30 Q48 32 62 30 L60 36 Q48 38 36 36 Z" fill="#c6a473"/>
-  <path d="M36 32 L60 32" stroke="#8a6a40" stroke-width="0.4" opacity=".6"/>
+  <!-- FUR MANTLE / shaggy collar -->
+  <path d="M8 32 Q12 38 22 38 L34 36 Q40 34 48 34 Q56 34 62 36 L74 38 Q84 38 88 32
+           Q82 26 70 26 Q60 28 48 28 Q36 28 26 26 Q14 26 8 32 Z" fill="url(#wd-fur)"/>
+  <path d="M8 32 L10 36 L12 32 L14 36 L16 32 L18 36 L20 32 L22 36 L24 32 L26 36 L28 32 L30 36 L32 32
+           L34 36 L36 32 L38 36 L40 32 L42 36 L44 32 L46 36 L48 32 L50 36 L52 32 L54 36 L56 32 L58 36
+           L60 32 L62 36 L64 32 L66 36 L68 32 L70 36 L72 32 L74 36 L76 32 L78 36 L80 32 L82 36 L84 32 L86 36 L88 32"
+        fill="none" stroke="#2a2414" stroke-width="0.6"/>
+  <path d="M18 36 Q48 40 78 36" fill="none" stroke="#4a3e28" stroke-width="1"/>
 
-  <!-- HEAD: Full helmet (no face visible) -->
-  <path d="M30 26 Q30 6 48 4 Q66 6 66 26 L66 32 L30 32 Z" fill="url(#wd-helmet)"/>
-  <!-- helmet crest horns -->
-  <path d="M46 4 L44 -2 L48 0 L52 -2 L50 4 Z" fill="url(#wd-plate-dark)"/>
-  <path d="M40 10 L34 2 L38 12 Z" fill="url(#wd-plate-dark)"/>
-  <path d="M56 10 L62 2 L58 12 Z" fill="url(#wd-plate-dark)"/>
-  <!-- sand weathering on crest -->
-  <path d="M35 4 L38 8 M58 8 L61 4" stroke="#d4b07c" stroke-width="0.4" opacity=".6"/>
-  <!-- T-visor slit -->
-  <path d="M36 18 L60 18 L60 22 L50 22 L50 28 L46 28 L46 22 L36 22 Z" fill="#0d1119"/>
-  <circle cx="41" cy="20" r="0.8" fill="#ff9a3c"/>
-  <circle cx="55" cy="20" r="0.8" fill="#ff9a3c"/>
-  <!-- cheek plates -->
-  <path d="M30 24 L32 30 L34 24 Z" fill="#5a3f22"/>
-  <path d="M66 24 L64 30 L62 24 Z" fill="#5a3f22"/>
-  <!-- helmet rivets -->
-  <circle cx="34" cy="14" r="0.8" fill="#ff9a3c"/>
-  <circle cx="62" cy="14" r="0.8" fill="#ff9a3c"/>
-  <!-- helmet sand-weathered ridge -->
-  <path d="M32 12 Q48 6 64 12" fill="none" stroke="#d4b07c" stroke-width="0.5" opacity=".5"/>
+  <!-- SCARF under helmet -->
+  <path d="M34 34 Q48 40 62 34 L62 42 Q48 48 34 42 Z" fill="url(#wd-scarf)"/>
+  <path d="M36 38 Q48 42 60 38" fill="none" stroke="#7a6e52" stroke-width="0.4"/>
 
-  <!-- ARMS with vambraces (sand) -->
-  <path d="M8 50 Q6 54 8 58 L14 74 Q16 78 20 76 L22 72 L22 44 Z" fill="url(#wd-steel)"/>
-  <path d="M88 50 Q90 54 88 58 L82 74 Q80 78 76 76 L74 72 L74 44 Z" fill="url(#wd-steel)"/>
-  <!-- vambrace plates (sand) -->
-  <rect x="6" y="56" width="16" height="4" fill="url(#wd-plate)"/>
-  <rect x="74" y="56" width="16" height="4" fill="url(#wd-plate)"/>
-  <rect x="8" y="66" width="14" height="4" fill="url(#wd-plate)"/>
-  <rect x="74" y="66" width="14" height="4" fill="url(#wd-plate)"/>
-  <!-- gauntlets -->
-  <path d="M6 72 Q4 78 10 80 L20 78 Q22 74 20 72 Z" fill="#2a1c10"/>
-  <path d="M90 72 Q92 78 86 80 L76 78 Q74 74 76 72 Z" fill="#2a1c10"/>
-  <!-- knuckle studs -->
-  <circle cx="8" cy="76" r="0.9" fill="#ff9a3c"/>
-  <circle cx="12" cy="78" r="0.9" fill="#ff9a3c"/>
-  <circle cx="88" cy="76" r="0.9" fill="#ff9a3c"/>
-  <circle cx="84" cy="78" r="0.9" fill="#ff9a3c"/>
+  <!-- HEAD / HEAVY BONE SKULL HELMET -->
+  <ellipse cx="48" cy="20" rx="16" ry="18" fill="url(#wd-bone)"/>
+  <!-- heavy ridged crown -->
+  <path d="M32 10 Q48 0 64 10 L62 16 Q48 8 34 16 Z" fill="url(#wd-bone-dark)"/>
+  <!-- crown spikes / horns -->
+  <path d="M40 2 L38 -4 L42 2 Z" fill="url(#wd-bone-dark)"/>
+  <path d="M48 -2 L46 -6 L50 -6 Z" fill="url(#wd-bone-dark)"/>
+  <path d="M56 2 L58 -4 L54 2 Z" fill="url(#wd-bone-dark)"/>
+  <!-- forehead engraving -->
+  <path d="M42 10 L48 6 L54 10 L52 14 L44 14 Z" fill="none" stroke="#5a4a30" stroke-width="0.6"/>
+  <circle cx="48" cy="10" r="0.9" fill="#ff9a3c"/>
+  <!-- temple side rails -->
+  <rect x="30" y="16" width="3" height="10" fill="#1a1410"/>
+  <rect x="63" y="16" width="3" height="10" fill="#1a1410"/>
+  <circle cx="31.5" cy="18" r="0.8" fill="#ff9a3c"/>
+  <!-- cheek plates (thick) -->
+  <path d="M32 20 L34 30 L38 28 L36 20 Z" fill="url(#wd-bone-dark)"/>
+  <path d="M64 20 L62 30 L58 28 L60 20 Z" fill="url(#wd-bone-dark)"/>
+  <!-- HEAVY T-VISOR -->
+  <path d="M34 18 L62 18 L62 24 L52 24 L52 30 L44 30 L44 24 L34 24 Z" fill="#0a0806"/>
+  <!-- visor glow slits (draconic red-orange) -->
+  <circle cx="40" cy="21" r="1" fill="#ff5a3c"/>
+  <circle cx="56" cy="21" r="1" fill="#ff5a3c"/>
+  <circle cx="40" cy="21" r="0.4" fill="#fff4c0"/>
+  <circle cx="56" cy="21" r="0.4" fill="#fff4c0"/>
+  <!-- mask engraved filigree -->
+  <path d="M36 26 Q40 30 44 28" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
+  <path d="M60 26 Q56 30 52 28" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
+  <!-- chin ridge -->
+  <path d="M44 30 L48 36 L52 30" fill="url(#wd-bone-dark)"/>
+  <path d="M46 32 L48 34 L50 32" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
+  <!-- respirator vent at mouth -->
+  <rect x="44" y="30" width="8" height="4" rx="0.4" fill="#1a1410"/>
+  <path d="M45 31 L51 31 M45 32.5 L51 32.5" stroke="#3a3228" stroke-width="0.3"/>
+  <!-- mask weathering -->
+  <path d="M34 20 L32 26" stroke="#6a5a40" stroke-width="0.3" opacity=".6"/>
+  <path d="M62 20 L64 26" stroke="#6a5a40" stroke-width="0.3" opacity=".6"/>
+  <!-- NVG/rangefinder mount -->
+  <rect x="44" y="-2" width="8" height="2" rx="0.5" fill="#1a1410"/>
+  <circle cx="48" cy="-1" r="0.7" fill="#ff9a3c"/>
 
-  <!-- DRAGONMAW AUTOCANNON (dark body, orange muzzle) -->
-  <path d="M4 66 L16 66 L16 76 L4 78 Z" fill="#3a2a1a"/>
-  <path d="M16 62 L62 62 L62 74 L16 74 Z" fill="#2a1f14"/>
-  <path d="M28 58 L44 58 L44 62 L28 62 Z" fill="#2a1f14"/>
-  <path d="M30 55 L34 55 L34 58 L30 58 Z" fill="#1a0e06"/>
-  <path d="M38 55 L42 55 L42 58 L38 58 Z" fill="#1a0e06"/>
-  <path d="M28 74 L50 74 L50 86 L28 86 Z" fill="#3a2a1a"/>
-  <path d="M30 76 L48 76 L48 84 L30 84 Z" fill="#2a1f14"/>
-  <path d="M50 78 L54 78 L54 82 L50 82 Z" fill="#1a0e06"/>
+  <!-- ARMS: undersuit + bone vambraces -->
+  <path d="M6 48 Q4 52 6 56 L12 72 Q14 76 18 74 L22 70 L22 42 Z" fill="url(#wd-under)"/>
+  <path d="M90 48 Q92 52 90 56 L84 72 Q82 76 78 74 L74 70 L74 42 Z" fill="url(#wd-under)"/>
+  <!-- bicep plates -->
+  <path d="M4 52 L22 52 L22 58 L4 58 Z" fill="url(#wd-bone)"/>
+  <path d="M92 52 L74 52 L74 58 L92 58 Z" fill="url(#wd-bone)"/>
+  <!-- forearm vambraces -->
+  <path d="M6 62 L22 62 L22 72 L6 72 Z" fill="url(#wd-bone)"/>
+  <path d="M90 62 L74 62 L74 72 L90 72 Z" fill="url(#wd-bone)"/>
+  <path d="M8 64 L20 64 M8 68 L20 68" stroke="#6a5a40" stroke-width="0.4"/>
+  <path d="M76 64 L88 64 M76 68 L88 68" stroke="#6a5a40" stroke-width="0.4"/>
+  <!-- engraved detail on vambrace -->
+  <path d="M12 66 Q14 70 12 72" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
+  <path d="M84 66 Q82 70 84 72" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
+  <!-- gauntlets (heavy dark) -->
+  <path d="M4 72 Q2 78 8 80 L20 78 Q22 74 20 72 Z" fill="#0a0806"/>
+  <path d="M92 72 Q94 78 88 80 L76 78 Q74 74 76 72 Z" fill="#0a0806"/>
+  <!-- knuckle studs (ember) -->
+  <circle cx="6" cy="76" r="0.9" fill="#ff9a3c"/>
+  <circle cx="10" cy="78" r="0.9" fill="#ff9a3c"/>
+  <circle cx="90" cy="76" r="0.9" fill="#ff9a3c"/>
+  <circle cx="86" cy="78" r="0.9" fill="#ff9a3c"/>
+
+  <!-- DRAGONMAW AUTOCANNON -->
+  <path d="M4 66 L16 66 L16 76 L4 78 Z" fill="#2a2218"/>
+  <path d="M16 62 L62 62 L62 74 L16 74 Z" fill="#1a1410"/>
+  <path d="M28 58 L44 58 L44 62 L28 62 Z" fill="#1a1410"/>
+  <path d="M30 55 L34 55 L34 58 L30 58 Z" fill="#0a0806"/>
+  <path d="M38 55 L42 55 L42 58 L38 58 Z" fill="#0a0806"/>
+  <path d="M28 74 L50 74 L50 86 L28 86 Z" fill="#2a2218"/>
+  <path d="M30 76 L48 76 L48 84 L30 84 Z" fill="#1a1410"/>
+  <path d="M50 78 L54 78 L54 82 L50 82 Z" fill="#0a0806"/>
   <circle cx="34" cy="80" r="1.2" fill="#ff9a3c"/>
   <circle cx="38" cy="80" r="1.2" fill="#ff9a3c"/>
   <circle cx="42" cy="80" r="1.2" fill="#ff9a3c"/>
   <circle cx="46" cy="80" r="1.2" fill="#ff9a3c"/>
-  <path d="M54 74 L58 74 L58 80 L54 80 Z" fill="#1a0e06"/>
-  <rect x="62" y="64" width="28" height="8" fill="#2a1f14"/>
-  <path d="M64 66 L64 70 M68 66 L68 70 M72 66 L72 70 M76 66 L76 70 M80 66 L80 70 M84 66 L84 70" stroke="#1a0e06" stroke-width="0.8"/>
-  <path d="M90 62 L96 62 L96 74 L90 74 Z" fill="#1a0e06"/>
-  <rect x="91" y="64" width="1" height="8" fill="#3a2a1a"/>
-  <rect x="93" y="64" width="1" height="8" fill="#3a2a1a"/>
-  <!-- ember muzzle glow -->
+  <path d="M54 74 L58 74 L58 80 L54 80 Z" fill="#0a0806"/>
+  <rect x="62" y="64" width="28" height="8" fill="#1a1410"/>
+  <path d="M64 66 L64 70 M68 66 L68 70 M72 66 L72 70 M76 66 L76 70 M80 66 L80 70 M84 66 L84 70" stroke="#0a0806" stroke-width="0.8"/>
+  <path d="M90 62 L96 62 L96 74 L90 74 Z" fill="#0a0806"/>
+  <rect x="91" y="64" width="1" height="8" fill="#2a2218"/>
+  <rect x="93" y="64" width="1" height="8" fill="#2a2218"/>
   <circle cx="93" cy="68" r="7" fill="url(#wd-ember)"/>
   <circle cx="93" cy="68" r="2.8" fill="#fff4c0"/>
   <path d="M72 67 L76 65 L80 67 L76 69 Z" fill="#ff9a3c" opacity=".7"/>
