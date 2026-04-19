@@ -9,18 +9,28 @@ export default function CombatHUD() {
   const selectedId = useCombatStore((s) => s.selectedId);
   const mode = useCombatStore((s) => s.mode);
   const selectedUtilityIdx = useCombatStore((s) => s.selectedUtilityIdx);
+  const pendingShotTargetId = useCombatStore((s) => s.pendingShotTargetId);
+  const pendingUtility = useCombatStore((s) => s.pendingUtility);
   const log = useCombatStore((s) => s.log);
   const setMode = useCombatStore((s) => s.setMode);
   const tryReload = useCombatStore((s) => s.tryReload);
   const toggleOverwatch = useCombatStore((s) => s.toggleOverwatch);
   const endPlayerTurn = useCombatStore((s) => s.endPlayerTurn);
   const selectUnit = useCombatStore((s) => s.selectUnit);
+  const confirmPending = useCombatStore((s) => s.confirmPending);
+  const cancelPending = useCombatStore((s) => s.cancelPending);
+  const getShotPreview = useCombatStore((s) => s.getShotPreview);
 
   const selected = units.find((u) => u.id === selectedId);
   const playerUnits = units.filter((u) => u.faction === 'player');
   const primary = selected?.loadout ? WEAPONS[selected.loadout.primaryId] : null;
-
   const disabled = phase !== 'player' || !selected || !selected.alive;
+
+  const shotPreview = pendingShotTargetId !== null ? getShotPreview(pendingShotTargetId) : null;
+  const shotTarget = pendingShotTargetId !== null ? units.find((u) => u.id === pendingShotTargetId) : null;
+  const pendingUtilityDef = (pendingUtility && selected?.loadout)
+    ? UTILITIES[selected.loadout.utilityIds[pendingUtility.idx]]
+    : null;
 
   return (
     <>
@@ -58,6 +68,58 @@ export default function CombatHUD() {
           ))}
         </div>
       </div>
+
+      {/* Shot preview card */}
+      {shotPreview && shotTarget && (
+        <div className="panel" style={{
+          position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+          bottom: 'calc(var(--safe-bottom) + 92px)',
+          minWidth: 240, padding: 'var(--s-3)', pointerEvents: 'auto',
+          borderColor: 'var(--danger)',
+        }}>
+          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
+            <strong style={{ color: 'var(--fg-0)' }}>Target: {shotTarget.name}</strong>
+            <span style={{ fontSize: 12, color: coverColor(shotPreview.cover) }}>
+              {shotPreview.cover === 'none' ? 'flanked' : `${shotPreview.cover} cover`}
+            </span>
+          </div>
+          <div className="row" style={{ gap: 'var(--s-4)', fontSize: 14, marginBottom: 8 }}>
+            <span><span style={{ color: 'var(--fg-2)' }}>hit</span> <strong>{shotPreview.hitChance}%</strong></span>
+            <span><span style={{ color: 'var(--fg-2)' }}>crit</span> <strong>{shotPreview.critChance}%</strong></span>
+            <span><span style={{ color: 'var(--fg-2)' }}>dmg</span> <strong>{shotPreview.dmgMin}–{shotPreview.dmgMax}</strong></span>
+          </div>
+          <div className="row" style={{ gap: 'var(--s-2)' }}>
+            <button style={{ flex: 1 }} onClick={cancelPending}>Cancel</button>
+            <button className="primary" style={{ flex: 1 }} onClick={confirmPending}>Fire</button>
+          </div>
+        </div>
+      )}
+
+      {/* Utility preview card */}
+      {pendingUtility && pendingUtilityDef && (
+        <div className="panel" style={{
+          position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+          bottom: 'calc(var(--safe-bottom) + 92px)',
+          minWidth: 240, padding: 'var(--s-3)', pointerEvents: 'auto',
+          borderColor: 'var(--accent-2)',
+        }}>
+          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
+            <strong>{pendingUtilityDef.name}</strong>
+            <span style={{ fontSize: 12, color: 'var(--accent-2)' }}>radius {pendingUtilityDef.radius}</span>
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--fg-1)', marginBottom: 8 }}>
+            {pendingUtilityDef.dmgMin !== undefined
+              ? `${pendingUtilityDef.dmgMin}–${pendingUtilityDef.dmgMax} dmg in radius`
+              : pendingUtilityDef.heal
+                ? `Heals ${pendingUtilityDef.heal} to adjacent ally`
+                : `Applies ${pendingUtilityDef.kind}`}
+          </div>
+          <div className="row" style={{ gap: 'var(--s-2)' }}>
+            <button style={{ flex: 1 }} onClick={cancelPending}>Cancel</button>
+            <button className="primary" style={{ flex: 1 }} onClick={confirmPending}>Throw</button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom action bar */}
       <div style={{
@@ -106,4 +168,10 @@ function logColor(k: string) {
     case 'heal': return 'var(--success)';
     default: return 'var(--fg-1)';
   }
+}
+
+function coverColor(c: string) {
+  if (c === 'full') return 'var(--accent)';
+  if (c === 'half') return 'var(--warn)';
+  return 'var(--danger)';
 }

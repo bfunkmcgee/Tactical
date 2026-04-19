@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useCombatStore } from '../../state/combatStore';
+import { UTILITIES } from '../data/utilities';
 import type { GridMap, Unit, Vec2 } from '../types';
 import { TILE_W, TILE_H, gridToScreen, screenToGrid } from './isoProjection';
 import { chebyshev, keyOf, tileAt } from '../engine/grid';
@@ -28,28 +29,25 @@ export default function PixiStage() {
 
       const world = new Container();
       const tileLayer = new Container();
-      const overlayLayer = new Container(); // reach/AoE/targets
+      const overlayLayer = new Container();
       const unitLayer = new Container();
       const fxLayer = new Container();
       world.addChild(tileLayer, overlayLayer, unitLayer, fxLayer);
       app.stage.addChild(world);
 
-      // Camera state
       const cam = { x: app.screen.width / 2, y: 80, zoom: 1 };
+      const shakeOffset = { x: 0, y: 0 };
       const applyCam = () => {
         world.position.set(cam.x + shakeOffset.x, cam.y + shakeOffset.y);
         world.scale.set(cam.zoom);
       };
-      const shakeOffset = { x: 0, y: 0 };
 
-      // Initial store draw
       const initialState = useCombatStore.getState();
       drawMap(tileLayer, initialState.map);
       applyCam();
 
-      // ---- Input: touch pan, pinch zoom, tap-to-resolve ----
-      let pointers = new Map<number, { x: number; y: number }>();
-      let lastTap = { x: 0, y: 0, t: 0 };
+      // ---- Input ----
+      const pointers = new Map<number, { x: number; y: number }>();
       let panStart: { cx: number; cy: number; px: number; py: number } | null = null;
       let pinchStart: { dist: number; zoom: number } | null = null;
       let dragged = false;
@@ -78,18 +76,15 @@ export default function PixiStage() {
         if (!pointers.has(e.pointerId)) return;
         pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (pointers.size === 1 && panStart) {
-          const dx = e.clientX - panStart.px;
-          const dy = e.clientY - panStart.py;
+          const dx = e.clientX - panStart.px, dy = e.clientY - panStart.py;
           if (Math.hypot(dx, dy) > 6) dragged = true;
-          cam.x = panStart.cx + dx;
-          cam.y = panStart.cy + dy;
+          cam.x = panStart.cx + dx; cam.y = panStart.cy + dy;
           applyCam();
         } else if (pointers.size === 2 && pinchStart) {
           const pts = [...pointers.values()];
           const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y;
           const d = Math.hypot(dx, dy);
-          const z = Math.max(0.5, Math.min(2.2, pinchStart.zoom * (d / pinchStart.dist)));
-          cam.zoom = z;
+          cam.zoom = Math.max(0.5, Math.min(2.2, pinchStart.zoom * (d / pinchStart.dist)));
           dragged = true;
           applyCam();
         }
@@ -98,14 +93,9 @@ export default function PixiStage() {
         const hadTwo = pointers.size === 2;
         pointers.delete(e.pointerId);
         if (!hadTwo && !dragged) {
-          // Tap resolved: translate screen to grid and dispatch.
           const rect = app.canvas.getBoundingClientRect();
-          const sx = e.clientX - rect.left;
-          const sy = e.clientY - rect.top;
-          const w = screenToWorld(sx, sy);
-          const g = screenToGrid(w);
-          onTapGrid(g);
-          lastTap = { x: g.x, y: g.y, t: performance.now() };
+          const w = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+          onTapGrid(screenToGrid(w));
         }
         if (pointers.size < 2) pinchStart = null;
         if (pointers.size === 0) panStart = null;
@@ -114,11 +104,9 @@ export default function PixiStage() {
       app.canvas.addEventListener('pointermove', onMove);
       app.canvas.addEventListener('pointerup', onUp);
       app.canvas.addEventListener('pointercancel', onUp);
-      // Mouse wheel zoom for desktop.
       const onWheel = (e: WheelEvent) => {
         e.preventDefault();
-        const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-        cam.zoom = Math.max(0.5, Math.min(2.2, cam.zoom * factor));
+        cam.zoom = Math.max(0.5, Math.min(2.2, cam.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
         applyCam();
       };
       app.canvas.addEventListener('wheel', onWheel, { passive: false });
@@ -126,17 +114,25 @@ export default function PixiStage() {
       function onTapGrid(g: Vec2) {
         const st = useCombatStore.getState();
         if (!inMap(st.map, g)) return;
-        // If a non-selected unit is under the tap, route correctly.
         const unitAt = st.units.find((u) => u.alive && u.pos.x === g.x && u.pos.y === g.y);
+
+        // Tap cancels an open pending preview (unless the same target is re-tapped to confirm).
+        if (st.pendingShotTargetId !== null) {
+          if (unitAt && unitAt.id === st.pendingShotTargetId) { st.confirmPending(); return; }
+          st.cancelPending();
+          if (st.mode !== 'fire') return;
+        }
+        if (st.pendingUtility) {
+          if (st.pendingUtility.center.x === g.x && st.pendingUtility.center.y === g.y) { st.confirmPending(); return; }
+          st.cancelPending();
+          if (st.mode !== 'utility') return;
+        }
+
         if (st.mode === 'idle') {
           if (unitAt && unitAt.faction === 'player') { st.selectUnit(unitAt.id); return; }
-          // Tap a visible enemy = quick fire preview-commit cycle
           if (unitAt && unitAt.faction === 'enemy') {
-            st.setMode('fire');
-            st.tryShoot(unitAt.id);
-            return;
+            st.setMode('fire'); st.queueShot(unitAt.id); return;
           }
-          // Tap own empty reachable tile = move directly
           if (st.selectedId && st.reach.has(keyOf(g.x, g.y))) st.tryMove(g);
           return;
         }
@@ -146,20 +142,32 @@ export default function PixiStage() {
           return;
         }
         if (st.mode === 'fire') {
-          if (unitAt && unitAt.faction === 'enemy') st.tryShoot(unitAt.id);
+          if (unitAt && unitAt.faction === 'enemy') st.queueShot(unitAt.id);
           else st.setMode('idle');
           return;
         }
         if (st.mode === 'utility' && st.selectedUtilityIdx !== null) {
-          st.tryUtility(g, st.selectedUtilityIdx);
+          st.queueUtility(g, st.selectedUtilityIdx);
           return;
         }
       }
 
-      // ---- Draw loop: re-render unit/overlay layers each tick from store ----
+      // Re-render reactive layers whenever the store changes.
+      // Floaters are drained to a local list so ticker animation doesn't churn
+      // the store every frame.
+      type ActiveFloater = { text: string; color: number; pos: Vec2; bornMs: number };
+      const active: ActiveFloater[] = [];
+      const FLOATER_MS = 900;
+
       const unsub = useCombatStore.subscribe(() => {
-        redrawOverlays(overlayLayer, useCombatStore.getState());
-        redrawUnits(unitLayer, useCombatStore.getState());
+        const s = useCombatStore.getState();
+        if (s.floaters.length > 0) {
+          const now = performance.now();
+          for (const f of s.floaters) active.push({ text: f.text, color: f.color, pos: f.pos, bornMs: now });
+          useCombatStore.setState({ floaters: [] });
+        }
+        redrawOverlays(overlayLayer, s);
+        redrawUnits(unitLayer, s);
       });
       redrawOverlays(overlayLayer, initialState);
       redrawUnits(unitLayer, initialState);
@@ -175,6 +183,12 @@ export default function PixiStage() {
           shakeOffset.x = 0; shakeOffset.y = 0;
           applyCam();
         }
+        // Prune aged floaters in the local list, then render.
+        const now = performance.now();
+        for (let i = active.length - 1; i >= 0; i--) {
+          if (now - active[i].bornMs > FLOATER_MS) active.splice(i, 1);
+        }
+        renderActiveFloaters(fxLayer, active, now, FLOATER_MS);
       });
 
       (app as unknown as { __cleanup?: () => void }).__cleanup = () => {
@@ -185,7 +199,6 @@ export default function PixiStage() {
         app.canvas.removeEventListener('pointercancel', onUp);
         app.canvas.removeEventListener('wheel', onWheel);
       };
-      void lastTap;
     })();
 
     return () => {
@@ -240,7 +253,9 @@ function redrawOverlays(layer: Container, st: ReturnType<typeof useCombatStore.g
   if (!sel || sel.faction !== 'player' || !sel.alive) return;
 
   const g = new Graphics();
-  if (st.mode === 'move' || st.mode === 'idle') {
+
+  // Movement reach when not targeting.
+  if ((st.mode === 'move' || st.mode === 'idle') && st.pendingUtility === null && st.pendingShotTargetId === null) {
     for (const [k, d] of st.reach) {
       const x = k % 4096, y = Math.floor(k / 4096);
       if (x === sel.pos.x && y === sel.pos.y) continue;
@@ -250,26 +265,42 @@ function redrawOverlays(layer: Container, st: ReturnType<typeof useCombatStore.g
       diamond(g, p.x, p.y, color, 0.18, color);
     }
   }
+
+  // Fire mode: mark valid targets in LOS.
   if (st.mode === 'fire') {
     for (const enemy of st.units) {
       if (enemy.faction !== 'enemy' || !enemy.alive) continue;
       if (!hasLineOfSight(st.map, sel.pos, enemy.pos)) continue;
       const p = gridToScreen(enemy.pos);
-      diamond(g, p.x, p.y, 0xff5a6a, 0.28, 0xff5a6a);
+      const pending = st.pendingShotTargetId === enemy.id;
+      diamond(g, p.x, p.y, 0xff5a6a, pending ? 0.45 : 0.28, 0xff5a6a);
     }
   }
+
+  // Utility mode: shade tiles within throw range; highlight AoE if a target is pending.
   if (st.mode === 'utility' && st.selectedUtilityIdx !== null && sel.loadout) {
-    const util = sel.loadout.utilityIds[st.selectedUtilityIdx];
+    const util = UTILITIES[sel.loadout.utilityIds[st.selectedUtilityIdx]];
     if (util) {
       for (let y = 0; y < st.map.height; y++) {
         for (let x = 0; x < st.map.width; x++) {
-          if (chebyshev(sel.pos, { x, y }) > 7) continue;
+          if (chebyshev(sel.pos, { x, y }) > util.range) continue;
           const p = gridToScreen({ x, y });
-          diamond(g, p.x, p.y, 0xff9a3c, 0.1, 0xff9a3c);
+          diamond(g, p.x, p.y, 0xff9a3c, 0.08);
+        }
+      }
+      if (st.pendingUtility) {
+        const c = st.pendingUtility.center;
+        for (let y = 0; y < st.map.height; y++) {
+          for (let x = 0; x < st.map.width; x++) {
+            if (chebyshev(c, { x, y }) > util.radius) continue;
+            const p = gridToScreen({ x, y });
+            diamond(g, p.x, p.y, 0xff9a3c, 0.35, 0xff9a3c);
+          }
         }
       }
     }
   }
+
   layer.addChild(g);
 }
 
@@ -305,8 +336,13 @@ function drawUnit(layer: Container, u: Unit, selected: boolean) {
     ow.circle(0, -46, 4).fill(0xf5c55a);
     c.addChild(ow);
   }
+  if (u.status.blinded) {
+    const bl = new Graphics();
+    bl.circle(-6, -46, 3).fill(0xc79aff);
+    bl.circle(6, -46, 3).fill(0xc79aff);
+    c.addChild(bl);
+  }
 
-  // HP bar
   const bar = new Graphics();
   const pct = u.hp / u.hpMax;
   bar.rect(-14, -48, 28, 4).fill(0x0b0f14);
@@ -322,4 +358,25 @@ function drawUnit(layer: Container, u: Unit, selected: boolean) {
   c.addChild(label);
 
   layer.addChild(c);
+}
+
+function renderActiveFloaters(
+  layer: Container,
+  active: Array<{ text: string; color: number; pos: Vec2; bornMs: number }>,
+  now: number,
+  totalMs: number
+) {
+  layer.removeChildren();
+  for (const f of active) {
+    const progress = Math.min(1, (now - f.bornMs) / totalMs);
+    const p = gridToScreen(f.pos);
+    const t = new Text({
+      text: f.text,
+      style: { fill: f.color, fontSize: 16, fontWeight: 'bold', fontFamily: 'system-ui' },
+    });
+    t.anchor.set(0.5, 1);
+    t.position.set(p.x, p.y - 56 - progress * 36);
+    t.alpha = Math.max(0, 1 - progress * 1.1);
+    layer.addChild(t);
+  }
 }
