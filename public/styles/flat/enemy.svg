@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 80">
+  <defs>
+    <linearGradient id="fl-cloak" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a3a5e"/>
+      <stop offset="1" stop-color="#2a1f3a"/>
+    </linearGradient>
+    <radialGradient id="fl-eye" r="0.5">
+      <stop offset="0" stop-color="#f0e0ff"/>
+      <stop offset="1" stop-color="#7d55b0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="80" fill="#1b2331"/>
+  <ellipse cx="32" cy="74" rx="16" ry="3" fill="#000" opacity=".55"/>
+  <!-- cloak silhouette -->
+  <path d="M18 20 Q18 12 32 10 Q46 12 46 20 L50 44 Q50 72 32 72 Q14 72 14 44 Z" fill="url(#fl-cloak)"/>
+  <!-- tattered hem -->
+  <path d="M14 66 L18 72 L22 66 L26 72 L32 66 L38 72 L42 66 L46 72 L50 66 L50 72 L14 72 Z" fill="#1b2331"/>
+  <!-- hood opening -->
+  <ellipse cx="32" cy="26" rx="10" ry="10" fill="#0b0814"/>
+  <!-- eyes -->
+  <circle cx="28" cy="26" r="2.4" fill="url(#fl-eye)"/>
+  <circle cx="36" cy="26" r="2.4" fill="url(#fl-eye)"/>
+  <!-- shoulder sigil -->
+  <path d="M22 28 L26 28 L24 32 Z" fill="#c79aff" opacity=".7"/>
+  <!-- spectral blade -->
+  <path d="M46 16 Q50 12 52 8 L55 12 Q52 22 48 30 L44 30 Q44 24 46 16 Z" fill="#c79aff" opacity=".85"/>
+  <path d="M46 16 Q50 12 52 8 L55 12 Q52 22 48 30 L44 30 Q44 24 46 16 Z" fill="#f0e0ff" opacity=".4"/>
+</svg>

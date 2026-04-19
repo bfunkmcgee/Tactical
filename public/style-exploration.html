@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Tactical — Sprite Style Exploration</title>
+<style>
+  :root {
+    --bg: #0b0f14; --panel: #121822; --border: #26324a;
+    --fg: #e6eef8; --muted: #aab4c4; --dim: #6b7689;
+    --accent: #7cc4ff; --warn: #ff9a3c; --danger: #ff5a6a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 14px/1.5 system-ui, -apple-system, sans-serif;
+    padding: 24px;
+  }
+  h1 { margin: 0 0 8px; font-size: 22px; }
+  p.lede { color: var(--muted); margin: 0 0 24px; max-width: 780px; }
+  .styles { display: grid; gap: 18px; grid-template-columns: 1fr; max-width: 1100px; margin: 0 auto; }
+  .style {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; display: grid; gap: 16px;
+    grid-template-columns: minmax(260px, 1fr) 2fr;
+  }
+  @media (max-width: 760px) { .style { grid-template-columns: 1fr; } }
+  .meta h2 { margin: 0 0 4px; font-size: 18px; }
+  .meta .subtitle { color: var(--accent); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  .meta p { color: var(--muted); margin: 8px 0; }
+  .meta ul { margin: 8px 0; padding-left: 16px; color: var(--muted); }
+  .meta ul li { margin: 2px 0; }
+  .meta .pros::before { content: "✓ "; color: #57d18b; }
+  .meta .cons::before { content: "✗ "; color: var(--danger); }
+  .sprites { display: grid; gap: 10px; grid-template-columns: 1fr 1fr 1.4fr; align-items: center; }
+  .sprite {
+    background: #0b0f14; border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .sprite img { width: 100%; height: auto; image-rendering: pixelated; }
+  .sprite.smooth img { image-rendering: auto; }
+  .sprite .label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+  .wide { grid-column: span 3; }
+  footer { max-width: 1100px; margin: 24px auto 0; color: var(--dim); font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Sprite style exploration</h1>
+  <p class="lede">Four direction options for soldier, enemy (Wraith Raider), and tileset. All are production-reasonable SVGs that would scale cleanly and render fast on mobile. Pick whichever <em>feel</em> fits best; the engine and HUD already support the whole catalog unchanged.</p>
+
+  <div class="styles">
+
+    <section class="style">
+      <div class="meta">
+        <div class="subtitle">Option A</div>
+        <h2>Pixel 16-bit</h2>
+        <p>Crunchy, deliberate pixels with a small palette. Reads instantly on phone screens and gives soldiers strong silhouettes.</p>
+        <ul>
+          <li class="pros">Extremely fast to author — 2–4 hours per soldier.</li>
+          <li class="pros">Readable at the smallest sizes (zoomed-out tactical camera).</li>
+          <li class="pros">Animation is cheap (2–4 frame walk cycles look great).</li>
+          <li class="cons">Looks retro — may feel dated for a modern-era pitch.</li>
+          <li class="cons">Less room for flashy FX without breaking the aesthetic.</li>
+        </ul>
+      </div>
+      <div class="sprites">
+        <div class="sprite"><img src="/styles/pixel/soldier.svg" alt="Pixel soldier"/><div class="label">Soldier (Ranger)</div></div>
+        <div class="sprite"><img src="/styles/pixel/enemy.svg" alt="Pixel enemy"/><div class="label">Enemy (Wraith)</div></div>
+        <div class="sprite"><img src="/styles/pixel/tiles.svg" alt="Pixel tiles"/><div class="label">Tiles</div></div>
+      </div>
+    </section>
+
+    <section class="style">
+      <div class="meta">
+        <div class="subtitle">Option B</div>
+        <h2>Flat vector</h2>
+        <p>Bold shapes, subtle gradients, no outlines. Think modern mobile strategy — clean silhouettes with rune-blue accents. Scales crisply at any resolution.</p>
+        <ul>
+          <li class="pros">Scales to any device pixel density without rework.</li>
+          <li class="pros">Fastest to iterate — all characters are composable shapes.</li>
+          <li class="pros">Easy to re-tint per elemental tag (runic/draconic/fae).</li>
+          <li class="cons">Can feel generic if palette isn't strong.</li>
+          <li class="cons">Less "handmade" character than pixel or painterly.</li>
+        </ul>
+      </div>
+      <div class="sprites">
+        <div class="sprite smooth"><img src="/styles/flat/soldier.svg" alt="Flat soldier"/><div class="label">Soldier (Ranger)</div></div>
+        <div class="sprite smooth"><img src="/styles/flat/enemy.svg" alt="Flat enemy"/><div class="label">Enemy (Wraith)</div></div>
+        <div class="sprite smooth"><img src="/styles/flat/tiles.svg" alt="Flat tiles"/><div class="label">Tiles</div></div>
+      </div>
+    </section>
+
+    <section class="style">
+      <div class="meta">
+        <div class="subtitle">Option C</div>
+        <h2>Painterly</h2>
+        <p>Warm gradients and soft edges — bronze, ember, deep shadow. Sells the "fantasy" side more than the "modern" side. Feels like a hand-illustrated game.</p>
+        <ul>
+          <li class="pros">Strongest mood — most memorable art direction.</li>
+          <li class="pros">Embers/glows fit naturally with draconic & alchemical tags.</li>
+          <li class="cons">Slowest to author — each sprite needs care.</li>
+          <li class="cons">Soft edges hurt readability at small zoom on phones.</li>
+          <li class="cons">Shifts brand: feels more D&D, less modern tactical.</li>
+        </ul>
+      </div>
+      <div class="sprites">
+        <div class="sprite smooth"><img src="/styles/painterly/soldier.svg" alt="Painterly soldier"/><div class="label">Soldier (Ranger)</div></div>
+        <div class="sprite smooth"><img src="/styles/painterly/enemy.svg" alt="Painterly enemy"/><div class="label">Enemy (Wraith)</div></div>
+        <div class="sprite smooth"><img src="/styles/painterly/tiles.svg" alt="Painterly tiles"/><div class="label">Tiles</div></div>
+      </div>
+    </section>
+
+    <section class="style">
+      <div class="meta">
+        <div class="subtitle">Option D</div>
+        <h2>Noir blueprint</h2>
+        <p>Two-tone wireframe aesthetic — runic cyan on near-black, enemies in violet, draconic/ember accents in orange. Every frame feels like a tactical overlay.</p>
+        <ul>
+          <li class="pros">Fantasy-modern duality built into the style itself.</li>
+          <li class="pros">Strongest "tactical HUD" feel — ties into cover/LOS overlays.</li>
+          <li class="pros">One sprite doubles as its own icon.</li>
+          <li class="cons">Limited palette can feel cold — worlds read as one-note.</li>
+          <li class="cons">Legibility depends on glow FX staying consistent.</li>
+        </ul>
+      </div>
+      <div class="sprites">
+        <div class="sprite smooth"><img src="/styles/blueprint/soldier.svg" alt="Blueprint soldier"/><div class="label">Soldier (Ranger)</div></div>
+        <div class="sprite smooth"><img src="/styles/blueprint/enemy.svg" alt="Blueprint enemy"/><div class="label">Enemy (Wraith)</div></div>
+        <div class="sprite smooth"><img src="/styles/blueprint/tiles.svg" alt="Blueprint tiles"/><div class="label">Tiles</div></div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    These are exploration sketches — not final art. Each style is rendered inline as SVG so you can zoom in your browser and the pixels hold up. Tell me which direction (A / B / C / D), and I'll roll it into the renderer, add idle animations, and build out the full soldier and enemy roster in that style.
+  </footer>
+</body>
+</html>

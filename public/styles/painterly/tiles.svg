@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100">
+  <defs>
+    <radialGradient id="pt-floor" cx="0.5" cy="0.5" r="0.7">
+      <stop offset="0" stop-color="#3a2e22"/>
+      <stop offset="1" stop-color="#17110a"/>
+    </radialGradient>
+    <linearGradient id="pt-crate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a6774a"/>
+      <stop offset="1" stop-color="#3a2410"/>
+    </linearGradient>
+    <linearGradient id="pt-wall" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a3a30"/>
+      <stop offset="1" stop-color="#1a120c"/>
+    </linearGradient>
+    <radialGradient id="pt-ember">
+      <stop offset="0" stop-color="#ffe8a0"/>
+      <stop offset="1" stop-color="#ff6a1a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="pt-blur"><feGaussianBlur stdDeviation="0.5"/></filter>
+  </defs>
+  <rect width="160" height="100" fill="#0f0a05"/>
+  <g filter="url(#pt-blur)">
+    <!-- floor -->
+    <g transform="translate(20,50)">
+      <polygon points="0,0 32,-16 64,0 32,16" fill="url(#pt-floor)"/>
+      <polygon points="0,0 32,-16 64,0 32,16" fill="none" stroke="#2a1f12" stroke-width="1"/>
+    </g>
+    <!-- half cover -->
+    <g transform="translate(80,50)">
+      <polygon points="0,0 32,-16 64,0 32,16" fill="url(#pt-floor)" stroke="#2a1f12"/>
+      <polygon points="32,4 50,-4 50,8 32,16" fill="#6a4a2a"/>
+      <polygon points="14,-4 32,4 32,16 14,8" fill="#3a2410"/>
+      <polygon points="14,-4 32,-12 50,-4 32,4" fill="url(#pt-crate)"/>
+      <path d="M22 -8 L42 -8" stroke="#3a2410" stroke-width="0.8"/>
+      <circle cx="44" cy="-1" r="2" fill="url(#pt-ember)"/>
+    </g>
+    <!-- full cover wall -->
+    <g transform="translate(120,50)">
+      <polygon points="0,0 20,-10 20,22 0,32" fill="#1a120c" stroke="#2a1f12"/>
+      <polygon points="20,-10 40,0 40,32 20,22" fill="#2e2218" stroke="#2a1f12"/>
+      <polygon points="0,0 20,-10 40,0 20,10" fill="url(#pt-wall)" stroke="#2a1f12"/>
+      <rect x="10" y="6" width="4" height="6" rx="1" fill="#0a0604"/>
+      <circle cx="24" cy="4" r="1.8" fill="url(#pt-ember)"/>
+    </g>
+  </g>
+</svg>

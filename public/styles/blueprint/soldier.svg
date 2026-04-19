@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 80">
+  <defs>
+    <filter id="bp-glow"><feGaussianBlur stdDeviation="0.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="bp-core">
+      <stop offset="0" stop-color="#ffb44a"/>
+      <stop offset="1" stop-color="#ff6a1a" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="bp-grid" width="4" height="4" patternUnits="userSpaceOnUse">
+      <path d="M4 0 L0 0 L0 4" fill="none" stroke="#0e3048" stroke-width="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="64" height="80" fill="#02080e"/>
+  <rect width="64" height="80" fill="url(#bp-grid)"/>
+  <ellipse cx="32" cy="72" rx="14" ry="2.5" fill="#6bd0ff" opacity=".1"/>
+  <g fill="none" stroke="#6bd0ff" stroke-width="1" filter="url(#bp-glow)" stroke-linecap="round" stroke-linejoin="round">
+    <!-- legs -->
+    <path d="M26 50 L25 70"/>
+    <path d="M30 50 L30 70"/>
+    <path d="M34 50 L34 70"/>
+    <path d="M38 50 L39 70"/>
+    <path d="M22 70 L32 70 L42 70"/>
+    <!-- boots -->
+    <path d="M23 70 L23 73 L30 73 L30 70"/>
+    <path d="M34 70 L34 73 L41 73 L41 70"/>
+    <!-- torso outline -->
+    <path d="M20 26 L22 24 L42 24 L44 26 L45 50 L19 50 Z"/>
+    <!-- chest plate -->
+    <path d="M26 32 L38 32 L38 46 L32 50 L26 46 Z"/>
+    <!-- sigils -->
+    <circle cx="29" cy="38" r="1.5"/>
+    <circle cx="35" cy="38" r="1.5"/>
+    <!-- head outline -->
+    <ellipse cx="32" cy="18" rx="8" ry="9"/>
+    <!-- helmet -->
+    <path d="M22 16 Q22 7 32 7 Q42 7 42 16"/>
+    <path d="M22 20 L42 20"/>
+    <path d="M22 16 L42 16"/>
+    <!-- visor -->
+    <path d="M25 21 L39 21"/>
+    <!-- arms -->
+    <path d="M16 30 L16 46 L20 48"/>
+    <path d="M20 30 L20 42"/>
+    <path d="M48 30 L48 46 L44 48"/>
+    <path d="M44 30 L44 42"/>
+    <!-- rifle body -->
+    <path d="M9 42 L54 42 L54 45 L9 45 Z"/>
+    <path d="M22 38 L38 38 L38 42 L22 42 Z"/>
+    <!-- stock -->
+    <path d="M9 41 L6 39 L6 46 L9 45"/>
+  </g>
+  <!-- rune glow core -->
+  <circle cx="52" cy="43" r="6" fill="#6bd0ff" opacity=".45"/>
+  <circle cx="52" cy="43" r="3" fill="#e6f4ff"/>
+  <!-- chest accent -->
+  <circle cx="32" cy="42" r="1.6" fill="url(#bp-core)"/>
+  <circle cx="32" cy="42" r="0.8" fill="#fff4c0"/>
+  <!-- measurement tags -->
+  <g fill="#6bd0ff" font-family="ui-monospace, Menlo, monospace" font-size="4" opacity=".65">
+    <text x="3" y="26">08</text>
+    <text x="3" y="48">18</text>
+    <text x="3" y="68">28</text>
+    <text x="54" y="10">RX-03</text>
+  </g>
+</svg>

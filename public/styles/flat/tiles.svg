@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100">
+  <defs>
+    <linearGradient id="t-floor" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#202a3c"/>
+      <stop offset="1" stop-color="#1a2230"/>
+    </linearGradient>
+    <linearGradient id="t-half-top" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#527495"/>
+      <stop offset="1" stop-color="#3c5673"/>
+    </linearGradient>
+    <linearGradient id="t-wall-top" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6b85a6"/>
+      <stop offset="1" stop-color="#4a6688"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="100" fill="#121822"/>
+  <!-- floor -->
+  <g transform="translate(20,50)">
+    <polygon points="0,0 32,-16 64,0 32,16" fill="url(#t-floor)" stroke="#2a3447" stroke-linejoin="round"/>
+  </g>
+  <!-- half cover -->
+  <g transform="translate(80,50)">
+    <polygon points="0,0 32,-16 64,0 32,16" fill="url(#t-floor)" stroke="#2a3447" stroke-linejoin="round"/>
+    <polygon points="32,4 50,-4 50,8 32,16" fill="#4a6884"/>
+    <polygon points="14,-4 32,4 32,16 14,8" fill="#30485e"/>
+    <polygon points="14,-4 32,-12 50,-4 32,4" fill="url(#t-half-top)"/>
+    <circle cx="32" cy="-3" r="1.4" fill="#7cc4ff"/>
+  </g>
+  <!-- full cover wall -->
+  <g transform="translate(120,50)">
+    <polygon points="0,0 20,-10 20,22 0,32" fill="#141922" stroke="#2a3447" stroke-linejoin="round"/>
+    <polygon points="20,-10 40,0 40,32 20,22" fill="#1f2836" stroke="#2a3447" stroke-linejoin="round"/>
+    <polygon points="0,0 20,-10 40,0 20,10" fill="url(#t-wall-top)" stroke="#2a3447" stroke-linejoin="round"/>
+    <rect x="22" y="2" width="3" height="6" rx="0.6" fill="#7cc4ff" opacity=".8"/>
+  </g>
+</svg>

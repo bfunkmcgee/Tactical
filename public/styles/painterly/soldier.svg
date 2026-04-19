@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 80">
+  <defs>
+    <radialGradient id="p-body" cx="0.35" cy="0.3" r="0.9">
+      <stop offset="0" stop-color="#6e5a48"/>
+      <stop offset="1" stop-color="#2b1e14"/>
+    </radialGradient>
+    <radialGradient id="p-head" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#e0b89a"/>
+      <stop offset="1" stop-color="#7a4f34"/>
+    </radialGradient>
+    <radialGradient id="p-metal" cx="0.3" cy="0.3" r="0.9">
+      <stop offset="0" stop-color="#caa06a"/>
+      <stop offset="1" stop-color="#3a2410"/>
+    </radialGradient>
+    <radialGradient id="p-glow">
+      <stop offset="0" stop-color="#fff4c0"/>
+      <stop offset=".4" stop-color="#ffb44a"/>
+      <stop offset="1" stop-color="#ff6a1a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="p-blur"><feGaussianBlur stdDeviation="0.4"/></filter>
+  </defs>
+  <rect width="64" height="80" fill="#1c140e"/>
+  <rect width="64" height="80" fill="url(#p-glow)" opacity=".15"/>
+  <ellipse cx="32" cy="73" rx="14" ry="3" fill="#000" opacity=".6"/>
+  <g filter="url(#p-blur)">
+    <!-- legs -->
+    <path d="M25 50 L24 70 L30 71 L31 50 Z" fill="url(#p-body)"/>
+    <path d="M33 50 L33 71 L39 70 L39 50 Z" fill="url(#p-body)"/>
+    <!-- boots -->
+    <ellipse cx="27.5" cy="71" rx="4.5" ry="2.5" fill="#20150c"/>
+    <ellipse cx="36.5" cy="71" rx="4.5" ry="2.5" fill="#20150c"/>
+    <!-- torso -->
+    <path d="M19 28 Q20 25 24 25 L40 25 Q44 25 45 28 L46 50 Q44 54 32 54 Q20 54 18 50 Z" fill="url(#p-body)"/>
+    <!-- chest plate -->
+    <path d="M26 33 L38 33 Q39 34 39 36 L36 48 L28 48 L25 36 Q25 34 26 33 Z" fill="url(#p-metal)" opacity=".95"/>
+    <circle cx="32" cy="40" r="2.6" fill="#ff9a3c" opacity=".9"/>
+    <circle cx="32" cy="40" r="1.1" fill="#fff4c0"/>
+    <!-- neck / head -->
+    <rect x="28.5" y="22" width="7" height="5" rx="1" fill="#a27557"/>
+    <ellipse cx="32" cy="18" rx="8" ry="9.5" fill="url(#p-head)"/>
+    <!-- helmet -->
+    <path d="M22 17 Q22 7 32 6 Q42 7 42 17 L42 20 Q32 22 22 20 Z" fill="#1f1a10"/>
+    <path d="M22 17 Q22 9 32 8 Q42 9 42 17 L38 15 Q32 11 26 15 Z" fill="#2f2a1a" opacity=".6"/>
+    <!-- visor slit -->
+    <rect x="24" y="20.5" width="16" height="1.6" fill="#1a0e06"/>
+    <!-- arms -->
+    <path d="M14 30 Q13 31 14 32 L17 48 Q18 50 20 48 L22 32 Q22 30 20 29 Z" fill="url(#p-body)"/>
+    <path d="M50 30 Q51 31 50 32 L47 48 Q46 50 44 48 L42 32 Q42 30 44 29 Z" fill="url(#p-body)"/>
+    <!-- hands -->
+    <circle cx="18" cy="46" r="3" fill="#a27557"/>
+    <circle cx="46" cy="46" r="3" fill="#a27557"/>
+    <!-- rifle -->
+    <path d="M8 41 Q8 40 9 40 L54 40 Q55 40 55 44 L54 45 L9 45 Q8 45 8 44 Z" fill="url(#p-metal)"/>
+    <rect x="22" y="37" width="16" height="4" rx="1" fill="#1a0e06"/>
+    <!-- rune glow barrel -->
+    <circle cx="52" cy="43" r="5" fill="#ffb44a" opacity=".85"/>
+    <circle cx="52" cy="43" r="2.4" fill="#fff4c0"/>
+  </g>
+</svg>

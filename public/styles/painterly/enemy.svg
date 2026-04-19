@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 80">
+  <defs>
+    <radialGradient id="pa-cloak" cx="0.5" cy="0.3" r="0.9">
+      <stop offset="0" stop-color="#5a4270"/>
+      <stop offset="1" stop-color="#140818"/>
+    </radialGradient>
+    <radialGradient id="pa-eye">
+      <stop offset="0" stop-color="#fff0ff"/>
+      <stop offset="0.4" stop-color="#c79aff"/>
+      <stop offset="1" stop-color="#3a1a55" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pa-blade" cx="0.5" cy="0.3" r="0.7">
+      <stop offset="0" stop-color="#fff0ff"/>
+      <stop offset="1" stop-color="#7a3fb8"/>
+    </radialGradient>
+    <filter id="pa-blur"><feGaussianBlur stdDeviation="0.45"/></filter>
+  </defs>
+  <rect width="64" height="80" fill="#0f0a18"/>
+  <ellipse cx="32" cy="50" rx="26" ry="30" fill="#3a1a55" opacity=".25"/>
+  <ellipse cx="32" cy="74" rx="18" ry="3" fill="#000" opacity=".7"/>
+  <g filter="url(#pa-blur)">
+    <!-- main cloak silhouette -->
+    <path d="M16 22 Q16 10 32 9 Q48 10 48 22 L52 46 Q52 74 32 74 Q12 74 12 46 Z" fill="url(#pa-cloak)"/>
+    <!-- inner cloak shadow -->
+    <path d="M20 24 Q20 14 32 14 Q44 14 44 24 L46 44 Q46 68 32 68 Q18 68 18 44 Z" fill="#140818" opacity=".7"/>
+    <!-- tattered hem -->
+    <path d="M12 62 L18 74 L22 64 L26 74 L32 62 L38 74 L42 64 L46 74 L52 62 L52 74 L12 74 Z" fill="#0f0a18"/>
+    <!-- hood opening -->
+    <ellipse cx="32" cy="26" rx="11" ry="11" fill="#050208"/>
+    <!-- glowing eyes -->
+    <circle cx="28" cy="26" r="3.2" fill="url(#pa-eye)"/>
+    <circle cx="36" cy="26" r="3.2" fill="url(#pa-eye)"/>
+    <circle cx="28" cy="26" r="1.1" fill="#fff0ff"/>
+    <circle cx="36" cy="26" r="1.1" fill="#fff0ff"/>
+    <!-- chest sigil -->
+    <path d="M30 40 L34 40 L36 45 L32 50 L28 45 Z" fill="#c79aff" opacity=".6"/>
+    <!-- spectral blade -->
+    <path d="M44 14 Q50 10 54 6 L57 10 Q54 20 50 28 Q48 32 44 32 Q42 32 42 30 Q42 22 44 14 Z" fill="url(#pa-blade)"/>
+    <path d="M44 14 Q50 10 54 6 L57 10 Q54 20 50 28" fill="none" stroke="#fff0ff" stroke-width="0.7" opacity=".8"/>
+  </g>
+</svg>

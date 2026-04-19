@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 80">
+  <defs>
+    <linearGradient id="f-vest" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#455261"/>
+      <stop offset="1" stop-color="#2f3a48"/>
+    </linearGradient>
+    <linearGradient id="f-helmet" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a3447"/>
+      <stop offset="1" stop-color="#161c26"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="80" fill="#1b2331"/>
+  <ellipse cx="32" cy="73" rx="13" ry="3" fill="#000" opacity=".45"/>
+  <!-- legs -->
+  <path d="M25 50 Q25 70 27 71 L30 71 Q31 60 31 50 Z" fill="#2f3a48"/>
+  <path d="M39 50 Q39 70 37 71 L34 71 Q33 60 33 50 Z" fill="#2f3a48"/>
+  <rect x="24" y="68" width="8" height="4" rx="1.5" fill="#0f141c"/>
+  <rect x="32" y="68" width="8" height="4" rx="1.5" fill="#0f141c"/>
+  <!-- torso -->
+  <path d="M20 28 Q20 26 22 26 L42 26 Q44 26 44 28 L44 50 Q44 52 42 52 L22 52 Q20 52 20 50 Z" fill="url(#f-vest)"/>
+  <!-- vest plate -->
+  <path d="M26 32 L38 32 L38 44 L32 48 L26 44 Z" fill="#232c39"/>
+  <circle cx="29" cy="37" r="1.4" fill="#7cc4ff"/>
+  <circle cx="35" cy="37" r="1.4" fill="#7cc4ff"/>
+  <circle cx="32" cy="41" r="1.4" fill="#ff9a3c"/>
+  <!-- neck -->
+  <rect x="28" y="24" width="8" height="4" fill="#b48866"/>
+  <!-- head -->
+  <ellipse cx="32" cy="19" rx="8" ry="9" fill="#d6a07a"/>
+  <!-- helmet -->
+  <path d="M22 17 Q22 7 32 7 Q42 7 42 17 L42 20 L22 20 Z" fill="url(#f-helmet)"/>
+  <rect x="22" y="16" width="20" height="2" fill="#0f141c"/>
+  <rect x="40" y="11" width="4" height="4" rx="0.8" fill="#7cc4ff"/>
+  <!-- visor line -->
+  <rect x="24" y="21" width="16" height="1.6" fill="#0b0f14" opacity=".6"/>
+  <!-- arms -->
+  <rect x="15" y="30" width="6" height="18" rx="3" fill="#2f3a48"/>
+  <rect x="43" y="30" width="6" height="18" rx="3" fill="#2f3a48"/>
+  <!-- hands -->
+  <circle cx="18" cy="46" r="3" fill="#d6a07a"/>
+  <circle cx="46" cy="46" r="3" fill="#d6a07a"/>
+  <!-- rifle body -->
+  <rect x="8" y="41" width="46" height="4" rx="1" fill="#3a2a1a"/>
+  <rect x="22" y="38" width="16" height="4" rx="1" fill="#1a0e06"/>
+  <rect x="8" y="45" width="46" height="1" fill="#1a0e06"/>
+  <!-- rune glow on barrel -->
+  <circle cx="52" cy="43" r="4" fill="#7cc4ff" opacity=".9"/>
+  <circle cx="52" cy="43" r="2" fill="#e6f4ff"/>
+  <!-- sigils on arms -->
+  <circle cx="18" cy="34" r="1.2" fill="#7cc4ff"/>
+  <circle cx="46" cy="34" r="1.2" fill="#7cc4ff"/>
+</svg>
