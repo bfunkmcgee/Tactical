@@ -1,0 +1,279 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="s-olive" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a9058"/><stop offset="1" stop-color="#2a3a1a"/>
+    </linearGradient>
+    <linearGradient id="s-olive-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a5830"/><stop offset="1" stop-color="#1a2410"/>
+    </linearGradient>
+    <linearGradient id="s-canvas" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a7048"/><stop offset="1" stop-color="#3a2e1a"/>
+    </linearGradient>
+    <linearGradient id="s-oakheart" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a4a28"/><stop offset="1" stop-color="#2a1a0e"/>
+    </linearGradient>
+    <linearGradient id="s-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d8a070"/><stop offset="1" stop-color="#8a5c38"/>
+    </linearGradient>
+    <linearGradient id="s-brass" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#c8a868"/><stop offset="1" stop-color="#6a4a1a"/>
+    </linearGradient>
+    <linearGradient id="s-gun" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#3a2a1a"/><stop offset="1" stop-color="#0f0806"/>
+    </linearGradient>
+    <radialGradient id="s-alch" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#e8f8d8"/>
+      <stop offset=".4" stop-color="#9cd6a6"/>
+      <stop offset="1" stop-color="#2a5a3a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="s-ember" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff4c0"/>
+      <stop offset=".5" stop-color="#ff9a3c"/>
+      <stop offset="1" stop-color="#8a3010" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="96" height="128" fill="#1b2331"/>
+  <ellipse cx="48" cy="120" rx="24" ry="4.5" fill="#000" opacity=".5"/>
+
+  <!-- LEGS: heavy cargo pants with pockets -->
+  <path d="M32 80 Q30 112 40 116 L46 116 L48 80 Z" fill="url(#s-olive-dark)"/>
+  <path d="M64 80 Q66 112 56 116 L50 116 L48 80 Z" fill="url(#s-olive-dark)"/>
+  <!-- cargo pockets -->
+  <path d="M32 90 L40 90 L40 100 L32 100 Z" fill="#3a4818"/>
+  <path d="M56 90 L64 90 L64 100 L56 100 Z" fill="#3a4818"/>
+  <path d="M32 90 L40 90 L40 92 L32 92 Z" fill="#5a7030" opacity=".6"/>
+  <path d="M56 90 L64 90 L64 92 L56 92 Z" fill="#5a7030" opacity=".6"/>
+  <circle cx="36" cy="95" r="0.8" fill="#c8a868"/>
+  <circle cx="60" cy="95" r="0.8" fill="#c8a868"/>
+  <!-- kneepads (reinforced) -->
+  <path d="M33 100 Q40 98 46 100 L46 108 Q40 110 33 108 Z" fill="#2a1a0e"/>
+  <path d="M63 100 Q56 98 50 100 L50 108 Q56 110 63 108 Z" fill="#2a1a0e"/>
+  <path d="M38 102 L42 102 M38 106 L42 106" stroke="#c8a868" stroke-width="0.5"/>
+  <path d="M54 102 L58 102 M54 106 L58 106" stroke="#c8a868" stroke-width="0.5"/>
+  <!-- steel-toed boots -->
+  <path d="M32 112 Q30 118 36 118 L48 118 L48 112 Z" fill="#1a0e06"/>
+  <path d="M64 112 Q66 118 60 118 L48 118 L48 112 Z" fill="#1a0e06"/>
+  <!-- steel toe caps -->
+  <path d="M30 118 L36 114 L34 118 Z" fill="url(#s-brass)"/>
+  <path d="M66 118 L60 114 L62 118 Z" fill="url(#s-brass)"/>
+  <path d="M34 114 L44 114 L44 116 L34 116 Z" fill="#3a2a1a"/>
+  <path d="M62 114 L52 114 L52 116 L62 116 Z" fill="#3a2a1a"/>
+
+  <!-- BELT WITH TOOL POUCHES + GRENADE LOOPS -->
+  <path d="M22 74 L74 74 L74 82 L22 82 Z" fill="#2a1a0e"/>
+  <!-- buckle -->
+  <rect x="44" y="73" width="10" height="10" fill="url(#s-brass)"/>
+  <path d="M46 75 L52 75 L52 81 L46 81 Z" fill="#2a1a0e"/>
+  <circle cx="49" cy="78" r="1.2" fill="#9cd6a6"/>
+  <!-- tool pouches -->
+  <path d="M24 82 L32 82 L32 94 L24 94 Z" fill="url(#s-canvas)"/>
+  <path d="M64 82 L72 82 L72 94 L64 94 Z" fill="url(#s-canvas)"/>
+  <path d="M25 86 L31 86" stroke="#3a2e1a" stroke-width="0.5"/>
+  <path d="M65 86 L71 86" stroke="#3a2e1a" stroke-width="0.5"/>
+  <!-- EMBERCORE ORBS hanging from belt (draconic orange) -->
+  <g>
+    <path d="M34 80 L34 86" stroke="#3a2a1a" stroke-width="0.8"/>
+    <circle cx="34" cy="88" r="3" fill="#2a1a0e"/>
+    <circle cx="34" cy="88" r="2.2" fill="url(#s-ember)"/>
+    <circle cx="34" cy="88" r="1" fill="#fff4c0"/>
+  </g>
+  <g>
+    <path d="M42 80 L42 88" stroke="#3a2a1a" stroke-width="0.8"/>
+    <circle cx="42" cy="90" r="3" fill="#2a1a0e"/>
+    <circle cx="42" cy="90" r="2.2" fill="url(#s-ember)"/>
+    <circle cx="42" cy="90" r="1" fill="#fff4c0"/>
+  </g>
+  <g>
+    <path d="M56 80 L56 88" stroke="#3a2a1a" stroke-width="0.8"/>
+    <circle cx="56" cy="90" r="3" fill="#2a1a0e"/>
+    <circle cx="56" cy="90" r="2.2" fill="url(#s-ember)"/>
+    <circle cx="56" cy="90" r="1" fill="#fff4c0"/>
+  </g>
+  <g>
+    <path d="M62 80 L62 86" stroke="#3a2a1a" stroke-width="0.8"/>
+    <circle cx="62" cy="88" r="3" fill="#2a1a0e"/>
+    <circle cx="62" cy="88" r="2.2" fill="url(#s-ember)"/>
+    <circle cx="62" cy="88" r="1" fill="#fff4c0"/>
+  </g>
+
+  <!-- TORSO: canvas duster + tactical vest -->
+  <!-- duster panels behind vest -->
+  <path d="M18 38 L30 36 L30 78 L16 76 Z" fill="url(#s-canvas)"/>
+  <path d="M78 38 L66 36 L66 78 L80 76 Z" fill="url(#s-canvas)"/>
+  <!-- vest front -->
+  <path d="M24 38 Q24 34 28 34 L68 34 Q72 34 72 38 L72 74 Q72 78 68 78 L28 78 Q24 78 24 74 Z" fill="url(#s-olive)"/>
+  <!-- vest collar highlight -->
+  <path d="M28 34 L68 34 L68 36 L28 36 Z" fill="#a0b878" opacity=".5"/>
+  <!-- chest plate (oakheart wood reinforced) -->
+  <path d="M34 44 L62 44 L62 68 L48 72 L34 68 Z" fill="url(#s-oakheart)"/>
+  <!-- wood grain lines on chest -->
+  <path d="M36 50 Q48 52 60 50" fill="none" stroke="#2a1a0e" stroke-width="0.4" opacity=".7"/>
+  <path d="M36 58 Q48 60 60 58" fill="none" stroke="#2a1a0e" stroke-width="0.4" opacity=".7"/>
+  <path d="M36 64 Q48 66 60 64" fill="none" stroke="#2a1a0e" stroke-width="0.4" opacity=".7"/>
+  <!-- alchemical insignia -->
+  <path d="M48 50 L52 55 L50 60 L46 60 L44 55 Z" fill="#9cd6a6"/>
+  <path d="M48 52 L50 55 L49 58 L47 58 L46 55 Z" fill="#e8f8d8"/>
+  <!-- rivets / bolts -->
+  <circle cx="36" cy="46" r="0.9" fill="url(#s-brass)"/>
+  <circle cx="60" cy="46" r="0.9" fill="url(#s-brass)"/>
+  <circle cx="36" cy="66" r="0.9" fill="url(#s-brass)"/>
+  <circle cx="60" cy="66" r="0.9" fill="url(#s-brass)"/>
+
+  <!-- ALCHEMICAL BANDOLIER across chest (vials) -->
+  <path d="M26 38 L72 56" stroke="#3a2e1a" stroke-width="4"/>
+  <!-- individual vials -->
+  <g>
+    <rect x="30" y="40" width="3" height="5" rx="0.4" fill="#0a0812"/>
+    <rect x="30.5" y="41" width="2" height="3" fill="#9cd6a6"/>
+    <circle cx="31.5" cy="40" r="0.7" fill="url(#s-brass)"/>
+  </g>
+  <g>
+    <rect x="36" y="43" width="3" height="5" rx="0.4" fill="#0a0812"/>
+    <rect x="36.5" y="44" width="2" height="3" fill="#9cd6a6"/>
+    <circle cx="37.5" cy="43" r="0.7" fill="url(#s-brass)"/>
+  </g>
+  <g>
+    <rect x="56" y="49" width="3" height="5" rx="0.4" fill="#0a0812"/>
+    <rect x="56.5" y="50" width="2" height="3" fill="#9cd6a6"/>
+    <circle cx="57.5" cy="49" r="0.7" fill="url(#s-brass)"/>
+  </g>
+  <g>
+    <rect x="62" y="52" width="3" height="5" rx="0.4" fill="#0a0812"/>
+    <rect x="62.5" y="53" width="2" height="3" fill="#9cd6a6"/>
+    <circle cx="63.5" cy="52" r="0.7" fill="url(#s-brass)"/>
+  </g>
+
+  <!-- SHOTGUN SHELL BANDOLIER across other shoulder -->
+  <path d="M72 38 L24 56" stroke="#3a2e1a" stroke-width="3.5"/>
+  <rect x="30" y="54" width="2.5" height="4" fill="#8a3010"/>
+  <rect x="30.5" y="54" width="2" height="1" fill="#c8a868"/>
+  <rect x="38" y="51" width="2.5" height="4" fill="#8a3010"/>
+  <rect x="38.5" y="51" width="2" height="1" fill="#c8a868"/>
+  <rect x="56" y="42" width="2.5" height="4" fill="#8a3010"/>
+  <rect x="56.5" y="42" width="2" height="1" fill="#c8a868"/>
+  <rect x="64" y="39" width="2.5" height="4" fill="#8a3010"/>
+  <rect x="64.5" y="39" width="2" height="1" fill="#c8a868"/>
+
+  <!-- SHOULDERS / pauldrons (canvas wraps) -->
+  <path d="M18 38 Q14 46 18 50 L28 46 L28 36 Q22 34 20 34 Q18 34 18 38 Z" fill="url(#s-canvas)"/>
+  <path d="M78 38 Q82 46 78 50 L68 46 L68 36 Q74 34 76 34 Q78 34 78 38 Z" fill="url(#s-canvas)"/>
+  <!-- shoulder patch -->
+  <path d="M20 42 L26 42 L26 48 L20 48 Z" fill="#2a1a0e"/>
+  <path d="M23 43 L25 45 L23 47 L21 45 Z" fill="#9cd6a6"/>
+
+  <!-- NECK with GAS MASK hanging -->
+  <rect x="43" y="28" width="10" height="6" fill="#8a5c38"/>
+  <!-- gas mask hose hanging around neck -->
+  <path d="M40 32 Q44 36 48 34 Q52 36 56 32" fill="none" stroke="#2a1a0e" stroke-width="2"/>
+  <circle cx="44" cy="36" r="1.2" fill="#2a1a0e"/>
+  <circle cx="52" cy="36" r="1.2" fill="#2a1a0e"/>
+
+  <!-- HEAD -->
+  <ellipse cx="48" cy="22" rx="12" ry="13" fill="url(#s-skin)"/>
+  <!-- beard stubble (heavy) -->
+  <path d="M38 24 Q48 34 58 24 L58 30 Q48 36 38 30 Z" fill="#3a2818" opacity=".5"/>
+  <path d="M40 26 L56 26 M40 28 L56 28 M40 30 L56 30" stroke="#3a2818" stroke-width="0.3" opacity=".6"/>
+  <!-- scar across cheek -->
+  <path d="M52 20 L58 26" stroke="#6a3a20" stroke-width="0.8"/>
+  <!-- mouth -->
+  <path d="M44 27 L52 27" stroke="#4a2e1c" stroke-width="0.8" stroke-linecap="round"/>
+  <!-- eyes (squinted, rugged) -->
+  <path d="M40 20 Q43 19 46 20" stroke="#1a2230" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+  <path d="M50 20 Q53 19 56 20" stroke="#1a2230" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+  <circle cx="43" cy="20" r="0.8" fill="#4a3820"/>
+  <circle cx="53" cy="20" r="0.8" fill="#4a3820"/>
+  <!-- brow (thick) -->
+  <path d="M39 17 L46 16" stroke="#3a2818" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M50 16 L57 17" stroke="#3a2818" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- ear -->
+  <path d="M36 20 Q34 22 36 24" fill="none" stroke="#8a5c38" stroke-width="1"/>
+
+  <!-- OAKHEART HELM: rounded kevlar with wooden reinforcement -->
+  <path d="M33 18 Q33 4 48 4 Q63 4 63 18 L63 22 L33 22 Z" fill="#1a0e06"/>
+  <!-- wood grain reinforcement bands -->
+  <path d="M33 10 L63 10" stroke="url(#s-oakheart)" stroke-width="3"/>
+  <path d="M33 16 L63 16" stroke="url(#s-oakheart)" stroke-width="3"/>
+  <path d="M34 10 Q48 6 62 10" fill="none" stroke="#4a3020" stroke-width="0.4"/>
+  <path d="M34 16 Q48 12 62 16" fill="none" stroke="#4a3020" stroke-width="0.4"/>
+  <!-- wood knot details -->
+  <circle cx="40" cy="10" r="0.8" fill="#2a1a0e"/>
+  <circle cx="56" cy="16" r="0.8" fill="#2a1a0e"/>
+  <!-- helmet side rails -->
+  <rect x="31" y="12" width="2" height="8" fill="#2a1a0e"/>
+  <rect x="63" y="12" width="2" height="8" fill="#2a1a0e"/>
+  <!-- helmet emblem (alchemical sigil) -->
+  <circle cx="48" cy="8" r="2.6" fill="#2a1a0e"/>
+  <path d="M48 6 L50 8 L48 10 L46 8 Z" fill="#9cd6a6"/>
+  <path d="M48 7 L49 8 L48 9 L47 8 Z" fill="#e8f8d8"/>
+  <!-- GOGGLES pushed up on helmet -->
+  <rect x="36" y="14" width="24" height="4" rx="1" fill="#2a1a0e"/>
+  <circle cx="42" cy="16" r="2" fill="#0a0812"/>
+  <circle cx="54" cy="16" r="2" fill="#0a0812"/>
+  <circle cx="42" cy="16" r="1.2" fill="#9cd6a6"/>
+  <circle cx="54" cy="16" r="1.2" fill="#9cd6a6"/>
+  <!-- goggle strap -->
+  <path d="M36 16 L33 14 M60 16 L63 14" stroke="#3a2414" stroke-width="1"/>
+
+  <!-- ARMS (rolled sleeves) -->
+  <path d="M18 42 Q16 44 16 48 L18 66 Q18 70 22 70 L26 68 L26 40 Z" fill="url(#s-olive)"/>
+  <path d="M78 42 Q80 44 80 48 L78 66 Q78 70 74 70 L70 68 L70 40 Z" fill="url(#s-olive)"/>
+  <!-- rolled cuff -->
+  <path d="M16 60 L26 60 L26 64 L16 64 Z" fill="url(#s-olive-dark)"/>
+  <path d="M80 60 L70 60 L70 64 L80 64 Z" fill="url(#s-olive-dark)"/>
+  <!-- forearm: skin showing (rolled up) -->
+  <path d="M16 64 Q14 68 16 72 L22 72 L26 68 L26 64 Z" fill="url(#s-skin)"/>
+  <path d="M80 64 Q82 68 80 72 L74 72 L70 68 L70 64 Z" fill="url(#s-skin)"/>
+  <!-- tattoo / scar on forearm -->
+  <path d="M18 68 L22 68" stroke="#3a2818" stroke-width="0.6"/>
+  <!-- reinforced gloves -->
+  <path d="M14 72 Q12 76 16 78 L22 78 Q24 74 22 72 Z" fill="#2a1a0e"/>
+  <path d="M82 72 Q84 76 80 78 L74 78 Q72 74 74 72 Z" fill="#2a1a0e"/>
+  <path d="M15 74 L21 76 M15 76 L21 78" stroke="#5a3a20" stroke-width="0.5"/>
+  <path d="M81 74 L75 76 M81 76 L75 78" stroke="#5a3a20" stroke-width="0.5"/>
+  <!-- knuckle studs -->
+  <circle cx="16" cy="74" r="0.8" fill="url(#s-brass)"/>
+  <circle cx="20" cy="76" r="0.8" fill="url(#s-brass)"/>
+  <circle cx="80" cy="74" r="0.8" fill="url(#s-brass)"/>
+  <circle cx="76" cy="76" r="0.8" fill="url(#s-brass)"/>
+
+  <!-- HEXBORE SCATTERGUN: short, wide shotgun -->
+  <!-- stock -->
+  <path d="M6 68 L18 66 L18 76 L6 78 Z" fill="url(#s-gun)"/>
+  <path d="M8 70 L16 69 M8 74 L16 73" stroke="#0f0806" stroke-width="0.5"/>
+  <!-- brass heel plate -->
+  <rect x="4" y="68" width="2" height="10" fill="url(#s-brass)"/>
+  <!-- receiver (wide) -->
+  <path d="M18 64 L48 64 L48 78 L18 78 Z" fill="url(#s-gun)"/>
+  <!-- brass receiver band -->
+  <rect x="18" y="70" width="30" height="2" fill="url(#s-brass)"/>
+  <!-- alchemical vial on side of receiver -->
+  <rect x="28" y="68" width="6" height="8" rx="0.6" fill="#0a0812"/>
+  <rect x="28.5" y="69" width="5" height="6" fill="#9cd6a6"/>
+  <rect x="28.5" y="69" width="5" height="2" fill="#e8f8d8" opacity=".7"/>
+  <!-- hex sigil on receiver -->
+  <path d="M40 68 L43 70 L43 73 L40 75 L37 73 L37 70 Z" fill="none" stroke="#9cd6a6" stroke-width="0.7"/>
+  <!-- pump grip -->
+  <path d="M38 78 L46 78 L46 84 L38 84 Z" fill="#2a1a0e"/>
+  <path d="M39 79 L45 79 M39 81 L45 81 M39 83 L45 83" stroke="#4a3020" stroke-width="0.4"/>
+  <!-- trigger guard -->
+  <path d="M48 72 Q52 76 54 72" fill="none" stroke="#0f0806" stroke-width="1.4"/>
+  <!-- grip -->
+  <path d="M52 72 L58 72 L58 82 L54 84 Z" fill="#2a1a0e"/>
+  <!-- short wide double barrel -->
+  <rect x="48" y="66" width="36" height="4" fill="url(#s-gun)"/>
+  <rect x="48" y="70" width="36" height="4" fill="url(#s-gun)"/>
+  <path d="M48 70 L84 70" stroke="#0f0806" stroke-width="0.4"/>
+  <!-- brass barrel bands -->
+  <rect x="58" y="66" width="2" height="8" fill="url(#s-brass)"/>
+  <rect x="72" y="66" width="2" height="8" fill="url(#s-brass)"/>
+  <!-- muzzle (wide, flared) -->
+  <path d="M84 64 L90 66 L90 74 L84 76 Z" fill="url(#s-gun)"/>
+  <rect x="85" y="66" width="1" height="8" fill="#0f0806"/>
+  <rect x="88" y="66" width="1" height="8" fill="#0f0806"/>
+  <!-- alchemical muzzle glow -->
+  <circle cx="92" cy="70" r="5" fill="url(#s-alch)"/>
+  <circle cx="92" cy="70" r="2.2" fill="#e8f8d8"/>
+  <!-- scatter sparks -->
+  <circle cx="90" cy="64" r="0.8" fill="#9cd6a6"/>
+  <circle cx="94" cy="76" r="0.6" fill="#9cd6a6"/>
+</svg>

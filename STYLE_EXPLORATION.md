@@ -1,78 +1,105 @@
 # Sprite Style Exploration
 
-You picked **Option B — Flat vector**. Below is the refined set with much more character detail plus a second class and a second enemy to show how the style holds up across the roster. Original comparison with the other three options is at the bottom.
+You picked **Option B — Flat vector**. Below is the full player squad roster plus two enemies, all in the refined flat-vector style. Each class reads differently at a glance: cloth silhouettes, color palettes, and weapon profiles are class-specific.
 
 ---
 
-## Refined Option B — Flat Vector, Detailed
+## Player Squad (4 classes)
 
-Same flat-vector DNA (bold solid fills, 1–2 gradient stops per material, no outlines) but with a full gear pass: faceted chest plates, mag pouches, shoulder sigils, patch insignia, kneepads with straps, detailed rifle with scope/magazine/rune engravings, under-hood bone mask on the Wraith, spectral sigils, chain cinch, inner robe layers — the works.
-
-### Ranger · Kestrel (Runeweave Carbine)
+### Ranger · Kestrel — sand scout, Runeweave Carbine (runic blue)
 
 <p>
-  <img src="public/styles/flat/soldier.svg" width="240" alt="Ranger with detailed kit"/>
+  <img src="public/styles/flat/soldier.svg" width="240" alt="Ranger Kestrel"/>
 </p>
 
-Fast scout build: tactical helmet with flip-up NVG mount and rune emblem, chest rig with four mag pouches, shoulder sigil, drop-leg holster, kneepads, runic carbine with scope and barrel engravings.
+Desert palette and a hooded cloak draped over both shoulders — mobility-first scout silhouette. Runic-blue sigils on chest, helmet emblem, and carbine muzzle.
 
-### Warden · Brannock (Dragonmaw Autocannon)
+### Warden · Brannock — heavy plate, Dragonmaw Autocannon (draconic orange)
 
 <p>
-  <img src="public/styles/flat/soldier_warden.svg" width="240" alt="Warden in heavy plate"/>
+  <img src="public/styles/flat/soldier_warden.svg" width="240" alt="Warden Brannock"/>
 </p>
 
-Heavy bulwark: full-face draconic helm with crest, oversized spiked pauldrons, layered chest plate with ember core, vambraces, studded gauntlets, heavy belt buckle, plated greaves, heat-shrouded belt-fed autocannon with ember muzzle.
+Brown-and-bronze heavy armor, spiked pauldrons, crested helm, belt-fed autocannon with ember muzzle. The tank of the squad.
 
-### Wraith Raider (Spectral Blade)
+### Mystic · Seraphine — violet fae coat, Arclight Marksman (fae violet + runic blue)
 
 <p>
-  <img src="public/styles/flat/enemy.svg" width="240" alt="Wraith Raider enemy"/>
+  <img src="public/styles/flat/soldier_mystic.svg" width="240" alt="Mystic Seraphine"/>
 </p>
 
-Ranged threat: bone mask beneath a tattered hood, chain cinch at the throat, inner robe layer, sash with focus sigil, bone claws, a rune-ringed haft and crystal-set spectral blade, violet eyes inside the mask sockets, floating sigils.
+Long fitted coat with trimmed skirt and pointed hem, silver filigree pauldrons, fae ocular monocle, silver braid, circlet with rune gems, swiftstep greaves. Carries a long-barreled sniper with copper rune coils around the barrel and a lightning-cored muzzle.
 
-### Gutter Troll (Spiked Maul)
+### Sapper · Orin — olive demolitions, Hexbore Scattergun (alchemical green + draconic orange)
 
 <p>
-  <img src="public/styles/flat/enemy_troll.svg" width="240" alt="Gutter Troll enemy"/>
+  <img src="public/styles/flat/soldier_sapper.svg" width="240" alt="Sapper Orin"/>
 </p>
 
-Melee bruiser: hunched stance with clawed bare feet, patchwork scavenged armor, chain sash, tusks and red eyes, scarred hide, rusted cleaver in the off-hand and a raised spike-maul overhead for scale.
+Canvas duster over tactical vest, oakheart helm with wood-grain bands and alchemical sigil, goggles pushed up, gas-mask hose round the neck. A bandolier of shotgun shells crosses an alchemical vial bandolier, with four glowing Embercore Orbs hanging from the belt.
 
-### Tiles (unchanged)
+---
+
+## Enemies
+
+### Wraith Raider — ranged caster
+
+<p>
+  <img src="public/styles/flat/enemy.svg" width="240" alt="Wraith Raider"/>
+</p>
+
+Bone mask beneath a tattered hood, inner robe layer, chain cinch at the throat, rune-ringed staff with a crystal-set spectral blade, bone claws, floating sigils, swirling mist at the base.
+
+### Gutter Troll — melee bruiser
+
+<p>
+  <img src="public/styles/flat/enemy_troll.svg" width="240" alt="Gutter Troll"/>
+</p>
+
+Hunched brute in patchwork scavenged armor, tusks and red eyes in deep sockets, a rusted cleaver in the off-hand and a raised spiked maul overhead.
+
+---
+
+## Tiles
 
 <p>
   <img src="public/styles/flat/tiles.svg" width="480" alt="Flat vector tiles"/>
 </p>
 
----
-
-## How this fits the engine
-
-- Each sprite is a single SVG, ~4–8 KB. Serveable as-is from `public/styles/flat/` — no sprite atlas needed for MVP.
-- Color-coded rune/ember/sigil accents already match the tag palette in `src/game/types.ts` (`runic`=blue, `draconic`=orange, `fae`=violet, `alchemical`=green), so the same sprite can be re-tinted per weapon/armor tag.
-- When we wire them into `PixiStage`, the `Assets.load()` path is one line and replaces the current colored placeholder rectangles.
-
-## Next steps once you confirm
-
-1. Produce the remaining two soldier classes (**Mystic** with Arclight Marksman, **Sapper** with Hexbore Scattergun) at the same level of detail.
-2. Add idle + aimed-at + hit-flash variants per character.
-3. Swap the placeholder rectangles in the renderer for these SVGs, depth-sorted on `g.x + g.y`.
-4. Optional: 2 tile biomes (ruined market / arcane foundry) reusing the same tile family.
+Isometric floor / half cover (chest-high crate) / full cover (wall).
 
 ---
 
-## Original four-way comparison (for reference)
+## Class color logic
+
+Each class carries two tags: **armor/clothing** (environmental/elemental) and **weapon** (often independent). Both are rendered as ambient accent colors so you can read loadout at a glance.
+
+| Class  | Clothing   | Weapon accent          |
+|--------|------------|------------------------|
+| Ranger | Sand       | Runic blue (carbine)   |
+| Warden | Draconic   | Draconic orange (autocannon) |
+| Mystic | Fae violet | Runic blue (marksman)  |
+| Sapper | Alchemical green | Alchemical green (scattergun) with draconic-orange embercore grenades on the belt |
+
+---
+
+## Next steps once you confirm the roster
+
+1. Swap the placeholder rectangles in `PixiStage.tsx` for these SVGs (load via `Assets.load()`, depth-sort on `g.x + g.y`).
+2. Add idle bob + aim-at-target variants per character.
+3. Second tile biome (arcane foundry) reusing the same tile family.
+4. Additional enemy archetypes: *Sigil Hound*, *Forgewraith*.
+
+---
 
 <details>
-<summary>Click to expand the original A / B / C / D comparison.</summary>
+<summary>Original four-way A/B/C/D comparison (for reference)</summary>
 
 ### A · Pixel 16-bit
 <p><img src="public/styles/pixel/soldier.svg" width="140"/> <img src="public/styles/pixel/enemy.svg" width="140"/> <img src="public/styles/pixel/tiles.svg" width="360"/></p>
 
-### B · Flat vector (original)
-<p><img src="public/styles/flat/soldier.svg" width="140"/> <img src="public/styles/flat/enemy.svg" width="140"/> <img src="public/styles/flat/tiles.svg" width="360"/></p>
+### B · Flat vector (original, before detailing)
+<p>(See detailed roster above.)</p>
 
 ### C · Painterly
 <p><img src="public/styles/painterly/soldier.svg" width="140"/> <img src="public/styles/painterly/enemy.svg" width="140"/> <img src="public/styles/painterly/tiles.svg" width="360"/></p>
