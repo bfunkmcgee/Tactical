@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="wd-plate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a5a3a"/><stop offset="1" stop-color="#3a2616"/>
+    </linearGradient>
+    <linearGradient id="wd-steel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#5a5f6b"/><stop offset="1" stop-color="#22262e"/>
+    </linearGradient>
+    <linearGradient id="wd-helmet" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#3a2a1a"/><stop offset="1" stop-color="#1a0e06"/>
+    </linearGradient>
+    <radialGradient id="wd-ember" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff4c0"/>
+      <stop offset=".5" stop-color="#ff9a3c"/>
+      <stop offset="1" stop-color="#8a3010" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="96" height="128" fill="#1b2331"/>
+  <ellipse cx="48" cy="120" rx="26" ry="4.5" fill="#000" opacity=".5"/>
+
+  <!-- LEGS with plated greaves -->
+  <path d="M34 80 Q32 110 38 114 L46 114 L47 80 Z" fill="url(#wd-steel)"/>
+  <path d="M62 80 Q64 110 58 114 L50 114 L49 80 Z" fill="url(#wd-steel)"/>
+  <!-- greave bands -->
+  <rect x="35" y="88" width="11" height="3" fill="#3a2616"/>
+  <rect x="50" y="88" width="11" height="3" fill="#3a2616"/>
+  <rect x="35" y="98" width="11" height="3" fill="#3a2616"/>
+  <rect x="50" y="98" width="11" height="3" fill="#3a2616"/>
+  <!-- knee plate -->
+  <path d="M35 92 Q41 90 46 92 L46 98 Q41 100 35 98 Z" fill="url(#wd-plate)"/>
+  <path d="M61 92 Q55 90 50 92 L50 98 Q55 100 61 98 Z" fill="url(#wd-plate)"/>
+  <circle cx="40.5" cy="95" r="1.3" fill="#ff9a3c"/>
+  <circle cx="55.5" cy="95" r="1.3" fill="#ff9a3c"/>
+  <!-- armored boots -->
+  <path d="M32 110 L48 110 L48 116 L34 118 Q32 115 32 110 Z" fill="#0d1119"/>
+  <path d="M64 110 L48 110 L48 116 L62 118 Q64 115 64 110 Z" fill="#0d1119"/>
+
+  <!-- BELT -->
+  <path d="M20 74 L76 74 L76 82 L20 82 Z" fill="#2a1f14"/>
+  <!-- buckle -->
+  <rect x="42" y="72" width="12" height="12" fill="url(#wd-plate)"/>
+  <circle cx="48" cy="78" r="3" fill="#ff9a3c"/>
+  <circle cx="48" cy="78" r="1.2" fill="#fff4c0"/>
+  <!-- hanging plate -->
+  <path d="M40 82 L56 82 L54 94 L42 94 Z" fill="url(#wd-plate)"/>
+  <path d="M43 86 L53 86" stroke="#2a1f14" stroke-width="0.5"/>
+
+  <!-- TORSO: heavy plate -->
+  <path d="M18 38 Q16 34 22 32 L74 32 Q80 34 78 38 L78 74 Q78 78 74 78 L22 78 Q18 78 18 74 Z" fill="url(#wd-steel)"/>
+  <!-- front chest plate -->
+  <path d="M28 40 L68 40 Q70 40 70 42 L70 68 L48 76 L26 68 L26 42 Q26 40 28 40 Z" fill="url(#wd-plate)"/>
+  <!-- chest plate ridge -->
+  <path d="M48 40 L48 74" stroke="#2a1f14" stroke-width="1"/>
+  <path d="M28 50 L68 50" stroke="#2a1f14" stroke-width="0.6" opacity=".6"/>
+  <path d="M30 60 L66 60" stroke="#2a1f14" stroke-width="0.6" opacity=".6"/>
+  <!-- draconic insignia -->
+  <path d="M48 46 L54 52 L48 56 L42 52 Z" fill="#ff9a3c"/>
+  <path d="M48 48 L52 52 L48 54 L44 52 Z" fill="#fff4c0"/>
+  <circle cx="48" cy="52" r="1" fill="#8a3010"/>
+  <!-- rivets -->
+  <circle cx="30" cy="42" r="0.9" fill="#ff9a3c"/>
+  <circle cx="66" cy="42" r="0.9" fill="#ff9a3c"/>
+  <circle cx="30" cy="72" r="0.9" fill="#ff9a3c"/>
+  <circle cx="66" cy="72" r="0.9" fill="#ff9a3c"/>
+
+  <!-- PAULDRONS (oversized shoulder plates) -->
+  <path d="M10 36 Q8 52 18 54 L26 50 L28 36 Q24 32 14 32 Q10 32 10 36 Z" fill="url(#wd-plate)"/>
+  <path d="M86 36 Q88 52 78 54 L70 50 L68 36 Q72 32 82 32 Q86 32 86 36 Z" fill="url(#wd-plate)"/>
+  <!-- pauldron ridge -->
+  <path d="M12 38 Q12 50 22 52" fill="none" stroke="#2a1f14" stroke-width="1"/>
+  <path d="M84 38 Q84 50 74 52" fill="none" stroke="#2a1f14" stroke-width="1"/>
+  <!-- pauldron spikes -->
+  <path d="M12 32 L10 26 L8 32 Z" fill="#2a1f14"/>
+  <path d="M20 32 L18 26 L16 32 Z" fill="#2a1f14"/>
+  <path d="M84 32 L86 26 L88 32 Z" fill="#2a1f14"/>
+  <path d="M76 32 L78 26 L80 32 Z" fill="#2a1f14"/>
+  <!-- pauldron insignia -->
+  <circle cx="16" cy="44" r="2.4" fill="#ff9a3c"/>
+  <circle cx="16" cy="44" r="1" fill="#fff4c0"/>
+  <circle cx="80" cy="44" r="2.4" fill="#ff9a3c"/>
+  <circle cx="80" cy="44" r="1" fill="#fff4c0"/>
+
+  <!-- NECK gorget -->
+  <rect x="40" y="24" width="16" height="10" fill="url(#wd-steel)"/>
+  <rect x="40" y="28" width="16" height="2" fill="#0d1119"/>
+
+  <!-- HEAD -->
+  <!-- Full helmet (no face visible) -->
+  <path d="M30 26 Q30 6 48 4 Q66 6 66 26 L66 32 L30 32 Z" fill="url(#wd-helmet)"/>
+  <!-- helmet crest / horns -->
+  <path d="M46 4 L44 -2 L48 0 L52 -2 L50 4 Z" fill="url(#wd-plate)"/>
+  <path d="M40 10 L34 2 L38 12 Z" fill="url(#wd-plate)"/>
+  <path d="M56 10 L62 2 L58 12 Z" fill="url(#wd-plate)"/>
+  <!-- T-visor slit -->
+  <path d="M36 18 L60 18 L60 22 L50 22 L50 28 L46 28 L46 22 L36 22 Z" fill="#0d1119"/>
+  <circle cx="41" cy="20" r="0.8" fill="#ff9a3c"/>
+  <circle cx="55" cy="20" r="0.8" fill="#ff9a3c"/>
+  <!-- cheek plates -->
+  <path d="M30 24 L32 30 L34 24 Z" fill="#3a2a1a"/>
+  <path d="M66 24 L64 30 L62 24 Z" fill="#3a2a1a"/>
+  <!-- rivets on helmet -->
+  <circle cx="34" cy="14" r="0.8" fill="#ff9a3c"/>
+  <circle cx="62" cy="14" r="0.8" fill="#ff9a3c"/>
+
+  <!-- ARMS with vambraces -->
+  <path d="M8 50 Q6 54 8 58 L14 74 Q16 78 20 76 L22 72 L22 44 Z" fill="url(#wd-steel)"/>
+  <path d="M88 50 Q90 54 88 58 L82 74 Q80 78 76 76 L74 72 L74 44 Z" fill="url(#wd-steel)"/>
+  <!-- vambrace plates -->
+  <rect x="6" y="56" width="16" height="4" fill="url(#wd-plate)"/>
+  <rect x="74" y="56" width="16" height="4" fill="url(#wd-plate)"/>
+  <rect x="8" y="66" width="14" height="4" fill="url(#wd-plate)"/>
+  <rect x="74" y="66" width="14" height="4" fill="url(#wd-plate)"/>
+  <!-- gauntlets -->
+  <path d="M6 72 Q4 78 10 80 L20 78 Q22 74 20 72 Z" fill="#2a1f14"/>
+  <path d="M90 72 Q92 78 86 80 L76 78 Q74 74 76 72 Z" fill="#2a1f14"/>
+  <!-- knuckle studs -->
+  <circle cx="8" cy="76" r="0.9" fill="#ff9a3c"/>
+  <circle cx="12" cy="78" r="0.9" fill="#ff9a3c"/>
+  <circle cx="88" cy="76" r="0.9" fill="#ff9a3c"/>
+  <circle cx="84" cy="78" r="0.9" fill="#ff9a3c"/>
+
+  <!-- DRAGONMAW AUTOCANNON (heavy LMG) -->
+  <!-- stock -->
+  <path d="M4 66 L16 66 L16 76 L4 78 Z" fill="#3a2a1a"/>
+  <!-- receiver -->
+  <path d="M16 62 L62 62 L62 74 L16 74 Z" fill="#2a1f14"/>
+  <!-- top handle -->
+  <path d="M28 58 L44 58 L44 62 L28 62 Z" fill="#2a1f14"/>
+  <path d="M30 55 L34 55 L34 58 L30 58 Z" fill="#1a0e06"/>
+  <path d="M38 55 L42 55 L42 58 L38 58 Z" fill="#1a0e06"/>
+  <!-- ammo box / belt -->
+  <path d="M28 74 L50 74 L50 86 L28 86 Z" fill="#3a2a1a"/>
+  <path d="M30 76 L48 76 L48 84 L30 84 Z" fill="#2a1f14"/>
+  <!-- belt feed -->
+  <path d="M50 78 L54 78 L54 82 L50 82 Z" fill="#1a0e06"/>
+  <circle cx="34" cy="80" r="1.2" fill="#ff9a3c"/>
+  <circle cx="38" cy="80" r="1.2" fill="#ff9a3c"/>
+  <circle cx="42" cy="80" r="1.2" fill="#ff9a3c"/>
+  <circle cx="46" cy="80" r="1.2" fill="#ff9a3c"/>
+  <!-- grip -->
+  <path d="M54 74 L58 74 L58 80 L54 80 Z" fill="#1a0e06"/>
+  <!-- barrel (long, heat-shrouded) -->
+  <rect x="62" y="64" width="28" height="8" fill="#2a1f14"/>
+  <path d="M64 66 L64 70 M68 66 L68 70 M72 66 L72 70 M76 66 L76 70 M80 66 L80 70 M84 66 L84 70" stroke="#1a0e06" stroke-width="0.8"/>
+  <!-- muzzle brake -->
+  <path d="M90 62 L96 62 L96 74 L90 74 Z" fill="#1a0e06"/>
+  <rect x="91" y="64" width="1" height="8" fill="#3a2a1a"/>
+  <rect x="93" y="64" width="1" height="8" fill="#3a2a1a"/>
+  <!-- ember core glow -->
+  <circle cx="93" cy="68" r="7" fill="url(#wd-ember)"/>
+  <circle cx="93" cy="68" r="2.8" fill="#fff4c0"/>
+  <!-- draconic rune on barrel -->
+  <path d="M72 67 L76 65 L80 67 L76 69 Z" fill="#ff9a3c" opacity=".7"/>
+</svg>
