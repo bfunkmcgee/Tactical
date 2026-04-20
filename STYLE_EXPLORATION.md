@@ -62,15 +62,29 @@ Per-class read:
 
 ---
 
-## Enemies
+## Enemies — **The Rust Choir**
 
-### Wraith Raider
-<p><img src="public/styles/flat/enemy.svg" width="240"/></p>
+A scavenger-cult faction of goblinoid raiders clad in welded scrap. Shared visual language: orange-brown rust palette, mismatched salvaged metal plates riveted together over green skin, crude choir sigils daubed in rust-paint, and dangling bells/megaphones/horns that give them their name. Ember-lit eyes burn behind crude slits and kettle helms.
 
-### Gutter Troll
-<p><img src="public/styles/flat/enemy_troll.svg" width="240"/></p>
+### Rust Goblin — common grunt
 
-(Still need a pass to stay distinct against the new squad silhouette.)
+<p><img src="public/styles/flat/enemy_goblin.svg" width="220" alt="Rust Goblin"/></p>
+
+Short, hunched, sickly green. Dented kettle helmet with welded horns and a dangling bell. Asymmetric scrap chest plate over bare ribs. Tattered loincloth and shin wraps, bare clawed feet. Carries a crude pipe-gun blunderbuss welded from salvaged barrels and duct tape. Single shoulder pad with a little hymn-horn. **Most encounters are goblin packs.**
+
+### Rust Orc — rarer brute
+
+<p><img src="public/styles/flat/enemy_orc.svg" width="220" alt="Rust Orc"/></p>
+
+Broad-shouldered moss-green bruiser. Salvaged open-face helm with big welded bull horns, dangling bell off one horn. Patchwork chest plate — rust on one side, raw sheet metal on the other — splashed with a big painted choir hymn. Jutting tusks, hooked broken nose, ember eyes. Carries a cobbled scrap assault rifle with drum magazine and duct-taped heat shroud. Usually leads a goblin squad.
+
+### Rust Troll — rare war-priest
+
+<p><img src="public/styles/flat/enemy_troll.svg" width="220" alt="Rust Troll"/></p>
+
+Towering gray-brown hulk that fills the frame. **Full bucket helm** with narrow eye slit and red glowing eyes, huge welded bull horns with bells dangling off each, ventilation holes below the slit. Chest plates are a quilt of riveted salvage sheets with big hymn-glyphs, crossed by a **broken megaphone strapped to the torso**. Skull trophy and massive bell hang from the belt. Spiked pauldron on one side, welded door-panel on the other. Knuckle spikes welded onto massive fists. Wields a two-handed scrap heavy machine gun with belt feed and oversized heat shroud. **At most one per mission.**
+
+---
 
 ## Tiles
 <p><img src="public/styles/flat/tiles.svg" width="480"/></p>
