@@ -1,5 +1,6 @@
 import type {
-  Armor, EnemyTemplate, Kit, SoldierTemplate, TileKind, Utility, Weapon, WeaponMod,
+  Armor, Consumable, EnemyTemplate, Kit, SoldierTemplate, TileKind, Utility,
+  Weapon, WeaponMod, Zone,
 } from '../game/types';
 
 /**
@@ -38,6 +39,13 @@ export interface ContentPack {
   // -------- Faction identity (for HUD copy & log lines) --------
   playerFaction: { id: string; name: string; sigilColor: string };
   enemyFaction:  { id: string; name: string; sigilColor: string };
+
+  // -------- Excursion loop content (optional — packs without zones fall back
+  //          to the legacy pick-random-map mode, non-breaking). --------
+  zones?: Zone[];
+  consumables?: Record<string, Consumable>;
+  /** Initial base-stockpile counts on a fresh campaign for this pack. */
+  initialStockpile?: Record<string, number>;
 
   // -------- Optional theming --------
   theme?: PackTheme;

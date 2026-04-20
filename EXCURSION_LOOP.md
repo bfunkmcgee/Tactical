@@ -381,13 +381,13 @@ Each can layer on later without invalidating this skeleton.
 
 ---
 
-## Open questions
+## Decisions (locked)
 
-1. **Squad size and selection.** Is the deployed squad always the same 4 soldiers per excursion, or do you pick 4 out of a larger roster? *Recommendation: pick from roster. Enables wounded-sits-out mechanic and gives the hub a purpose beyond loadout editing.*
-2. **Wound recovery scaling.** Missions-missed = flat number (e.g. always 2) or proportional to damage suffered? *Recommendation: proportional. HP <=30% = 3 missions out; HP <=60% = 1 mission out; otherwise 0.*
-3. **Extraction failure handling.** Squad wipes mid-excursion — soldiers lost for good, captured (later rescue mission), or just wounded for a long time? *Recommendation: phase 1 = wounded (long recovery) not lost; permadeath as a setting toggle later.*
-4. **Resupply acquisition.** Earned between excursions (salvage shop), granted on zone completion, or granted automatically per excursion? *Recommendation: per excursion, zone-determined: small zones give 1 of each, larger give 2. Keeps the loop legible without a shop economy in phase 1.*
-5. **Armor damage affects stats?** Purely cosmetic, or does damage ≥80 inflict a penalty (−5 aim, −1 HP)? *Recommendation: cosmetic only for phase 5. Mechanical wear invites spreadsheet optimisation; visual wear invites narrative immersion. Keep it felt, not calculated.*
-6. **Skirmish Engage / Avoid cost.** Avoiding a skirmish is free in phase 1; later should it cost a consumable or time? *Recommendation: free for phase 1. Re-examine in phase 4 when skirmishes ship.*
+1. **Squad size** — Deploy up to **7 soldiers** per excursion, selected from the base roster. Today's 16×12 maps only expose 4 player spawns so the practical cap in phase 1 is still 4; growing maps to 7 spawn points is a phase-2 content task.
+2. **Wound recovery** — **Proportional.** HP ≤ 30% at extraction = 3 missions on the bench, HP ≤ 60% = 1 mission, otherwise 0.
+3. **Extraction failure** — Phase 1: squad-wide wipe leaves every survivor heavily wounded (long bench time); no permadeath. Permadeath toggle later.
+4. **Resupply acquisition** — Granted per excursion, zone-determined. Small zones grant 1 of each consumable, larger zones grant 2. No shop economy in phase 1.
+5. **Armor damage affects stats** — Mechanical, not cosmetic-only. When a soldier's `damage` ≥ 80 during an excursion they take **−5 aim** and **−1 max HP** until extraction. Armor-patch consumable is the intended mitigation.
+6. **Skirmish avoid cost** — Yes. Avoiding a rolled skirmish spends a consumable (exact tradeoff TBD in phase 4 — probably a single "any" consumable of the player's choice, narratively rations/fuel).
 
-Approve any of these (or pick differently) and I'll start phase 1 — the state skeleton plus one zone per pack.
+These answers shape later phases; phase 1 (state skeleton + one zone per pack) is being implemented now.

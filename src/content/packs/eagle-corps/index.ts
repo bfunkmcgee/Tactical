@@ -6,6 +6,7 @@ import { KITS } from './kits';
 import { MODS } from './mods';
 import { SOLDIERS } from './soldiers';
 import { ENEMIES } from './enemies';
+import { ZONES, CONSUMABLES, INITIAL_STOCKPILE } from './zones';
 
 /**
  * Eagle Corps vs. The Rust Choir — the ship-with pack. Desert-scout unit
@@ -41,4 +42,8 @@ export const pack: ContentPack = {
 
   playerFaction: { id: 'eagle-corps', name: 'Eagle Corps', sigilColor: '#e8c488' }, // gold
   enemyFaction:  { id: 'rust-choir',  name: 'The Rust Choir', sigilColor: '#c87030' }, // rust orange
+
+  zones: ZONES,
+  consumables: CONSUMABLES,
+  initialStockpile: INITIAL_STOCKPILE,
 };

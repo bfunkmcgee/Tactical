@@ -216,6 +216,71 @@ export type LogEntry = {
 
 export type CoverState = 'none' | 'half' | 'full';
 
+// =========================================================================
+//  Excursion loop types — see EXCURSION_LOOP.md
+// =========================================================================
+
+/** One authored step of a zone. */
+export interface Mission {
+  id: string;
+  name: string;
+  briefing: string;
+  mapId: string;                        // references an engine-owned map
+  objective: MissionObjective;
+  /** Per-mission spawn legend tweak — overrides the pack's legend just for this mission. */
+  spawnsOverride?: Record<string, string>;
+  /** Gate by prior excursion history (e.g. "previous mission's id is in history"). */
+  unlockCondition?: (history: readonly string[]) => boolean;
+}
+
+/**
+ * Mission victory condition. The union is built up front so packs can author
+ * varied missions; phase-1 engine implements only `eliminate_all` — any other
+ * kind renders as "(unsupported)" in the mission list until its handler ships.
+ */
+export type MissionObjective =
+  | { kind: 'eliminate_all' }
+  | { kind: 'eliminate_target'; templateId: string }
+  | { kind: 'reach_tile'; pos: Vec2; turnLimit?: number }
+  | { kind: 'destroy_objective'; pos: Vec2; hp: number }
+  | { kind: 'defend_point'; pos: Vec2; turns: number }
+  | { kind: 'extract_vip'; vipSpawn: Vec2; extractTile: Vec2 };
+
+/** Random encounter rolled between authored missions during an excursion. */
+export interface Skirmish {
+  id: string;
+  name: string;
+  flavor: string;
+  mapId: string;
+  objective: MissionObjective;
+  weight: number;
+  spawnsOverride?: Record<string, string>;
+}
+
+/** A deployable area — collection of missions + skirmish pool. */
+export interface Zone {
+  id: string;
+  name: string;
+  description: string;
+  biome: string;
+  missions: Mission[];
+  skirmishes: Skirmish[];
+  skirmishChance: number;              // 0..1 per inter-mission gap
+  /** Resupply consumable counts granted when the player deploys into this zone. */
+  consumableGrant?: Record<string, number>;
+}
+
+/** Single-use mid-excursion resupply item, consumed on the Excursion Overview. */
+export interface Consumable {
+  id: string;
+  name: string;
+  flavor: string;
+  kind: 'ammo_crate' | 'med_cache' | 'armor_patch' | 'field_wash' | 'reinforcement';
+  tag: ElementTag;
+}
+
+// =========================================================================
+
 /** A single contribution to the final hit%, surfaced in the preview card. */
 export type HitModifier = {
   label: string;

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Loadout } from '../game/types';
 import { useContent, allSoldierTemplates, onPackChange } from '../content/registry';
 
-type Screen = 'menu' | 'loadout' | 'combat' | 'debrief';
+type Screen = 'menu' | 'loadout' | 'mapRoom' | 'excursion' | 'combat' | 'debrief';
 
 type SquadLoadouts = Record<string, Loadout>;
 

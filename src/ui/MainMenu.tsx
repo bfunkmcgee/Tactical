@@ -1,14 +1,21 @@
 import { useState } from 'react';
 import { useGameStore } from '../state/gameStore';
+import { useCampaignStore } from '../state/campaignStore';
 import { useContent, setActivePack, ALL_PACKS } from '../content/registry';
 
+/**
+ * Base Camp Hub — the home screen between excursions. Rooms are flat buttons
+ * that route to dedicated screens (Armoury = Loadout, Map Room = Zone picker).
+ * Pack picker stays at the bottom so you can swap campaigns without coming
+ * back through a menu.
+ */
 export default function MainMenu() {
   const setScreen = useGameStore((s) => s.setScreen);
   const resetLoadouts = useGameStore((s) => s.resetLoadouts);
-  // Local re-render trigger when the active pack changes (since useContent()
-  // returns a snapshot, not a reactive value).
+  const completedZoneIds = useCampaignStore((s) => s.completedZoneIds);
   const [, bump] = useState(0);
   const pack = useContent();
+  const zones = pack.zones ?? [];
 
   const switchTo = (id: string) => {
     const next = ALL_PACKS.find((p) => p.id === id);
@@ -19,12 +26,24 @@ export default function MainMenu() {
 
   return (
     <div className="screen" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="panel stack" style={{ minWidth: 300, maxWidth: 380, textAlign: 'center' }}>
-        <h1>Tactical</h1>
+      <div className="panel stack" style={{ minWidth: 320, maxWidth: 420, textAlign: 'center' }}>
+        <h1>Base Camp</h1>
         <h3 style={{ color: pack.playerFaction.sigilColor }}>{pack.name}</h3>
-        <p style={{ margin: '8px 0 16px' }}>{pack.description}</p>
-        <button className="primary" onClick={() => setScreen('loadout')}>New Run</button>
-        <button onClick={() => { resetLoadouts(); }}>Reset Loadouts</button>
+        <p style={{ margin: '8px 0 12px' }}>{pack.description}</p>
+
+        {zones.length > 0 && (
+          <div style={{ fontSize: 12, color: 'var(--fg-2)', marginBottom: 'var(--s-3)' }}>
+            Zones cleared: {completedZoneIds.length} / {zones.length}
+          </div>
+        )}
+
+        <div className="stack" style={{ gap: 'var(--s-2)' }}>
+          <button onClick={() => setScreen('loadout')}>Armoury</button>
+          {zones.length > 0
+            ? <button className="primary" onClick={() => setScreen('mapRoom')}>Map Room</button>
+            : <button className="primary" onClick={() => setScreen('loadout')}>New Run</button>}
+          <button onClick={() => { resetLoadouts(); }} style={{ opacity: .7 }}>Reset Loadouts</button>
+        </div>
 
         {ALL_PACKS.length > 1 && (
           <div style={{ marginTop: 'var(--s-4)', borderTop: '1px solid var(--bg-3)', paddingTop: 'var(--s-3)' }}>

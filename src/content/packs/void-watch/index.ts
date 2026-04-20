@@ -6,6 +6,7 @@ import { KITS } from './kits';
 import { MODS } from './mods';
 import { SOLDIERS } from './soldiers';
 import { ENEMIES } from './enemies';
+import { ZONES, CONSUMABLES, INITIAL_STOCKPILE } from './zones';
 
 /**
  * Void-Watch — a deliberately small validation pack. Two operatives boarding
@@ -41,4 +42,8 @@ export const pack: ContentPack = {
 
   playerFaction: { id: 'void-watch', name: 'Void-Watch', sigilColor: '#9bd4ff' },
   enemyFaction:  { id: 'the-hollow', name: 'The Hollow', sigilColor: '#7a8fb0' },
+
+  zones: ZONES,
+  consumables: CONSUMABLES,
+  initialStockpile: INITIAL_STOCKPILE,
 };

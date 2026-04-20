@@ -73,13 +73,46 @@ type CombatState = {
   endPlayerTurn: () => void;
   runEnemyTurn: () => Promise<void>;
   getShotPreview: (targetId: UnitId, useSidearm?: boolean) => ShotPreview | null;
+
+  /**
+   * Excursion-aware init: deploy onto a specific map with optional carry-over
+   * per soldier. Falls back to today's pick-random-map + fresh-squad path when
+   * called with no args.
+   */
+  initMission: (opts?: {
+    map?: GridMap;
+    rosterIds?: string[];
+    carries?: Record<string, SoldierCarry>;
+    briefing?: string;
+  }) => void;
+
+  /** Snapshot player-unit state for the excursion's squad-carry record. */
+  snapshotSquadCarry: () => Array<{
+    soldierId: string;
+    hp: number;
+    ammoPrimary: number;
+    ammoSidearm: number;
+    utilityCharges: number[];
+  }>;
 };
 
 let nextUnitId = 1;
 let nextLogId = 1;
 let nextFloaterId = 1;
 
-function mkSoldierUnit(templateId: string): Unit {
+/**
+ * Per-soldier carry-over applied when spawning into a mission that's part of
+ * an ongoing excursion. Lets HP / ammo / charges persist between missions
+ * without touching the spawn code path for a fresh campaign deploy.
+ */
+export interface SoldierCarry {
+  hp?: number;                 // if set, starting HP = min(hp, hpMax)
+  ammoPrimary?: number;
+  ammoSidearm?: number;
+  utilityCharges?: number[];
+}
+
+function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
   const t = getSoldierTemplate(templateId);
   const store = useGameStore.getState();
   const loadout = store.loadouts[templateId] ?? t.defaultLoadout;
@@ -90,25 +123,32 @@ function mkSoldierUnit(templateId: string): Unit {
   const k = kit?.effects ?? {};
   // Kit folds into spawn-time stats — no runtime hooks needed in phase 1.
   const hpMax = Math.max(1, t.hpMax + armor.hpBonus + (k.hpBonus ?? 0));
-  const utilityCharges = loadout.utilityIds.map((id) =>
+  const utilityChargesMax = loadout.utilityIds.map((id) =>
     (useContent().utilities[id]?.charges ?? 0) + (k.extraUtilityCharges ?? 0)
   );
+  // Apply excursion carry-over if provided — otherwise full HP / full magazines.
+  const startHp = carry?.hp !== undefined ? Math.max(1, Math.min(hpMax, carry.hp)) : hpMax;
+  const utilityCharges = carry?.utilityCharges
+    ? utilityChargesMax.map((max, i) => Math.min(max, carry.utilityCharges?.[i] ?? max))
+    : utilityChargesMax;
   // Mods can also nudge wielder mobility (heavy stock −1, folding +1, etc.).
   const modMobility = totalMobilityDeltaFromMods(loadout.primaryMods, loadout.sidearmMods);
+  const primaryCap = primary.ammo + (k.extraAmmoPrimary ?? 0);
+  const sidearmCap = sidearm.ammo + (k.extraAmmoSidearm ?? 0);
   return {
     id: nextUnitId++,
     faction: 'player',
     templateId,
     name: t.name,
     pos: { x: 0, y: 0 },
-    hp: hpMax,
+    hp: startHp,
     hpMax,
     aim: t.aim + (k.aimBonus ?? 0),
     mobility: Math.max(2, t.mobility + armor.mobility + (k.mobilityBonus ?? 0) + modMobility),
     ap: 2, apMax: 2,
     loadout,
-    ammo: primary.ammo + (k.extraAmmoPrimary ?? 0),
-    sidearmAmmo: sidearm.ammo + (k.extraAmmoSidearm ?? 0),
+    ammo: carry?.ammoPrimary !== undefined ? Math.min(primaryCap, carry.ammoPrimary) : primaryCap,
+    sidearmAmmo: carry?.ammoSidearm !== undefined ? Math.min(sidearmCap, carry.ammoSidearm) : sidearmCap,
     utilityCharges,
     // Players don't use innate attack stats — combat resolves through their weapon.
     dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
@@ -216,15 +256,24 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   floaters: [],
 
   init: () => {
+    get().initMission();
+  },
+
+  initMission: (opts) => {
     nextUnitId = 1; nextLogId = 1; nextFloaterId = 1;
-    const roster = useGameStore.getState().roster;
-    const map = pickRandomMap();
+    const map = opts?.map ?? pickRandomMap();
+    const roster = opts?.rosterIds ?? useGameStore.getState().roster;
+    const carries = opts?.carries ?? {};
     const units: Unit[] = [];
     roster.forEach((id, i) => {
-      const u = mkSoldierUnit(id);
+      const u = mkSoldierUnit(id, carries[id]);
       u.pos = map.playerSpawns[i % map.playerSpawns.length];
       units.push(u);
     });
+    // Kept for interop with the legacy init path; excursion-mode re-enters here.
+    void opts?.briefing;
+    // continue — same logic, but resolves enemy spawn keys via the active pack.
+    // (existing code below handles enemy spawning + state seeding)
     for (const es of map.enemySpawns) {
       const enemyId = resolveSpawn(es.spawnKey);
       if (!enemyId) {
@@ -247,7 +296,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       pendingShotTargetId: null,
       pendingShotUsesSidearm: false,
       pendingUtility: null,
-      log: [{ id: nextLogId++, text: `Mission: ${map.name}. Neutralize all hostiles.`, kind: 'info' }],
+      log: [{ id: nextLogId++, text: opts?.briefing ?? `Mission: ${map.name}. Neutralize all hostiles.`, kind: 'info' }],
       rng: makeRng(Date.now() & 0xffffffff),
       kills: 0, damageTaken: 0, floaters: [],
     });
@@ -515,6 +564,18 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     if (!w) return null;
     return previewShot(st.map, u, t, w, unitArmor(t),
       new Set(st.smokeTiles.keys()), unitMods(u, !!useSidearm));
+  },
+
+  snapshotSquadCarry: () => {
+    return get().units
+      .filter((u) => u.faction === 'player')
+      .map((u) => ({
+        soldierId: u.templateId,
+        hp: u.hp,
+        ammoPrimary: u.ammo,
+        ammoSidearm: u.sidearmAmmo,
+        utilityCharges: [...u.utilityCharges],
+      }));
   },
 }));
 
