@@ -12,6 +12,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       sidearmId: 'sigilshot_pistol',
       armorId: 'mithril_vest',
       utilityIds: ['embercore_orb', 'phoenix_draught'],
+      kitId: 'salvagers_webbing',
     },
   },
   warden_brannock: {
@@ -25,6 +26,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       sidearmId: 'thornlock_revolver',
       armorId: 'warded_plate',
       utilityIds: ['mistvial', 'phoenix_draught'],
+      kitId: 'warden_plate',
     },
   },
   mystic_seraphine: {
@@ -38,6 +40,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       sidearmId: 'sigilshot_pistol',
       armorId: 'swiftstep_greaves',
       utilityIds: ['faewisp_flare', 'mistvial'],
+      kitId: 'spotters_lens',
     },
   },
   sapper_orin: {
@@ -51,6 +54,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       sidearmId: 'thornlock_revolver',
       armorId: 'oakheart_helm',
       utilityIds: ['embercore_orb', 'embercore_orb'],
+      kitId: 'alchemists_satchel',
     },
   },
 };

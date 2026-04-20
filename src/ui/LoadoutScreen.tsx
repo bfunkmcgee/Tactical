@@ -4,6 +4,7 @@ import { SOLDIERS } from '../game/data/soldiers';
 import { WEAPONS, PRIMARY_WEAPONS, SIDEARMS } from '../game/data/weapons';
 import { ARMOR, ALL_ARMOR } from '../game/data/armor';
 import { ALL_UTILITIES } from '../game/data/utilities';
+import { KITS, ALL_KITS } from '../game/data/kits';
 import type { Loadout } from '../game/types';
 
 const MAX_UTILITIES = 2;
@@ -20,12 +21,17 @@ export default function LoadoutScreen() {
 
   const armor = ARMOR[current.armorId];
   const primary = WEAPONS[current.primaryId];
+  const kit = current.kitId ? KITS[current.kitId] : null;
 
-  const derived = useMemo(() => ({
-    hpMax: soldier.hpMax + (armor?.hpBonus ?? 0),
-    mobility: Math.max(2, soldier.mobility + (armor?.mobility ?? 0)),
-    aim: soldier.aim + (primary?.aim ?? 0),
-  }), [soldier, armor, primary]);
+  const derived = useMemo(() => {
+    const k = kit?.effects ?? {};
+    return {
+      hpMax: Math.max(1, soldier.hpMax + (armor?.hpBonus ?? 0) + (k.hpBonus ?? 0)),
+      mobility: Math.max(2, soldier.mobility + (armor?.mobility ?? 0) + (k.mobilityBonus ?? 0)),
+      aim: soldier.aim + (primary?.aim ?? 0) + (k.aimBonus ?? 0),
+      ammoPrimary: (primary?.ammo ?? 0) + (k.extraAmmoPrimary ?? 0),
+    };
+  }, [soldier, armor, primary, kit]);
 
   function set(partial: Partial<Loadout>) {
     setLoadout(soldierId, { ...current, ...partial });
@@ -75,10 +81,11 @@ export default function LoadoutScreen() {
             <div className="stack" style={{ gap: 4, flex: 1 }}>
               <h2>{soldier.name}</h2>
               <p>{soldier.class}</p>
-              <div className="row" style={{ gap: 'var(--s-4)', color: 'var(--fg-1)', fontSize: 14 }}>
+              <div className="row" style={{ gap: 'var(--s-4)', color: 'var(--fg-1)', fontSize: 14, flexWrap: 'wrap' }}>
                 <span>HP {derived.hpMax}</span>
                 <span>Aim {derived.aim >= 0 ? '+' : ''}{derived.aim}</span>
                 <span>Move {derived.mobility}</span>
+                <span>Ammo {derived.ammoPrimary}</span>
               </div>
             </div>
           </div>
@@ -140,9 +147,36 @@ export default function LoadoutScreen() {
             })}
           </Grid>
         </Section>
+
+        <Section title={`Kit ${kit ? `· ${kit.name}` : '· (none)'}`}>
+          <Grid>
+            <Card selected={current.kitId === null} onClick={() => set({ kitId: null })}
+              title="No Kit" tag="mundane"
+              lines={['No passive equipment.', 'Free up the slot for a clean run.']} />
+            {ALL_KITS.map((k) => (
+              <Card key={k.id} selected={current.kitId === k.id} onClick={() => set({ kitId: k.id })}
+                title={k.name} tag={k.tag}
+                lines={[
+                  describeKitEffects(k.effects),
+                  k.flavor,
+                ]} />
+            ))}
+          </Grid>
+        </Section>
       </div>
     </div>
   );
+}
+
+function describeKitEffects(e: import('../game/types').Kit['effects']): string {
+  const parts: string[] = [];
+  if (e.hpBonus !== undefined) parts.push(`${e.hpBonus >= 0 ? '+' : ''}${e.hpBonus} HP`);
+  if (e.mobilityBonus !== undefined) parts.push(`${e.mobilityBonus >= 0 ? '+' : ''}${e.mobilityBonus} move`);
+  if (e.aimBonus !== undefined) parts.push(`${e.aimBonus >= 0 ? '+' : ''}${e.aimBonus} aim`);
+  if (e.extraAmmoPrimary !== undefined) parts.push(`+${e.extraAmmoPrimary} primary ammo`);
+  if (e.extraAmmoSidearm !== undefined) parts.push(`+${e.extraAmmoSidearm} sidearm ammo`);
+  if (e.extraUtilityCharges !== undefined) parts.push(`+${e.extraUtilityCharges} utility charge${e.extraUtilityCharges === 1 ? '' : 's'}`);
+  return parts.join(' · ') || 'No effect';
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

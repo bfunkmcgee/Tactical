@@ -231,11 +231,11 @@ These can layer on later without invalidating the core design.
 
 ---
 
-## Open questions
+## Decisions (locked)
 
-1. **Where do mods live in the picker UI** — flat list per slot, or grouped by tag? *Recommendation: flat list, tag shown as a coloured chip next to the name.*
-2. **Should mods cost AP to swap mid-mission?** *Recommendation: no — only swappable on the loadout screen.*
-3. **Do sidearms get mods?** *Recommendation: yes, but only optic + muzzle (2 slots), not magazine/stock — keeps them simpler than primaries.*
-4. **Is `Gear` better named "Kit", "Trinket", "Carry"?** *Recommendation: stick with "Gear" — short, plain, mobile-friendly.*
+1. **Picker UI** — mods grouped by `ElementTag` in the picker modal. Each tag becomes a labelled section with its accent colour as a heading.
+2. **Mid-mission swapping** — yes, mods can be swapped during a mission. Treated as a 1-AP "Field Refit" action on a soldier's turn (cannot swap while in overwatch).
+3. **Sidearm mods** — sidearms get **2** slots only: `optic` and `muzzle`. No magazine/stock for sidearms.
+4. **Passive slot name** — **"Kit"**.
 
-Approve any of these before phase-1 implementation begins.
+These answers shape phase 2 (mods); phase 1 (kit slot only) is being implemented now.

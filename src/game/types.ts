@@ -76,6 +76,26 @@ export type Loadout = {
   sidearmId: string;
   armorId: string;
   utilityIds: string[]; // length up to 2
+  kitId: string | null; // optional passive equipment
+};
+
+/**
+ * Always-on passive equipment. Effects are folded into the soldier at unit
+ * spawn time; no AP cost, no mid-mission interaction (yet).
+ */
+export type Kit = {
+  id: string;
+  name: string;
+  flavor: string;
+  effects: {
+    hpBonus?: number;
+    mobilityBonus?: number;
+    aimBonus?: number;
+    extraAmmoPrimary?: number;
+    extraAmmoSidearm?: number;
+    extraUtilityCharges?: number; // applied to every equipped utility
+  };
+  tag: ElementTag;
 };
 
 export type SoldierTemplate = {

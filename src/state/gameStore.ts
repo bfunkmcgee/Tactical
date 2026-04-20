@@ -8,10 +8,29 @@ type SquadLoadouts = Record<string, Loadout>;
 
 const LS_KEY = 'tactical.squadLoadouts.v1';
 
+/**
+ * Older saved loadouts (pre-Kit phase) lack `kitId`. Normalise on load so the
+ * runtime always sees a complete Loadout shape — null kit means "no kit".
+ */
+function normalise(loadout: Partial<Loadout>): Loadout {
+  return {
+    primaryId: loadout.primaryId!,
+    sidearmId: loadout.sidearmId!,
+    armorId: loadout.armorId!,
+    utilityIds: loadout.utilityIds ?? [],
+    kitId: loadout.kitId ?? null,
+  };
+}
+
 function loadPersisted(): SquadLoadouts {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (raw) return JSON.parse(raw) as SquadLoadouts;
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, Partial<Loadout>>;
+      const out: SquadLoadouts = {};
+      for (const id in parsed) out[id] = normalise(parsed[id]);
+      return out;
+    }
   } catch {}
   const defaults: SquadLoadouts = {};
   for (const s of Object.values(SOLDIERS)) defaults[s.id] = { ...s.defaultLoadout };

@@ -1,6 +1,7 @@
 import { useCombatStore } from '../state/combatStore';
 import { UTILITIES } from '../game/data/utilities';
 import { WEAPONS } from '../game/data/weapons';
+import { KITS } from '../game/data/kits';
 
 export default function CombatHUD() {
   const phase = useCombatStore((s) => s.phase);
@@ -26,6 +27,10 @@ export default function CombatHUD() {
   const playerUnits = units.filter((u) => u.faction === 'player');
   const primary = selected?.loadout ? WEAPONS[selected.loadout.primaryId] : null;
   const sidearm = selected?.loadout ? WEAPONS[selected.loadout.sidearmId] : null;
+  const kit = selected?.loadout?.kitId ? KITS[selected.loadout.kitId] : null;
+  // Magazine caps include any Kit bonus ammo so Reload disables correctly.
+  const primaryCap = (primary?.ammo ?? 0) + (kit?.effects.extraAmmoPrimary ?? 0);
+  const sidearmCap = (sidearm?.ammo ?? 0) + (kit?.effects.extraAmmoSidearm ?? 0);
   const disabled = phase !== 'player' || !selected || !selected.alive;
 
   const shotPreview = pendingShotTargetId !== null
@@ -155,12 +160,12 @@ export default function CombatHUD() {
         <button onClick={() => setMode(mode === 'fire' ? 'idle' : 'fire')}
           disabled={disabled || !primary || (selected!.ap < primary.apCost) || selected!.ammo <= 0}
           style={{ borderColor: mode === 'fire' ? 'var(--accent)' : undefined }}>
-          Fire {primary ? `(${selected!.ammo}/${primary.ammo})` : ''}
+          Fire {primary ? `(${selected!.ammo}/${primaryCap})` : ''}
         </button>
         <button onClick={() => setMode(mode === 'sidearm' ? 'idle' : 'sidearm')}
           disabled={disabled || !sidearm || (selected!.ap < sidearm.apCost) || selected!.sidearmAmmo <= 0}
           style={{ borderColor: mode === 'sidearm' ? 'var(--accent)' : undefined }}>
-          Sidearm {sidearm ? `(${selected!.sidearmAmmo}/${sidearm.ammo})` : ''}
+          Sidearm {sidearm ? `(${selected!.sidearmAmmo}/${sidearmCap})` : ''}
         </button>
         {selected?.loadout?.utilityIds.map((uid, i) => {
           const u = UTILITIES[uid]!;
@@ -176,8 +181,7 @@ export default function CombatHUD() {
         })}
         <button onClick={() => tryReload()}
           disabled={disabled || !primary
-            || (selected!.ammo >= (primary?.ammo ?? 0)
-                && selected!.sidearmAmmo >= (sidearm?.ammo ?? 0))}>Reload</button>
+            || (selected!.ammo >= primaryCap && selected!.sidearmAmmo >= sidearmCap)}>Reload</button>
         <button onClick={() => toggleOverwatch()} disabled={disabled || selected!.ap < 1}
           style={{ borderColor: selected?.status.overwatch ? 'var(--accent)' : undefined }}>
           {selected?.status.overwatch ? 'Cancel OW' : 'Overwatch'}

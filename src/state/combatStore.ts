@@ -6,6 +6,7 @@ import { ENEMIES } from '../game/data/enemies';
 import { WEAPONS } from '../game/data/weapons';
 import { ARMOR } from '../game/data/armor';
 import { UTILITIES } from '../game/data/utilities';
+import { KITS } from '../game/data/kits';
 import { useGameStore } from './gameStore';
 import { reachable, findPath } from '../game/engine/pathing';
 import { chebyshev, keyOf } from '../game/engine/grid';
@@ -83,8 +84,13 @@ function mkSoldierUnit(templateId: string): Unit {
   const primary = WEAPONS[loadout.primaryId]!;
   const sidearm = WEAPONS[loadout.sidearmId]!;
   const armor = ARMOR[loadout.armorId]!;
-  const hpMax = t.hpMax + armor.hpBonus;
-  const utilityCharges = loadout.utilityIds.map((id) => UTILITIES[id]?.charges ?? 0);
+  const kit = loadout.kitId ? KITS[loadout.kitId] : null;
+  const k = kit?.effects ?? {};
+  // Kit folds into spawn-time stats — no runtime hooks needed in phase 1.
+  const hpMax = Math.max(1, t.hpMax + armor.hpBonus + (k.hpBonus ?? 0));
+  const utilityCharges = loadout.utilityIds.map((id) =>
+    (UTILITIES[id]?.charges ?? 0) + (k.extraUtilityCharges ?? 0)
+  );
   return {
     id: nextUnitId++,
     faction: 'player',
@@ -93,12 +99,12 @@ function mkSoldierUnit(templateId: string): Unit {
     pos: { x: 0, y: 0 },
     hp: hpMax,
     hpMax,
-    aim: t.aim,
-    mobility: Math.max(2, t.mobility + armor.mobility),
+    aim: t.aim + (k.aimBonus ?? 0),
+    mobility: Math.max(2, t.mobility + armor.mobility + (k.mobilityBonus ?? 0)),
     ap: 2, apMax: 2,
     loadout,
-    ammo: primary.ammo,
-    sidearmAmmo: sidearm.ammo,
+    ammo: primary.ammo + (k.extraAmmoPrimary ?? 0),
+    sidearmAmmo: sidearm.ammo + (k.extraAmmoSidearm ?? 0),
     utilityCharges,
     // Players don't use innate attack stats — combat resolves through their weapon.
     dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
@@ -332,9 +338,13 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const primary = unitPrimary(u);
     const sidearm = unitSidearm(u);
     if (!primary) return false;
+    // Honour the kit's extra-ammo bonuses — otherwise reload would shrink the magazine.
+    const kit = u.loadout?.kitId ? KITS[u.loadout.kitId] : null;
+    const primaryCap = primary.ammo + (kit?.effects.extraAmmoPrimary ?? 0);
+    const sidearmCap = (sidearm?.ammo ?? 0) + (kit?.effects.extraAmmoSidearm ?? 0);
     // Reload tops up both weapons (one action covers the loadout).
     const units = st.units.map((o) => o.id === u.id
-      ? { ...o, ammo: primary.ammo, sidearmAmmo: sidearm?.ammo ?? o.sidearmAmmo,
+      ? { ...o, ammo: primaryCap, sidearmAmmo: sidearmCap,
           ap: o.ap - 1, status: { ...o.status, overwatch: false } }
       : o);
     set({ units, log: pushLog(st.log, `${u.name} reloads.`) });
