@@ -1,7 +1,14 @@
+import { useState } from 'react';
 import { useCombatStore } from '../state/combatStore';
 import { UTILITIES } from '../game/data/utilities';
 import { WEAPONS } from '../game/data/weapons';
 import { KITS } from '../game/data/kits';
+import { MODS } from '../game/data/mods';
+import { SIDEARM_MOD_SLOTS } from '../game/types';
+import type { ModSlot } from '../game/types';
+import ModPicker from './components/ModPicker';
+
+const PRIMARY_SLOTS: ModSlot[] = ['optic', 'magazine', 'muzzle', 'stock'];
 
 export default function CombatHUD() {
   const phase = useCombatStore((s) => s.phase);
@@ -17,11 +24,16 @@ export default function CombatHUD() {
   const setMode = useCombatStore((s) => s.setMode);
   const tryReload = useCombatStore((s) => s.tryReload);
   const toggleOverwatch = useCombatStore((s) => s.toggleOverwatch);
+  const tryRefit = useCombatStore((s) => s.tryRefit);
   const endPlayerTurn = useCombatStore((s) => s.endPlayerTurn);
   const selectUnit = useCombatStore((s) => s.selectUnit);
   const confirmPending = useCombatStore((s) => s.confirmPending);
   const cancelPending = useCombatStore((s) => s.cancelPending);
   const getShotPreview = useCombatStore((s) => s.getShotPreview);
+
+  // Field Refit panel state lives in the HUD (not the store) — it's UI-only.
+  const [refitOpen, setRefitOpen] = useState(false);
+  const [refitPicker, setRefitPicker] = useState<{ slot: ModSlot; sidearm: boolean } | null>(null);
 
   const selected = units.find((u) => u.id === selectedId);
   const playerUnits = units.filter((u) => u.faction === 'player');
@@ -186,10 +198,105 @@ export default function CombatHUD() {
           style={{ borderColor: selected?.status.overwatch ? 'var(--accent)' : undefined }}>
           {selected?.status.overwatch ? 'Cancel OW' : 'Overwatch'}
         </button>
+        <button onClick={() => setRefitOpen(true)}
+          disabled={disabled || selected!.ap < 1 || selected!.status.overwatch}>
+          Refit
+        </button>
         <div style={{ flex: 1 }} />
         <button className="primary" onClick={() => endPlayerTurn()} disabled={phase !== 'player'}>End Turn</button>
       </div>
+
+      {/* Refit overlay */}
+      {refitOpen && selected?.loadout && (() => {
+        const p = WEAPONS[selected.loadout.primaryId];
+        const s = WEAPONS[selected.loadout.sidearmId];
+        return (
+          <div onClick={() => setRefitOpen(false)} style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 50,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--s-3)',
+          }}>
+            <div onClick={(e) => e.stopPropagation()} className="panel stack" style={{
+              maxWidth: 380, width: '100%', padding: 'var(--s-3)', gap: 'var(--s-3)',
+              maxHeight: '88vh', overflowY: 'auto',
+            }}>
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <h2 style={{ fontSize: 18 }}>Field Refit · {selected.name}</h2>
+                <button onClick={() => setRefitOpen(false)}>Done</button>
+              </div>
+              <p style={{ fontSize: 12 }}>
+                Each swap costs <strong>1 AP</strong>. Current AP: <strong>{selected.ap}/{selected.apMax}</strong>.
+              </p>
+
+              <RefitWeaponPanel name={p?.name ?? 'Primary'} subtitle={p?.class ?? ''}
+                slots={PRIMARY_SLOTS} slotMap={selected.loadout.primaryMods}
+                disabled={selected.ap < 1}
+                onSlotClick={(slot) => setRefitPicker({ slot, sidearm: false })} />
+              <RefitWeaponPanel name={s?.name ?? 'Sidearm'} subtitle={s?.class ?? ''}
+                slots={SIDEARM_MOD_SLOTS} slotMap={selected.loadout.sidearmMods}
+                disabled={selected.ap < 1}
+                onSlotClick={(slot) => setRefitPicker({ slot, sidearm: true })} />
+            </div>
+          </div>
+        );
+      })()}
+
+      {refitPicker && selected?.loadout && (() => {
+        const wpn = refitPicker.sidearm
+          ? WEAPONS[selected.loadout.sidearmId]
+          : WEAPONS[selected.loadout.primaryId];
+        if (!wpn) return null;
+        const cur = (refitPicker.sidearm ? selected.loadout.sidearmMods : selected.loadout.primaryMods)[refitPicker.slot] ?? null;
+        return (
+          <ModPicker
+            slot={refitPicker.slot}
+            weaponClass={wpn.class}
+            currentModId={cur}
+            onPick={(modId) => tryRefit(refitPicker.slot, refitPicker.sidearm, modId)}
+            onClose={() => setRefitPicker(null)}
+            title={`Refit · ${refitPicker.sidearm ? 'Sidearm' : 'Primary'} · ${refitPicker.slot}`}
+          />
+        );
+      })()}
     </>
+  );
+}
+
+function RefitWeaponPanel({ name, subtitle, slots, slotMap, disabled, onSlotClick }: {
+  name: string; subtitle: string; slots: ModSlot[];
+  slotMap: Partial<Record<ModSlot, string>>;
+  disabled: boolean;
+  onSlotClick: (slot: ModSlot) => void;
+}) {
+  return (
+    <div className="stack" style={{ gap: 'var(--s-2)' }}>
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <strong>{name}</strong>
+        <span style={{ fontSize: 11, color: 'var(--fg-2)', textTransform: 'uppercase' }}>{subtitle}</span>
+      </div>
+      <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+        {slots.map((slot) => {
+          const id = slotMap[slot];
+          const mod = id ? MODS[id] : null;
+          return (
+            <button key={slot} onClick={() => onSlotClick(slot)} disabled={disabled}
+              style={{
+                flex: '1 1 130px', minHeight: 56, padding: 'var(--s-2)',
+                display: 'block', textAlign: 'left',
+                borderColor: mod ? 'var(--accent)' : 'var(--bg-3)',
+                background: mod ? 'var(--bg-3)' : 'var(--bg-2)',
+                borderStyle: mod ? 'solid' : 'dashed',
+              }}>
+              <div style={{ fontSize: 10, color: 'var(--fg-2)', textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                {slot}
+              </div>
+              <div style={{ fontSize: 13, color: mod ? 'var(--fg-0)' : 'var(--fg-2)', marginTop: 2 }}>
+                {mod?.name ?? `+ Add ${slot}`}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

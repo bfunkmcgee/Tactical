@@ -71,9 +71,42 @@ export type Utility = {
 
 export type SoldierClass = 'Ranger' | 'Warden' | 'Mystic' | 'Sapper';
 
+export type ModSlot = 'optic' | 'magazine' | 'muzzle' | 'stock';
+
+/** Sidearms only honour these two slots — keeps them simpler than primaries. */
+export const SIDEARM_MOD_SLOTS: ModSlot[] = ['optic', 'muzzle'];
+
+export type WeaponFlag =
+  | 'thermal'             // weapon's LOS ignores smoke clouds
+  | 'piercing'            // -2 effective armor DR
+  | 'no_range_falloff'    // ignores the long-range hit penalty
+  | 'recover_ammo_on_crit'; // crit refunds the spent shot
+
+export type WeaponMod = {
+  id: string;
+  name: string;
+  flavor: string;
+  slot: ModSlot;
+  fits: WeaponClass[];           // weapon classes that accept this mod
+  effects: {
+    aim?: number;
+    crit?: number;
+    dmgMin?: number;
+    dmgMax?: number;
+    rangeShort?: number;
+    rangeLong?: number;
+    ammo?: number;
+    mobility?: number;           // wielder mobility delta
+    flags?: WeaponFlag[];
+  };
+  tag: ElementTag;
+};
+
 export type Loadout = {
   primaryId: string;
+  primaryMods: Partial<Record<ModSlot, string>>;
   sidearmId: string;
+  sidearmMods: Partial<Record<ModSlot, string>>;
   armorId: string;
   utilityIds: string[]; // length up to 2
   kitId: string | null; // optional passive equipment

@@ -15,7 +15,9 @@ const LS_KEY = 'tactical.squadLoadouts.v1';
 function normalise(loadout: Partial<Loadout>): Loadout {
   return {
     primaryId: loadout.primaryId!,
+    primaryMods: loadout.primaryMods ?? {},
     sidearmId: loadout.sidearmId!,
+    sidearmMods: loadout.sidearmMods ?? {},
     armorId: loadout.armorId!,
     utilityIds: loadout.utilityIds ?? [],
     kitId: loadout.kitId ?? null,

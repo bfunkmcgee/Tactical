@@ -7,6 +7,8 @@ import { WEAPONS } from '../game/data/weapons';
 import { ARMOR } from '../game/data/armor';
 import { UTILITIES } from '../game/data/utilities';
 import { KITS } from '../game/data/kits';
+import { modsFromIds, totalMobilityDeltaFromMods } from '../game/engine/loadout';
+import type { ModSlot } from '../game/types';
 import { useGameStore } from './gameStore';
 import { reachable, findPath } from '../game/engine/pathing';
 import { chebyshev, keyOf } from '../game/engine/grid';
@@ -68,6 +70,8 @@ type CombatState = {
   cancelPending: () => void;
   tryReload: () => boolean;
   toggleOverwatch: () => boolean;
+  /** Mid-mission Field Refit: swap one mod slot for 1 AP. Pass `null` to clear. */
+  tryRefit: (slot: ModSlot, useSidearm: boolean, modId: string | null) => boolean;
   endPlayerTurn: () => void;
   runEnemyTurn: () => Promise<void>;
   getShotPreview: (targetId: UnitId, useSidearm?: boolean) => ShotPreview | null;
@@ -91,6 +95,8 @@ function mkSoldierUnit(templateId: string): Unit {
   const utilityCharges = loadout.utilityIds.map((id) =>
     (UTILITIES[id]?.charges ?? 0) + (k.extraUtilityCharges ?? 0)
   );
+  // Mods can also nudge wielder mobility (heavy stock −1, folding +1, etc.).
+  const modMobility = totalMobilityDeltaFromMods(loadout.primaryMods, loadout.sidearmMods);
   return {
     id: nextUnitId++,
     faction: 'player',
@@ -100,7 +106,7 @@ function mkSoldierUnit(templateId: string): Unit {
     hp: hpMax,
     hpMax,
     aim: t.aim + (k.aimBonus ?? 0),
-    mobility: Math.max(2, t.mobility + armor.mobility + (k.mobilityBonus ?? 0)),
+    mobility: Math.max(2, t.mobility + armor.mobility + (k.mobilityBonus ?? 0) + modMobility),
     ap: 2, apMax: 2,
     loadout,
     ammo: primary.ammo + (k.extraAmmoPrimary ?? 0),
@@ -156,6 +162,12 @@ function unitUtility(u: Unit, idx: number): Utility | null {
   if (!u.loadout) return null;
   const id = u.loadout.utilityIds[idx];
   return id ? UTILITIES[id] ?? null : null;
+}
+
+/** Equipped mods for a soldier's primary or sidearm. Empty for enemies. */
+function unitMods(u: Unit, useSidearm: boolean) {
+  if (!u.loadout) return [];
+  return modsFromIds(useSidearm ? u.loadout.sidearmMods : u.loadout.primaryMods);
 }
 
 function pushLog(log: LogEntry[], text: string, kind: LogEntry['kind'] = 'info'): LogEntry[] {
@@ -281,7 +293,11 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const w = unitPrimary(u);
     if (!w) return false;
     if (u.ap < w.apCost || u.ammo <= 0) return false;
-    if (!hasLineOfSight(st.map, u.pos, t.pos, st.smokeTiles ? new Set(st.smokeTiles.keys()) : undefined)) return false;
+    // Thermal optic ignores smoke for the LOS check.
+    const mods = unitMods(u, false);
+    const blockers = mods.some((m) => m.effects.flags?.includes('thermal'))
+      ? undefined : new Set(st.smokeTiles.keys());
+    if (!hasLineOfSight(st.map, u.pos, t.pos, blockers)) return false;
     set({ pendingShotTargetId: targetId, pendingShotUsesSidearm: false, mode: 'fire' });
     return true;
   },
@@ -295,7 +311,10 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const w = unitSidearm(u);
     if (!w) return false;
     if (u.ap < w.apCost || u.sidearmAmmo <= 0) return false;
-    if (!hasLineOfSight(st.map, u.pos, t.pos, new Set(st.smokeTiles.keys()))) return false;
+    const mods = unitMods(u, true);
+    const blockers = mods.some((m) => m.effects.flags?.includes('thermal'))
+      ? undefined : new Set(st.smokeTiles.keys());
+    if (!hasLineOfSight(st.map, u.pos, t.pos, blockers)) return false;
     set({ pendingShotTargetId: targetId, pendingShotUsesSidearm: true, mode: 'sidearm' });
     return true;
   },
@@ -348,6 +367,29 @@ export const useCombatStore = create<CombatState>((set, get) => ({
           ap: o.ap - 1, status: { ...o.status, overwatch: false } }
       : o);
     set({ units, log: pushLog(st.log, `${u.name} reloads.`) });
+    return true;
+  },
+
+  tryRefit: (slot, useSidearm, modId) => {
+    const st = get();
+    if (st.phase !== 'player') return false;
+    const u = st.units.find((x) => x.id === st.selectedId);
+    if (!u || !u.alive || !u.loadout) return false;
+    if (u.status.overwatch) return false; // can't tinker while watching
+    if (u.ap < 1) return false;
+    // Apply the swap and decrement 1 AP. Mod choice isn't validated here —
+    // the picker UI is responsible for offering only fits-compatible mods.
+    const slotMap = useSidearm ? { ...u.loadout.sidearmMods } : { ...u.loadout.primaryMods };
+    if (modId === null) delete slotMap[slot];
+    else slotMap[slot] = modId;
+    const nextLoadout = useSidearm
+      ? { ...u.loadout, sidearmMods: slotMap }
+      : { ...u.loadout, primaryMods: slotMap };
+    const units = st.units.map((o) => o.id === u.id
+      ? { ...o, loadout: nextLoadout, ap: o.ap - 1 }
+      : o);
+    const verb = modId === null ? 'removes' : 'fits';
+    set({ units, log: pushLog(st.log, `${u.name} ${verb} a mod (Field Refit).`) });
     return true;
   },
 
@@ -468,7 +510,8 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     if (!u || !t) return null;
     const w = useSidearm ? unitSidearm(u) : unitPrimary(u);
     if (!w) return null;
-    return previewShot(st.map, u, t, w, unitArmor(t), new Set(st.smokeTiles.keys()));
+    return previewShot(st.map, u, t, w, unitArmor(t),
+      new Set(st.smokeTiles.keys()), unitMods(u, !!useSidearm));
   },
 }));
 
@@ -488,16 +531,24 @@ function applyShotResult(
   if (!u || !t || !u.alive || !t.alive) return;
   const ammoField = useSidearm ? 'sidearmAmmo' : 'ammo';
   if (u.ap < weapon.apCost || u[ammoField] <= 0) return;
-  const smokeSet = new Set(st.smokeTiles.keys());
-  if (!hasLineOfSight(st.map, u.pos, t.pos, smokeSet)) return;
 
-  const preview = previewShot(st.map, u, t, weapon, unitArmor(t), smokeSet);
-  const result = resolveShot(preview, weapon, null, st.rng);
+  const mods = unitMods(u, useSidearm);
+  const thermalSkipsSmoke = mods.some((m) => m.effects.flags?.includes('thermal'));
+  const smokeSet = new Set(st.smokeTiles.keys());
+  const losBlockers = thermalSkipsSmoke ? undefined : smokeSet;
+  if (!hasLineOfSight(st.map, u.pos, t.pos, losBlockers)) return;
+
+  const preview = previewShot(st.map, u, t, weapon, unitArmor(t),
+    thermalSkipsSmoke ? undefined : smokeSet, mods);
+  const result = resolveShot(preview, weapon, null, st.rng, mods);
   // Sidearms never end the turn even if the primary's flag is set.
   const apSpent = (!useSidearm && weapon.endsTurn) ? u.ap : weapon.apCost;
+  // Reactive Grip refunds the round on a crit — track for HUD log too.
+  const ammoRefund = result.kind === 'hit' && result.ammoRefund;
   let units = st.units.map((o) =>
     o.id === u.id
-      ? { ...o, ap: o.ap - apSpent, [ammoField]: o[ammoField] - 1, status: { ...o.status, overwatch: false } }
+      ? { ...o, ap: o.ap - apSpent, [ammoField]: o[ammoField] - (ammoRefund ? 0 : 1),
+          status: { ...o.status, overwatch: false } }
       : o
   );
   let kills = st.kills;
@@ -512,9 +563,10 @@ function applyShotResult(
     const died = newHp <= 0;
     units = units.map((o) => o.id === t.id ? { ...o, hp: newHp, alive: !died } : o);
     if (died) kills += 1;
+    const refundTag = ammoRefund ? ' (round salvaged)' : '';
     entry = {
       id: nextLogId++,
-      text: `${u.name} ${verb}${result.critical ? 'critically ' : ''}hits ${t.name} for ${result.damage}${died ? ' — eliminated!' : ''}.`,
+      text: `${u.name} ${verb}${result.critical ? 'critically ' : ''}hits ${t.name} for ${result.damage}${refundTag}${died ? ' — eliminated!' : ''}.`,
       kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
     };
     floaters.push(floaterFor(t.pos, `-${result.damage}`, result.critical ? 0xff9a3c : 0x57d18b));
@@ -639,19 +691,26 @@ function triggerOverwatch(set: Setter, get: Getter, enemyId: UnitId): boolean {
   const enemy = st.units.find((u) => u.id === enemyId);
   if (!enemy || !enemy.alive) return false;
   const smokeSet = new Set(st.smokeTiles.keys());
-  const watcher = st.units.find((u) =>
-    u.faction === 'player' && u.alive && u.status.overwatch &&
-    hasLineOfSight(st.map, u.pos, enemy.pos, smokeSet) &&
-    u.ammo > 0
-  );
+  // Find the first overwatching player who can see through smoke (thermal mod
+  // bypasses smoke for that watcher).
+  const watcher = st.units.find((u) => {
+    if (u.faction !== 'player' || !u.alive || !u.status.overwatch || u.ammo <= 0) return false;
+    const mods = unitMods(u, false);
+    const blockers = mods.some((m) => m.effects.flags?.includes('thermal'))
+      ? undefined : smokeSet;
+    return hasLineOfSight(st.map, u.pos, enemy.pos, blockers);
+  });
   if (!watcher) return false;
   const weapon = unitPrimary(watcher);
   if (!weapon) return false;
-  const base = previewShot(st.map, watcher, enemy, weapon, 0, smokeSet);
+  const watcherMods = unitMods(watcher, false);
+  const watcherSmoke = watcherMods.some((m) => m.effects.flags?.includes('thermal'))
+    ? undefined : smokeSet;
+  const base = previewShot(st.map, watcher, enemy, weapon, 0, watcherSmoke, watcherMods);
   const preview: ShotPreview = { ...base,
     hitChance: Math.max(1, base.hitChance - OVERWATCH_HIT_PENALTY),
     critChance: Math.max(0, base.critChance - OVERWATCH_CRIT_PENALTY) };
-  const result = resolveShot(preview, weapon, null, st.rng);
+  const result = resolveShot(preview, weapon, null, st.rng, watcherMods);
   let units = st.units.map((o) => o.id === watcher.id
     ? { ...o, ammo: o.ammo - 1, status: { ...o.status, overwatch: false } } : o);
   const floaters = [...st.floaters];

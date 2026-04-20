@@ -8,6 +8,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
     hpMax: 10, aim: 10, mobility: 4,
     portraitColor: '#7cc4ff',
     defaultLoadout: {
+      primaryMods: {}, sidearmMods: {},
       primaryId: 'runeweave_carbine',
       sidearmId: 'sigilshot_pistol',
       armorId: 'mithril_vest',
@@ -22,6 +23,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
     hpMax: 14, aim: 0, mobility: 3,
     portraitColor: '#ff9a3c',
     defaultLoadout: {
+      primaryMods: {}, sidearmMods: {},
       primaryId: 'dragonmaw_autocannon',
       sidearmId: 'thornlock_revolver',
       armorId: 'warded_plate',
@@ -36,6 +38,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
     hpMax: 9, aim: 15, mobility: 4,
     portraitColor: '#c79aff',
     defaultLoadout: {
+      primaryMods: {}, sidearmMods: {},
       primaryId: 'arclight_marksman',
       sidearmId: 'sigilshot_pistol',
       armorId: 'swiftstep_greaves',
@@ -50,6 +53,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
     hpMax: 11, aim: 5, mobility: 4,
     portraitColor: '#9cd6a6',
     defaultLoadout: {
+      primaryMods: {}, sidearmMods: {},
       primaryId: 'hexbore_scattergun',
       sidearmId: 'thornlock_revolver',
       armorId: 'oakheart_helm',
