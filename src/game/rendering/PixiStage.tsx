@@ -120,7 +120,7 @@ export default function PixiStage() {
         if (st.pendingShotTargetId !== null) {
           if (unitAt && unitAt.id === st.pendingShotTargetId) { st.confirmPending(); return; }
           st.cancelPending();
-          if (st.mode !== 'fire') return;
+          if (st.mode !== 'fire' && st.mode !== 'sidearm') return;
         }
         if (st.pendingUtility) {
           if (st.pendingUtility.center.x === g.x && st.pendingUtility.center.y === g.y) { st.confirmPending(); return; }
@@ -143,6 +143,11 @@ export default function PixiStage() {
         }
         if (st.mode === 'fire') {
           if (unitAt && unitAt.faction === 'enemy') st.queueShot(unitAt.id);
+          else st.setMode('idle');
+          return;
+        }
+        if (st.mode === 'sidearm') {
+          if (unitAt && unitAt.faction === 'enemy') st.queueSidearmShot(unitAt.id);
           else st.setMode('idle');
           return;
         }
@@ -249,10 +254,24 @@ function drawMap(layer: Container, map: GridMap) {
 
 function redrawOverlays(layer: Container, st: ReturnType<typeof useCombatStore.getState>) {
   layer.removeChildren();
-  const sel = st.units.find((u) => u.id === st.selectedId);
-  if (!sel || sel.faction !== 'player' || !sel.alive) return;
 
   const g = new Graphics();
+  const smokeSet = new Set(st.smokeTiles.keys());
+
+  // Smoke clouds (always drawn, regardless of selection state).
+  for (const [k, rounds] of st.smokeTiles) {
+    const x = k % 4096, y = Math.floor(k / 4096);
+    const p = gridToScreen({ x, y });
+    // Fade as the cloud nears dissipation.
+    const alpha = rounds >= 2 ? 0.6 : 0.4;
+    diamond(g, p.x, p.y, 0xc8c8d0, alpha, 0xa0a0b0);
+  }
+
+  const sel = st.units.find((u) => u.id === st.selectedId);
+  if (!sel || sel.faction !== 'player' || !sel.alive) {
+    layer.addChild(g);
+    return;
+  }
 
   // Movement reach when not targeting.
   if ((st.mode === 'move' || st.mode === 'idle') && st.pendingUtility === null && st.pendingShotTargetId === null) {
@@ -266,11 +285,11 @@ function redrawOverlays(layer: Container, st: ReturnType<typeof useCombatStore.g
     }
   }
 
-  // Fire mode: mark valid targets in LOS.
-  if (st.mode === 'fire') {
+  // Fire / Sidearm mode: mark valid targets in LOS (smoke blocks).
+  if (st.mode === 'fire' || st.mode === 'sidearm') {
     for (const enemy of st.units) {
       if (enemy.faction !== 'enemy' || !enemy.alive) continue;
-      if (!hasLineOfSight(st.map, sel.pos, enemy.pos)) continue;
+      if (!hasLineOfSight(st.map, sel.pos, enemy.pos, smokeSet)) continue;
       const p = gridToScreen(enemy.pos);
       const pending = st.pendingShotTargetId === enemy.id;
       diamond(g, p.x, p.y, 0xff5a6a, pending ? 0.45 : 0.28, 0xff5a6a);

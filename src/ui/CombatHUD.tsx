@@ -10,6 +10,7 @@ export default function CombatHUD() {
   const mode = useCombatStore((s) => s.mode);
   const selectedUtilityIdx = useCombatStore((s) => s.selectedUtilityIdx);
   const pendingShotTargetId = useCombatStore((s) => s.pendingShotTargetId);
+  const pendingShotUsesSidearm = useCombatStore((s) => s.pendingShotUsesSidearm);
   const pendingUtility = useCombatStore((s) => s.pendingUtility);
   const log = useCombatStore((s) => s.log);
   const setMode = useCombatStore((s) => s.setMode);
@@ -24,10 +25,13 @@ export default function CombatHUD() {
   const selected = units.find((u) => u.id === selectedId);
   const playerUnits = units.filter((u) => u.faction === 'player');
   const primary = selected?.loadout ? WEAPONS[selected.loadout.primaryId] : null;
+  const sidearm = selected?.loadout ? WEAPONS[selected.loadout.sidearmId] : null;
   const disabled = phase !== 'player' || !selected || !selected.alive;
 
-  const shotPreview = pendingShotTargetId !== null ? getShotPreview(pendingShotTargetId) : null;
-  const shotTarget = pendingShotTargetId !== null ? units.find((u) => u.id === pendingShotTargetId) : null;
+  const shotPreview = pendingShotTargetId !== null
+    ? getShotPreview(pendingShotTargetId, pendingShotUsesSidearm) : null;
+  const shotTarget = pendingShotTargetId !== null
+    ? units.find((u) => u.id === pendingShotTargetId) : null;
   const pendingUtilityDef = (pendingUtility && selected?.loadout)
     ? UTILITIES[selected.loadout.utilityIds[pendingUtility.idx]]
     : null;
@@ -69,28 +73,43 @@ export default function CombatHUD() {
         </div>
       </div>
 
-      {/* Shot preview card */}
+      {/* Shot preview card with hit-modifier breakdown */}
       {shotPreview && shotTarget && (
         <div className="panel" style={{
           position: 'absolute', left: '50%', transform: 'translateX(-50%)',
           bottom: 'calc(var(--safe-bottom) + 92px)',
-          minWidth: 240, padding: 'var(--s-3)', pointerEvents: 'auto',
+          minWidth: 260, maxWidth: 320, padding: 'var(--s-3)', pointerEvents: 'auto',
           borderColor: 'var(--danger)',
         }}>
           <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-            <strong style={{ color: 'var(--fg-0)' }}>Target: {shotTarget.name}</strong>
+            <strong style={{ color: 'var(--fg-0)' }}>
+              {pendingShotUsesSidearm ? '🔫 Sidearm' : 'Target'}: {shotTarget.name}
+            </strong>
             <span style={{ fontSize: 12, color: coverColor(shotPreview.cover) }}>
               {shotPreview.cover === 'none' ? 'flanked' : `${shotPreview.cover} cover`}
             </span>
           </div>
-          <div className="row" style={{ gap: 'var(--s-4)', fontSize: 14, marginBottom: 8 }}>
+          <div className="row" style={{ gap: 'var(--s-4)', fontSize: 14, marginBottom: 6 }}>
             <span><span style={{ color: 'var(--fg-2)' }}>hit</span> <strong>{shotPreview.hitChance}%</strong></span>
             <span><span style={{ color: 'var(--fg-2)' }}>crit</span> <strong>{shotPreview.critChance}%</strong></span>
             <span><span style={{ color: 'var(--fg-2)' }}>dmg</span> <strong>{shotPreview.dmgMin}–{shotPreview.dmgMax}</strong></span>
           </div>
+          {/* Modifier breakdown */}
+          <div style={{ fontSize: 11, color: 'var(--fg-2)', marginBottom: 8,
+            borderTop: '1px solid var(--bg-3)', paddingTop: 6 }}>
+            {shotPreview.modifiers.map((m, i) => (
+              <span key={i} style={{ marginRight: 8 }}>
+                <span style={{ color: m.value < 0 ? 'var(--danger)' : m.value > 0 ? 'var(--success)' : 'var(--fg-2)' }}>
+                  {m.value > 0 ? '+' : ''}{m.value}
+                </span> {m.label}
+              </span>
+            ))}
+          </div>
           <div className="row" style={{ gap: 'var(--s-2)' }}>
             <button style={{ flex: 1 }} onClick={cancelPending}>Cancel</button>
-            <button className="primary" style={{ flex: 1 }} onClick={confirmPending}>Fire</button>
+            <button className="primary" style={{ flex: 1 }} onClick={confirmPending}>
+              {pendingShotUsesSidearm ? 'Pistol' : 'Fire'}
+            </button>
           </div>
         </div>
       )}
@@ -110,9 +129,11 @@ export default function CombatHUD() {
           <div style={{ fontSize: 13, color: 'var(--fg-1)', marginBottom: 8 }}>
             {pendingUtilityDef.dmgMin !== undefined
               ? `${pendingUtilityDef.dmgMin}–${pendingUtilityDef.dmgMax} dmg in radius`
-              : pendingUtilityDef.heal
-                ? `Heals ${pendingUtilityDef.heal} to adjacent ally`
-                : `Applies ${pendingUtilityDef.kind}`}
+              : pendingUtilityDef.kind === 'smoke'
+                ? `Drops smoke that blocks line of sight for 2 rounds`
+                : pendingUtilityDef.heal
+                  ? `Heals ${pendingUtilityDef.heal} to adjacent ally`
+                  : `Applies ${pendingUtilityDef.kind}`}
           </div>
           <div className="row" style={{ gap: 'var(--s-2)' }}>
             <button style={{ flex: 1 }} onClick={cancelPending}>Cancel</button>
@@ -136,18 +157,27 @@ export default function CombatHUD() {
           style={{ borderColor: mode === 'fire' ? 'var(--accent)' : undefined }}>
           Fire {primary ? `(${selected!.ammo}/${primary.ammo})` : ''}
         </button>
+        <button onClick={() => setMode(mode === 'sidearm' ? 'idle' : 'sidearm')}
+          disabled={disabled || !sidearm || (selected!.ap < sidearm.apCost) || selected!.sidearmAmmo <= 0}
+          style={{ borderColor: mode === 'sidearm' ? 'var(--accent)' : undefined }}>
+          Sidearm {sidearm ? `(${selected!.sidearmAmmo}/${sidearm.ammo})` : ''}
+        </button>
         {selected?.loadout?.utilityIds.map((uid, i) => {
           const u = UTILITIES[uid]!;
           const active = mode === 'utility' && selectedUtilityIdx === i;
+          const charges = selected.utilityCharges[i] ?? 0;
           return (
             <button key={i} onClick={() => setMode(active ? 'idle' : 'utility', active ? undefined : i)}
-              disabled={disabled || selected!.ap < u.apCost}
+              disabled={disabled || selected!.ap < u.apCost || charges <= 0}
               style={{ borderColor: active ? 'var(--accent)' : undefined }}>
-              {u.name}
+              {u.name} ×{charges}
             </button>
           );
         })}
-        <button onClick={() => tryReload()} disabled={disabled || !primary || selected!.ammo >= (primary?.ammo ?? 0)}>Reload</button>
+        <button onClick={() => tryReload()}
+          disabled={disabled || !primary
+            || (selected!.ammo >= (primary?.ammo ?? 0)
+                && selected!.sidearmAmmo >= (sidearm?.ammo ?? 0))}>Reload</button>
         <button onClick={() => toggleOverwatch()} disabled={disabled || selected!.ap < 1}
           style={{ borderColor: selected?.status.overwatch ? 'var(--accent)' : undefined }}>
           {selected?.status.overwatch ? 'Cancel OW' : 'Overwatch'}

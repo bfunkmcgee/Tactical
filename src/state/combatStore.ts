@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GridMap, LogEntry, TurnPhase, Unit, UnitId, Utility, Vec2, ShotPreview } from '../game/types';
+import type { GridMap, LogEntry, TurnPhase, Unit, UnitId, Utility, Vec2, ShotPreview, Weapon } from '../game/types';
 import { RUINED_MARKET, pickRandomMap } from '../game/data/maps';
 import { SOLDIERS } from '../game/data/soldiers';
 import { ENEMIES } from '../game/data/enemies';
@@ -14,7 +14,13 @@ import { hasLineOfSight } from '../game/engine/los';
 import { makeRng, type RNG } from '../game/engine/rng';
 import { decide } from '../game/engine/ai';
 
-export type ActionMode = 'idle' | 'move' | 'fire' | 'utility';
+export type ActionMode = 'idle' | 'move' | 'fire' | 'sidearm' | 'utility';
+
+/** Smoke cloud lifetime (in player rounds) before it dissipates. */
+const SMOKE_DURATION = 2;
+/** Overwatch reaction-fire accuracy penalty. */
+const OVERWATCH_HIT_PENALTY = 15;
+const OVERWATCH_CRIT_PENALTY = 10;
 
 export type Floater = {
   id: number;
@@ -27,6 +33,8 @@ export type Floater = {
 type CombatState = {
   map: GridMap;
   units: Unit[];
+  /** Smoke cloud cells: tile key → rounds remaining. Blocks LOS for both sides. */
+  smokeTiles: Map<number, number>;
   selectedId: UnitId | null;
   phase: TurnPhase;
   round: number;
@@ -40,6 +48,8 @@ type CombatState = {
   damageTaken: number;
   // pending confirm
   pendingShotTargetId: UnitId | null;
+  /** When set, the pending shot uses the soldier's sidearm instead of primary. */
+  pendingShotUsesSidearm: boolean;
   pendingUtility: { center: Vec2; idx: number } | null;
   // ui ephemera
   shakeFrames: number;
@@ -51,6 +61,7 @@ type CombatState = {
 
   tryMove: (to: Vec2) => boolean;
   queueShot: (targetId: UnitId) => boolean;
+  queueSidearmShot: (targetId: UnitId) => boolean;
   queueUtility: (target: Vec2, utilityIdx: number) => boolean;
   confirmPending: () => void;
   cancelPending: () => void;
@@ -58,7 +69,7 @@ type CombatState = {
   toggleOverwatch: () => boolean;
   endPlayerTurn: () => void;
   runEnemyTurn: () => Promise<void>;
-  getShotPreview: (targetId: UnitId) => ShotPreview | null;
+  getShotPreview: (targetId: UnitId, useSidearm?: boolean) => ShotPreview | null;
 };
 
 let nextUnitId = 1;
@@ -131,6 +142,10 @@ function unitPrimary(u: Unit) {
   return u.loadout ? WEAPONS[u.loadout.primaryId]! : null;
 }
 
+function unitSidearm(u: Unit) {
+  return u.loadout ? WEAPONS[u.loadout.sidearmId]! : null;
+}
+
 function unitUtility(u: Unit, idx: number): Utility | null {
   if (!u.loadout) return null;
   const id = u.loadout.utilityIds[idx];
@@ -167,6 +182,7 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 export const useCombatStore = create<CombatState>((set, get) => ({
   map: RUINED_MARKET,
   units: [],
+  smokeTiles: new Map(),
   selectedId: null,
   phase: 'player',
   round: 1,
@@ -178,6 +194,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   kills: 0,
   damageTaken: 0,
   pendingShotTargetId: null,
+  pendingShotUsesSidearm: false,
   pendingUtility: null,
   shakeFrames: 0,
   floaters: [],
@@ -200,14 +217,16 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     set({
       map,
       units,
+      smokeTiles: new Map(),
       selectedId: units[0]?.id ?? null,
       phase: 'player',
       round: 1,
       mode: 'idle',
       selectedUtilityIdx: null,
       pendingShotTargetId: null,
+      pendingShotUsesSidearm: false,
       pendingUtility: null,
-      log: [{ id: nextLogId++, text: 'Mission: Ruined Market. Neutralize all hostiles.', kind: 'info' }],
+      log: [{ id: nextLogId++, text: `Mission: ${map.name}. Neutralize all hostiles.`, kind: 'info' }],
       rng: makeRng(Date.now() & 0xffffffff),
       kills: 0, damageTaken: 0, floaters: [],
     });
@@ -215,13 +234,14 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   },
 
   selectUnit: (id) => {
-    set({ selectedId: id, mode: 'idle', selectedUtilityIdx: null, pendingShotTargetId: null, pendingUtility: null });
+    set({ selectedId: id, mode: 'idle', selectedUtilityIdx: null,
+      pendingShotTargetId: null, pendingShotUsesSidearm: false, pendingUtility: null });
     set((st) => ({ reach: recalcReach(st) }));
   },
 
   setMode: (m, utilityIdx) => set({
     mode: m, selectedUtilityIdx: utilityIdx ?? null,
-    pendingShotTargetId: null, pendingUtility: null,
+    pendingShotTargetId: null, pendingShotUsesSidearm: false, pendingUtility: null,
   }),
 
   tryMove: (to) => {
@@ -255,8 +275,22 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const w = unitPrimary(u);
     if (!w) return false;
     if (u.ap < w.apCost || u.ammo <= 0) return false;
-    if (!hasLineOfSight(st.map, u.pos, t.pos)) return false;
-    set({ pendingShotTargetId: targetId, mode: 'fire' });
+    if (!hasLineOfSight(st.map, u.pos, t.pos, st.smokeTiles ? new Set(st.smokeTiles.keys()) : undefined)) return false;
+    set({ pendingShotTargetId: targetId, pendingShotUsesSidearm: false, mode: 'fire' });
+    return true;
+  },
+
+  queueSidearmShot: (targetId) => {
+    const st = get();
+    if (st.phase !== 'player') return false;
+    const u = st.units.find((x) => x.id === st.selectedId);
+    const t = st.units.find((x) => x.id === targetId);
+    if (!u || !t || !u.alive || !t.alive) return false;
+    const w = unitSidearm(u);
+    if (!w) return false;
+    if (u.ap < w.apCost || u.sidearmAmmo <= 0) return false;
+    if (!hasLineOfSight(st.map, u.pos, t.pos, new Set(st.smokeTiles.keys()))) return false;
+    set({ pendingShotTargetId: targetId, pendingShotUsesSidearm: true, mode: 'sidearm' });
     return true;
   },
 
@@ -268,17 +302,22 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const util = unitUtility(u, utilityIdx);
     if (!util) return false;
     if (u.ap < util.apCost) return false;
+    if ((u.utilityCharges[utilityIdx] ?? 0) <= 0) return false;
     if (chebyshev(u.pos, center) > util.range) return false;
     set({ pendingUtility: { center, idx: utilityIdx }, mode: 'utility', selectedUtilityIdx: utilityIdx });
     return true;
   },
 
-  cancelPending: () => set({ pendingShotTargetId: null, pendingUtility: null }),
+  cancelPending: () => set({ pendingShotTargetId: null, pendingShotUsesSidearm: false, pendingUtility: null }),
 
   confirmPending: () => {
     const st = get();
     if (st.pendingShotTargetId !== null) {
-      resolvePlayerShot(set, get, st.selectedId!, st.pendingShotTargetId);
+      if (st.pendingShotUsesSidearm) {
+        resolvePlayerSidearm(set, get, st.selectedId!, st.pendingShotTargetId);
+      } else {
+        resolvePlayerShot(set, get, st.selectedId!, st.pendingShotTargetId);
+      }
       return;
     }
     if (st.pendingUtility) {
@@ -290,10 +329,13 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const st = get();
     const u = st.units.find((x) => x.id === st.selectedId);
     if (!u || !u.alive || u.ap < 1) return false;
-    const w = unitPrimary(u);
-    if (!w) return false;
+    const primary = unitPrimary(u);
+    const sidearm = unitSidearm(u);
+    if (!primary) return false;
+    // Reload tops up both weapons (one action covers the loadout).
     const units = st.units.map((o) => o.id === u.id
-      ? { ...o, ammo: w.ammo, ap: o.ap - 1, status: { ...o.status, overwatch: false } }
+      ? { ...o, ammo: primary.ammo, sidearmAmmo: sidearm?.ammo ?? o.sidearmAmmo,
+          ap: o.ap - 1, status: { ...o.status, overwatch: false } }
       : o);
     set({ units, log: pushLog(st.log, `${u.name} reloads.`) });
     return true;
@@ -317,18 +359,20 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   endPlayerTurn: () => {
     const st = get();
     if (st.phase !== 'player') return;
-    set({ phase: 'enemy', mode: 'idle', selectedUtilityIdx: null, pendingShotTargetId: null, pendingUtility: null });
+    set({ phase: 'enemy', mode: 'idle', selectedUtilityIdx: null,
+      pendingShotTargetId: null, pendingShotUsesSidearm: false, pendingUtility: null });
     void get().runEnemyTurn();
   },
 
   runEnemyTurn: async () => {
     const isTest = typeof window === 'undefined';
     const delay = isTest ? 0 : 220;
+    const smokeSet = () => new Set(get().smokeTiles.keys());
     const enemies = get().units.filter((u) => u.faction === 'enemy' && u.alive);
     for (const eSnap of enemies) {
       let actor = get().units.find((u) => u.id === eSnap.id);
       while (actor && actor.alive && actor.ap > 0) {
-        const intent = decide(get().map, actor, get().units);
+        const intent = decide(get().map, actor, get().units, smokeSet());
         if (intent.kind === 'wait') break;
         if (intent.kind === 'move') {
           const steps = Math.min(intent.path.length - 1, actor.mobility * actor.ap);
@@ -360,7 +404,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
           const target = get().units.find((u) => u.id === intent.target.id);
           if (!target || !target.alive) break;
           const armorDr = target.faction === 'player' ? unitArmor(target) : 0;
-          const result = resolveEnemyAttack(get().map, actor, target, armorDr, get().rng);
+          const result = resolveEnemyAttack(get().map, actor, target, armorDr, get().rng, smokeSet());
           let units = get().units.map((o) => o.id === actor!.id ? { ...o, ap: o.ap - 1 } : o);
           let damageTaken = get().damageTaken;
           let entry: LogEntry;
@@ -388,23 +432,33 @@ export const useCombatStore = create<CombatState>((set, get) => ({
         actor = get().units.find((u) => u.id === eSnap.id);
       }
     }
+    // Reset AP, clear short-lived statuses, and tick smoke clouds down.
     const units = get().units.map((u) => u.alive
       ? { ...u, ap: u.apMax, status: { ...u.status, blinded: false, suppressed: false } }
       : u);
-    set({ units, phase: 'player', round: get().round + 1 });
-    set((s) => ({ reach: recalcReach(s), log: pushLog(s.log, `Round ${s.round} — your turn.`) }));
+    const nextSmoke = new Map<number, number>();
+    let dissipated = 0;
+    for (const [k, rounds] of get().smokeTiles) {
+      if (rounds > 1) nextSmoke.set(k, rounds - 1);
+      else dissipated++;
+    }
+    set({ units, phase: 'player', round: get().round + 1, smokeTiles: nextSmoke });
+    set((s) => ({ reach: recalcReach(s),
+      log: pushLog(s.log, dissipated > 0
+        ? `Round ${s.round} — smoke dissipates. Your turn.`
+        : `Round ${s.round} — your turn.`) }));
     const end = checkEnd(get());
     if (end) set(end);
   },
 
-  getShotPreview: (targetId) => {
+  getShotPreview: (targetId, useSidearm) => {
     const st = get();
     const u = st.units.find((x) => x.id === st.selectedId);
     const t = st.units.find((x) => x.id === targetId);
     if (!u || !t) return null;
-    const w = unitPrimary(u);
+    const w = useSidearm ? unitSidearm(u) : unitPrimary(u);
     if (!w) return null;
-    return previewShot(st.map, u, t, w, unitArmor(t));
+    return previewShot(st.map, u, t, w, unitArmor(t), new Set(st.smokeTiles.keys()));
   },
 }));
 
@@ -413,26 +467,35 @@ export const useCombatStore = create<CombatState>((set, get) => ({
 type Setter = (partial: Partial<CombatState> | ((s: CombatState) => Partial<CombatState>)) => void;
 type Getter = () => CombatState;
 
-function resolvePlayerShot(set: Setter, get: Getter, shooterId: UnitId, targetId: UnitId) {
+/** Shared shot-resolution path used by both primary and sidearm fire. */
+function applyShotResult(
+  set: Setter, get: Getter, shooterId: UnitId, targetId: UnitId,
+  weapon: Weapon, useSidearm: boolean
+) {
   const st = get();
   const u = st.units.find((x) => x.id === shooterId);
   const t = st.units.find((x) => x.id === targetId);
   if (!u || !t || !u.alive || !t.alive) return;
-  const weapon = unitPrimary(u);
-  if (!weapon) return;
-  if (u.ap < weapon.apCost || u.ammo <= 0) return;
-  if (!hasLineOfSight(st.map, u.pos, t.pos)) return;
-  const preview = previewShot(st.map, u, t, weapon, unitArmor(t));
+  const ammoField = useSidearm ? 'sidearmAmmo' : 'ammo';
+  if (u.ap < weapon.apCost || u[ammoField] <= 0) return;
+  const smokeSet = new Set(st.smokeTiles.keys());
+  if (!hasLineOfSight(st.map, u.pos, t.pos, smokeSet)) return;
+
+  const preview = previewShot(st.map, u, t, weapon, unitArmor(t), smokeSet);
   const result = resolveShot(preview, weapon, null, st.rng);
-  const apSpent = weapon.endsTurn ? u.ap : weapon.apCost;
+  // Sidearms never end the turn even if the primary's flag is set.
+  const apSpent = (!useSidearm && weapon.endsTurn) ? u.ap : weapon.apCost;
   let units = st.units.map((o) =>
-    o.id === u.id ? { ...o, ap: o.ap - apSpent, ammo: o.ammo - 1, status: { ...o.status, overwatch: false } } : o
+    o.id === u.id
+      ? { ...o, ap: o.ap - apSpent, [ammoField]: o[ammoField] - 1, status: { ...o.status, overwatch: false } }
+      : o
   );
   let kills = st.kills;
   const floaters = [...st.floaters];
   let entry: LogEntry;
+  const verb = useSidearm ? `draws ${weapon.name} and ` : '';
   if (result.kind === 'miss') {
-    entry = { id: nextLogId++, text: `${u.name} misses ${t.name} (${preview.hitChance}%).`, kind: 'miss' };
+    entry = { id: nextLogId++, text: `${u.name} ${verb}misses ${t.name} (${preview.hitChance}%).`, kind: 'miss' };
     floaters.push(floaterFor(t.pos, 'MISS', 0x6b7689));
   } else {
     const newHp = Math.max(0, t.hp - result.damage);
@@ -441,16 +504,33 @@ function resolvePlayerShot(set: Setter, get: Getter, shooterId: UnitId, targetId
     if (died) kills += 1;
     entry = {
       id: nextLogId++,
-      text: `${u.name} ${result.critical ? 'critically ' : ''}hits ${t.name} for ${result.damage}${died ? ' — eliminated!' : ''}.`,
+      text: `${u.name} ${verb}${result.critical ? 'critically ' : ''}hits ${t.name} for ${result.damage}${died ? ' — eliminated!' : ''}.`,
       kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
     };
     floaters.push(floaterFor(t.pos, `-${result.damage}`, result.critical ? 0xff9a3c : 0x57d18b));
   }
   set({ units, kills, log: [...st.log, entry].slice(-60),
-    mode: 'idle', pendingShotTargetId: null, shakeFrames: result.kind === 'hit' ? 8 : 0, floaters });
+    mode: 'idle', pendingShotTargetId: null, pendingShotUsesSidearm: false,
+    shakeFrames: result.kind === 'hit' ? 8 : 0, floaters });
   set((s) => ({ reach: recalcReach(s) }));
   const end = checkEnd(get());
   if (end) set(end);
+}
+
+function resolvePlayerShot(set: Setter, get: Getter, shooterId: UnitId, targetId: UnitId) {
+  const u = get().units.find((x) => x.id === shooterId);
+  if (!u) return;
+  const w = unitPrimary(u);
+  if (!w) return;
+  applyShotResult(set, get, shooterId, targetId, w, false);
+}
+
+function resolvePlayerSidearm(set: Setter, get: Getter, shooterId: UnitId, targetId: UnitId) {
+  const u = get().units.find((x) => x.id === shooterId);
+  if (!u) return;
+  const w = unitSidearm(u);
+  if (!w) return;
+  applyShotResult(set, get, shooterId, targetId, w, true);
 }
 
 function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: Vec2, idx: number) {
@@ -460,12 +540,14 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
   const util = unitUtility(u, idx);
   if (!util) return;
   if (u.ap < util.apCost) return;
+  if ((u.utilityCharges[idx] ?? 0) <= 0) return;
   if (chebyshev(u.pos, center) > util.range) return;
 
   let units = [...st.units];
   let kills = st.kills;
   let msg = '';
   const floaters = [...st.floaters];
+  let nextSmoke: Map<number, number> | null = null;
 
   if (util.kind === 'grenade' && util.dmgMin !== undefined && util.dmgMax !== undefined) {
     const dmgMin = util.dmgMin!, dmgMax = util.dmgMax!;
@@ -492,7 +574,21 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
     );
     msg = `${u.name} pops ${util.name}; foes are blinded.`;
   } else if (util.kind === 'smoke') {
-    msg = `${u.name} deploys ${util.name}; vision dims where it falls.`;
+    // Drop smoke tiles in the radius. Each tile blocks LOS for SMOKE_DURATION rounds.
+    nextSmoke = new Map(st.smokeTiles);
+    let added = 0;
+    for (let dy = -util.radius; dy <= util.radius; dy++) {
+      for (let dx = -util.radius; dx <= util.radius; dx++) {
+        const x = center.x + dx, y = center.y + dy;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) > util.radius) continue;
+        if (x < 0 || y < 0 || x >= st.map.width || y >= st.map.height) continue;
+        const tile = st.map.tiles[y * st.map.width + x];
+        if (!tile || tile.kind === 'wall') continue;
+        nextSmoke.set(keyOf(x, y), SMOKE_DURATION);
+        added++;
+      }
+    }
+    msg = `${u.name} deploys ${util.name}; ${added} tiles of smoke roll out.`;
   } else if (util.kind === 'medkit' && util.heal) {
     const heal = util.heal!;
     units = units.map((o) => {
@@ -506,17 +602,19 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
     msg = `${u.name} applies ${util.name}.`;
   }
 
+  // Decrement THIS slot's charge counter (correct even when the same utility is equipped twice).
   units = units.map((o) => {
     if (o.id !== u.id) return o;
-    const newUtilIds = [...(o.loadout?.utilityIds ?? [])];
-    newUtilIds.splice(idx, 1);
-    return { ...o, ap: o.ap - util.apCost, status: { ...o.status, overwatch: false },
-      loadout: o.loadout ? { ...o.loadout, utilityIds: newUtilIds } : o.loadout };
+    const charges = [...o.utilityCharges];
+    charges[idx] = Math.max(0, (charges[idx] ?? 0) - 1);
+    return { ...o, utilityCharges: charges, ap: o.ap - util.apCost,
+      status: { ...o.status, overwatch: false } };
   });
 
   set({ units, kills, mode: 'idle', selectedUtilityIdx: null, pendingUtility: null,
     log: pushLog(st.log, msg, util.kind === 'medkit' ? 'heal' : 'info'),
-    shakeFrames: util.kind === 'grenade' ? 10 : 0, floaters });
+    shakeFrames: util.kind === 'grenade' ? 10 : 0, floaters,
+    ...(nextSmoke ? { smokeTiles: nextSmoke } : {}) });
   set((s) => ({ reach: recalcReach(s) }));
   const end = checkEnd(get());
   if (end) set(end);
@@ -530,17 +628,19 @@ function triggerOverwatch(set: Setter, get: Getter, enemyId: UnitId): boolean {
   const st = get();
   const enemy = st.units.find((u) => u.id === enemyId);
   if (!enemy || !enemy.alive) return false;
+  const smokeSet = new Set(st.smokeTiles.keys());
   const watcher = st.units.find((u) =>
     u.faction === 'player' && u.alive && u.status.overwatch &&
-    u.ap >= 0 && // overwatch already locked AP to 0 — always allowed to react
-    hasLineOfSight(st.map, u.pos, enemy.pos) &&
+    hasLineOfSight(st.map, u.pos, enemy.pos, smokeSet) &&
     u.ammo > 0
   );
   if (!watcher) return false;
   const weapon = unitPrimary(watcher);
   if (!weapon) return false;
-  const base = previewShot(st.map, watcher, enemy, weapon, 0);
-  const preview: ShotPreview = { ...base, hitChance: Math.max(1, base.hitChance - 15), critChance: Math.max(0, base.critChance - 10) };
+  const base = previewShot(st.map, watcher, enemy, weapon, 0, smokeSet);
+  const preview: ShotPreview = { ...base,
+    hitChance: Math.max(1, base.hitChance - OVERWATCH_HIT_PENALTY),
+    critChance: Math.max(0, base.critChance - OVERWATCH_CRIT_PENALTY) };
   const result = resolveShot(preview, weapon, null, st.rng);
   let units = st.units.map((o) => o.id === watcher.id
     ? { ...o, ammo: o.ammo - 1, status: { ...o.status, overwatch: false } } : o);
