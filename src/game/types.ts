@@ -74,7 +74,13 @@ export type Utility = {
   tag: ElementTag;
 };
 
-export type SoldierClass = 'Ranger' | 'Warden' | 'Mystic' | 'Sapper';
+/**
+ * Soldier class label — purely cosmetic, displayed in the loadout screen.
+ * Originally a fixed union (Ranger/Warden/Mystic/Sapper) for the launch
+ * faction; widened to plain string so packs can name their own classes
+ * (Operator, Sentinel, Choirsworn, etc.) without the engine caring.
+ */
+export type SoldierClass = string;
 
 export type ModSlot = 'optic' | 'magazine' | 'muzzle' | 'stock';
 

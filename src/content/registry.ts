@@ -3,6 +3,10 @@ import type {
 } from '../game/types';
 import type { ContentPack } from './types';
 import { pack as eagleCorps } from './packs/eagle-corps';
+import { pack as voidWatch } from './packs/void-watch';
+
+/** Every pack the build ships with. Add new packs here to make them selectable. */
+export const ALL_PACKS: ContentPack[] = [eagleCorps, voidWatch];
 
 /**
  * Active pack accessor. One pack is active at a time. Hot-swappable via

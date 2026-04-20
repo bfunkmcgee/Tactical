@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import type { Loadout } from '../game/types';
-import { useContent, allSoldierTemplates } from '../content/registry';
+import { useContent, allSoldierTemplates, onPackChange } from '../content/registry';
 
 type Screen = 'menu' | 'loadout' | 'combat' | 'debrief';
 
 type SquadLoadouts = Record<string, Loadout>;
 
-const LS_KEY = 'tactical.squadLoadouts.v1';
+/** Per-pack localStorage key — keeps Eagle Corps loadouts from leaking into Void-Watch and vice versa. */
+const lsKey = (packId: string) => `tactical.${packId}.squadLoadouts.v1`;
 
 /**
  * Older saved loadouts (pre-Kit / pre-mods) lack newer fields. Normalise on
@@ -24,9 +25,16 @@ function normalise(loadout: Partial<Loadout>): Loadout {
   };
 }
 
+function defaultsForActivePack(): SquadLoadouts {
+  const out: SquadLoadouts = {};
+  for (const s of allSoldierTemplates()) out[s.id] = { ...s.defaultLoadout };
+  return out;
+}
+
 function loadPersisted(): SquadLoadouts {
+  const key = lsKey(useContent().id);
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw) as Record<string, Partial<Loadout>>;
       const out: SquadLoadouts = {};
@@ -34,13 +42,11 @@ function loadPersisted(): SquadLoadouts {
       return out;
     }
   } catch {}
-  const defaults: SquadLoadouts = {};
-  for (const s of allSoldierTemplates()) defaults[s.id] = { ...s.defaultLoadout };
-  return defaults;
+  return defaultsForActivePack();
 }
 
 function persist(loadouts: SquadLoadouts) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(loadouts)); } catch {}
+  try { localStorage.setItem(lsKey(useContent().id), JSON.stringify(loadouts)); } catch {}
 }
 
 type GameState = {
@@ -55,6 +61,8 @@ type GameState = {
   setLoadout: (soldierId: string, loadout: Loadout) => void;
   resetLoadouts: () => void;
   setOutcome: (o: 'victory' | 'defeat', kills: number, damage: number) => void;
+  /** Reset roster + loadouts to the active pack's defaults. Called on pack swap. */
+  reloadFromActivePack: () => void;
 };
 
 export const useGameStore = create<GameState>((set) => ({
@@ -74,10 +82,23 @@ export const useGameStore = create<GameState>((set) => ({
     }),
   resetLoadouts: () =>
     set(() => {
-      const defaults: SquadLoadouts = {};
-      for (const s of allSoldierTemplates()) defaults[s.id] = { ...s.defaultLoadout };
+      const defaults = defaultsForActivePack();
       persist(defaults);
       return { loadouts: defaults };
     }),
   setOutcome: (o, kills, damage) => set({ lastOutcome: o, lastKills: kills, lastDamage: damage }),
+  reloadFromActivePack: () =>
+    set(() => ({
+      screen: 'menu',
+      roster: useContent().defaultRoster.slice(),
+      loadouts: loadPersisted(),
+      lastOutcome: null,
+      lastKills: 0,
+      lastDamage: 0,
+    })),
 }));
+
+// Pack swaps automatically reload roster + persisted loadouts from the new pack.
+onPackChange(() => {
+  useGameStore.getState().reloadFromActivePack();
+});
