@@ -1,269 +1,229 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
   <defs>
-    <linearGradient id="m-bone" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#f4eee0"/><stop offset="1" stop-color="#8a7e66"/>
+    <linearGradient id="m-plate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#0a0a0c"/>
     </linearGradient>
-    <linearGradient id="m-bone-dark" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#b8ad95"/><stop offset="1" stop-color="#4a3e28"/>
+    <linearGradient id="m-plate-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4a50"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <linearGradient id="m-tan" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a88c5c"/><stop offset="1" stop-color="#5a4828"/>
+    </linearGradient>
+    <linearGradient id="m-tan-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a6038"/><stop offset="1" stop-color="#3a2e18"/>
+    </linearGradient>
+    <linearGradient id="m-boot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b09060"/><stop offset="1" stop-color="#6a5430"/>
+    </linearGradient>
+    <linearGradient id="m-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8c488"/><stop offset="1" stop-color="#8a6838"/>
     </linearGradient>
     <linearGradient id="m-fur" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#d4c8b0"/><stop offset="1" stop-color="#3a3020"/>
+      <stop offset="0" stop-color="#8a6e48"/><stop offset="1" stop-color="#2a1e10"/>
+    </linearGradient>
+    <linearGradient id="m-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d8a878"/><stop offset="1" stop-color="#8a6038"/>
     </linearGradient>
     <linearGradient id="m-scarf" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#ece4c8"/><stop offset="1" stop-color="#7a6e52"/>
-    </linearGradient>
-    <linearGradient id="m-under" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#2a251e"/><stop offset="1" stop-color="#0a0806"/>
+      <stop offset="0" stop-color="#b8986a"/><stop offset="1" stop-color="#6a5230"/>
     </linearGradient>
     <linearGradient id="m-gun" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#2a2224"/><stop offset="1" stop-color="#080608"/>
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#08080a"/>
     </linearGradient>
     <radialGradient id="m-rune" cx=".5" cy=".5" r=".5">
       <stop offset="0" stop-color="#eaf6ff"/>
       <stop offset=".5" stop-color="#7cc4ff"/>
       <stop offset="1" stop-color="#2a6aa0" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="m-fae" cx=".5" cy=".5" r=".5">
-      <stop offset="0" stop-color="#fff0ff"/>
-      <stop offset=".5" stop-color="#c79aff"/>
-      <stop offset="1" stop-color="#3a1a55" stop-opacity="0"/>
-    </radialGradient>
   </defs>
   <rect width="96" height="128" fill="#1b2331"/>
-  <ellipse cx="48" cy="118" rx="22" ry="4" fill="#000" opacity=".5"/>
-  <ellipse cx="48" cy="50" rx="28" ry="32" fill="#3a1a55" opacity=".08"/>
+  <ellipse cx="48" cy="120" rx="24" ry="4" fill="#000" opacity=".55"/>
 
-  <!-- FLOWING CLOAK (longer than Ranger, reaches the ground, trailing) -->
-  <path d="M14 36 Q10 58 8 96 Q10 122 20 122 L30 118 L32 80 L32 34 Q22 30 18 32 Q14 34 14 36 Z" fill="url(#m-fur)"/>
-  <path d="M82 36 Q86 58 88 96 Q86 122 76 122 L66 118 L64 80 L64 34 Q74 30 78 32 Q82 34 82 36 Z" fill="url(#m-fur)"/>
-  <!-- center back panel -->
-  <path d="M32 40 L64 40 L66 118 L30 118 Z" fill="url(#m-bone-dark)" opacity=".4"/>
-  <!-- cloak tattered hem (pointed, ornate) -->
-  <path d="M8 112 L10 122 L14 116 L18 124 L22 116 L26 122 L30 118 L30 126 L8 126 Z" fill="#1b2331"/>
-  <path d="M66 118 L66 126 L88 126 L88 112 L86 122 L82 116 L78 124 L74 116 L70 122 Z" fill="#1b2331"/>
-  <!-- cloak fold lines -->
-  <path d="M16 42 Q14 80 12 118" fill="none" stroke="#2a2414" stroke-width="0.8"/>
-  <path d="M80 42 Q82 80 84 118" fill="none" stroke="#2a2414" stroke-width="0.8"/>
-  <!-- fae trim along cloak edge -->
-  <path d="M30 42 Q28 80 28 118" fill="none" stroke="#c79aff" stroke-width="0.5" opacity=".6"/>
-  <path d="M66 42 Q68 80 68 118" fill="none" stroke="#c79aff" stroke-width="0.5" opacity=".6"/>
+  <!-- LEGS: tan pants + black kneepads -->
+  <path d="M34 76 Q32 108 38 114 L46 114 L48 76 Z" fill="url(#m-tan-dark)"/>
+  <path d="M62 76 Q64 108 58 114 L50 114 L48 76 Z" fill="url(#m-tan-dark)"/>
+  <path d="M36 82 L38 108" stroke="#2a2010" stroke-width="0.5" opacity=".6"/>
+  <path d="M58 82 L60 108" stroke="#2a2010" stroke-width="0.5" opacity=".6"/>
+  <!-- cargo pockets -->
+  <path d="M34 84 L46 84 L46 94 L34 94 Z" fill="#4a3818"/>
+  <path d="M62 84 L50 84 L50 94 L62 94 Z" fill="#4a3818"/>
+  <!-- BLACK HARD SHELL KNEE PADS -->
+  <path d="M34 94 Q40 92 46 94 L46 104 Q40 108 34 106 Z" fill="url(#m-plate)"/>
+  <path d="M62 94 Q56 92 50 94 L50 104 Q56 108 62 106 Z" fill="url(#m-plate)"/>
+  <path d="M36 96 Q40 94 45 96" fill="none" stroke="#4a4a50" stroke-width="0.6"/>
+  <path d="M60 96 Q56 94 51 96" fill="none" stroke="#4a4a50" stroke-width="0.6"/>
+  <!-- ankle wraps -->
+  <path d="M35 106 L47 106 L47 110 L35 110 Z" fill="#2a2010"/>
+  <path d="M61 106 L49 106 L49 110 L61 110 Z" fill="#2a2010"/>
+  <!-- DESERT BOOTS -->
+  <path d="M33 110 Q32 116 36 118 L48 118 L48 110 Z" fill="url(#m-boot)"/>
+  <path d="M63 110 Q64 116 60 118 L48 118 L48 110 Z" fill="url(#m-boot)"/>
+  <path d="M36 112 L45 112 M36 114 L45 114 M36 116 L45 116" stroke="#3a2818" stroke-width="0.5"/>
+  <path d="M51 112 L60 112 M51 114 L60 114 M51 116 L60 116" stroke="#3a2818" stroke-width="0.5"/>
 
-  <!-- LEGS: dark tights + slim bone greaves -->
-  <path d="M38 76 Q37 108 40 112 L46 112 L47 76 Z" fill="url(#m-under)"/>
-  <path d="M58 76 Q59 108 56 112 L50 112 L49 76 Z" fill="url(#m-under)"/>
-  <!-- thigh plate (engraved filigree) -->
-  <path d="M37 76 L47 76 L47 88 L37 88 Z" fill="url(#m-bone)"/>
-  <path d="M59 76 L49 76 L49 88 L59 88 Z" fill="url(#m-bone)"/>
-  <path d="M40 78 Q42 82 40 86" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
-  <path d="M44 78 Q44 82 44 86" fill="none" stroke="#5a4a30" stroke-width="0.3"/>
-  <path d="M52 78 Q52 82 52 86" fill="none" stroke="#5a4a30" stroke-width="0.3"/>
-  <path d="M56 78 Q54 82 56 86" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
-  <path d="M41 82 L43 82 M53 82 L55 82" stroke="#c79aff" stroke-width="0.4"/>
-  <!-- kneepad with fae gem -->
-  <path d="M37 92 Q42 90 46 92 L46 100 Q42 102 37 100 Z" fill="url(#m-bone)"/>
-  <path d="M59 92 Q54 90 50 92 L50 100 Q54 102 59 100 Z" fill="url(#m-bone)"/>
-  <path d="M42 96 L43 97 L42 98 L41 97 Z" fill="#c79aff"/>
-  <path d="M54 96 L55 97 L54 98 L53 97 Z" fill="#c79aff"/>
-  <!-- shin greaves (elegant, swiftstep) -->
-  <path d="M38 100 L46 100 L45 110 L39 110 Z" fill="url(#m-bone)"/>
-  <path d="M58 100 L50 100 L51 110 L57 110 Z" fill="url(#m-bone)"/>
-  <path d="M40 104 L44 104" stroke="#6a5a40" stroke-width="0.3"/>
-  <path d="M52 104 L56 104" stroke="#6a5a40" stroke-width="0.3"/>
-  <!-- pointed boots (elvish silhouette) -->
-  <path d="M37 110 Q36 114 40 114 L47 114 L47 110 Z" fill="#0a0806"/>
-  <path d="M59 110 Q60 114 56 114 L49 114 L49 110 Z" fill="#0a0806"/>
-  <path d="M45 112 L49 115 L45 115 Z" fill="#0a0806"/>
-  <path d="M51 112 L47 115 L51 115 Z" fill="#0a0806"/>
-
-  <!-- BELT + fae charms -->
+  <!-- BELT + leg holster -->
   <path d="M28 72 L68 72 L68 78 L28 78 Z" fill="#1a1410"/>
-  <rect x="44" y="71" width="8" height="8" fill="url(#m-bone-dark)"/>
-  <path d="M48 73 L50 75 L48 77 L46 75 Z" fill="#c79aff"/>
-  <path d="M48 75 L49 76 L48 77 L47 76 Z" fill="#fff0ff"/>
-  <!-- hanging fae charms -->
-  <circle cx="34" cy="80" r="1.2" fill="#c79aff"/>
-  <path d="M34 81 L34 86" stroke="#8a5fb8" stroke-width="0.5"/>
-  <circle cx="34" cy="86" r="0.8" fill="#e8e0f0"/>
-  <circle cx="62" cy="80" r="1.2" fill="#c79aff"/>
-  <path d="M62 81 L62 86" stroke="#8a5fb8" stroke-width="0.5"/>
-  <circle cx="62" cy="86" r="0.8" fill="#e8e0f0"/>
+  <rect x="45" y="72" width="6" height="6" fill="url(#m-plate-hl)"/>
+  <rect x="46.5" y="73.5" width="3" height="3" fill="#c79aff"/>
+  <path d="M58 78 L66 78 L66 94 L58 94 Z" fill="url(#m-plate)"/>
+  <path d="M60 80 L64 80 L64 90 L60 90 Z" fill="#0a0a0c"/>
 
-  <!-- TORSO: slim bone plate -->
-  <path d="M24 38 Q24 34 28 34 L68 34 Q72 34 72 38 L72 72 Q72 76 68 76 L28 76 Q24 76 24 72 Z" fill="url(#m-under)"/>
-  <!-- upper plate (slim, feminine silhouette) -->
-  <path d="M28 40 L68 40 Q70 40 70 42 L70 56 L48 60 L26 56 L26 42 Q26 40 28 40 Z" fill="url(#m-bone)"/>
-  <!-- lower plate with V cinch -->
-  <path d="M28 56 L68 56 L68 68 L48 74 L28 68 Z" fill="url(#m-bone)"/>
-  <!-- plate edge shadow -->
-  <path d="M26 56 L70 56" stroke="#6a5a40" stroke-width="0.6"/>
-  <!-- ORNATE filigree crown sigil (more delicate than Warden's) -->
-  <path d="M40 46 Q44 42 48 44 Q52 42 56 46 L54 52 L42 52 Z" fill="none" stroke="#5a4a30" stroke-width="0.6"/>
-  <path d="M44 44 L44 50 M48 44 L48 50 M52 44 L52 50" stroke="#5a4a30" stroke-width="0.4"/>
-  <path d="M42 52 Q48 54 54 52" fill="none" stroke="#5a4a30" stroke-width="0.5"/>
-  <!-- fae violet gem in sigil center -->
-  <circle cx="48" cy="48" r="1.4" fill="#c79aff"/>
-  <circle cx="48" cy="48" r="0.7" fill="#fff0ff"/>
-  <!-- filigree on lower plate -->
-  <path d="M34 60 Q48 64 62 60" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
-  <path d="M36 64 Q48 68 60 64" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
-  <path d="M40 68 Q48 70 56 68" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
-  <!-- fae swirl details -->
-  <path d="M32 58 Q30 62 32 66" fill="none" stroke="#c79aff" stroke-width="0.4" opacity=".7"/>
-  <path d="M64 58 Q66 62 64 66" fill="none" stroke="#c79aff" stroke-width="0.4" opacity=".7"/>
-  <!-- rivets (small, delicate) -->
-  <circle cx="30" cy="44" r="0.7" fill="#6a5a40"/>
-  <circle cx="66" cy="44" r="0.7" fill="#6a5a40"/>
-  <circle cx="30" cy="54" r="0.7" fill="#6a5a40"/>
-  <circle cx="66" cy="54" r="0.7" fill="#6a5a40"/>
-  <circle cx="32" cy="66" r="0.7" fill="#6a5a40"/>
-  <circle cx="64" cy="66" r="0.7" fill="#6a5a40"/>
-  <!-- weathering (lighter than Warden) -->
-  <path d="M32 50 L36 54" stroke="#6a5a40" stroke-width="0.3" opacity=".5"/>
-  <path d="M60 50 L64 54" stroke="#6a5a40" stroke-width="0.3" opacity=".5"/>
+  <!-- TORSO: matte black hard-shell plate -->
+  <path d="M22 38 Q22 34 26 34 L70 34 Q74 34 74 38 L74 72 Q74 76 70 76 L26 76 Q22 76 22 72 Z" fill="url(#m-plate)"/>
+  <path d="M26 34 L70 34 L70 36 L26 36 Z" fill="url(#m-plate-hl)" opacity=".7"/>
+  <path d="M22 44 L74 44" stroke="#4a4a50" stroke-width="0.5" opacity=".6"/>
+  <path d="M22 60 L74 60" stroke="#4a4a50" stroke-width="0.5" opacity=".6"/>
+  <path d="M48 34 L48 76" stroke="#4a4a50" stroke-width="0.4" opacity=".5"/>
+  <!-- gold double-headed eagle emblem -->
+  <g transform="translate(48 52)">
+    <ellipse cx="0" cy="0" rx="2.5" ry="4.5" fill="url(#m-gold)"/>
+    <circle cx="-2.5" cy="-4" r="1.6" fill="url(#m-gold)"/>
+    <circle cx="2.5" cy="-4" r="1.6" fill="url(#m-gold)"/>
+    <path d="M-4 -4.5 L-5 -4 L-4 -3.5 Z" fill="url(#m-gold)"/>
+    <path d="M4 -4.5 L5 -4 L4 -3.5 Z" fill="url(#m-gold)"/>
+    <path d="M-2 -1 L-8 -2 L-10 1 L-8 3 L-4 2 L-2 3 Z" fill="url(#m-gold)"/>
+    <path d="M2 -1 L8 -2 L10 1 L8 3 L4 2 L2 3 Z" fill="url(#m-gold)"/>
+    <path d="M-9 0 L-6 0 M-8 2 L-5 2" stroke="#8a6838" stroke-width="0.3"/>
+    <path d="M9 0 L6 0 M8 2 L5 2" stroke="#8a6838" stroke-width="0.3"/>
+    <path d="M-1 4 L0 6 L1 4 Z" fill="url(#m-gold)"/>
+    <path d="M-1 -6 L-1 -5 L0 -6 L1 -5 L1 -6 Z" fill="url(#m-gold)"/>
+    <!-- fae violet gem between heads -->
+    <circle cx="0" cy="-3.5" r="0.6" fill="#c79aff"/>
+  </g>
+  <!-- chest rig (tan straps) -->
+  <path d="M26 40 L46 40 L46 46 L26 46 Z" fill="url(#m-tan)"/>
+  <path d="M50 40 L70 40 L70 46 L50 46 Z" fill="url(#m-tan)"/>
+  <rect x="27" y="42" width="5" height="8" rx="0.5" fill="#1a1410"/>
+  <rect x="33" y="42" width="5" height="8" rx="0.5" fill="#1a1410"/>
+  <rect x="39" y="42" width="5" height="8" rx="0.5" fill="#1a1410"/>
+  <rect x="52" y="42" width="5" height="8" rx="0.5" fill="#1a1410"/>
+  <rect x="58" y="42" width="5" height="8" rx="0.5" fill="#1a1410"/>
+  <rect x="64" y="42" width="5" height="8" rx="0.5" fill="#1a1410"/>
+  <rect x="30" y="62" width="6" height="10" rx="0.5" fill="#1a1410"/>
+  <rect x="60" y="62" width="6" height="10" rx="0.5" fill="#1a1410"/>
 
-  <!-- pauldrons (ornate bone) -->
-  <path d="M16 34 Q14 46 20 50 L28 46 L28 36 Q22 32 18 32 Q16 32 16 34 Z" fill="url(#m-bone)"/>
-  <path d="M80 34 Q82 46 76 50 L68 46 L68 36 Q74 32 78 32 Q80 32 80 34 Z" fill="url(#m-bone)"/>
-  <!-- pauldron scallop -->
-  <path d="M16 42 Q22 46 28 42" fill="none" stroke="#6a5a40" stroke-width="0.5"/>
-  <path d="M80 42 Q74 46 68 42" fill="none" stroke="#6a5a40" stroke-width="0.5"/>
-  <!-- fae gem embellishment -->
-  <path d="M22 40 L24 42 L22 44 L20 42 Z" fill="#c79aff"/>
-  <path d="M22 41 L23 42 L22 43 L21 42 Z" fill="#fff0ff"/>
-  <path d="M74 40 L76 42 L74 44 L72 42 Z" fill="#c79aff"/>
-  <path d="M74 41 L75 42 L74 43 L73 42 Z" fill="#fff0ff"/>
-  <!-- squad sigil (runic blue) small, below fae gem -->
-  <circle cx="22" cy="47" r="1.2" fill="#3a3020"/>
-  <path d="M22 46 L23 47 L22 48 L21 47 Z" fill="#7cc4ff"/>
-  <circle cx="74" cy="47" r="1.2" fill="#3a3020"/>
-  <path d="M74 46 L75 47 L74 48 L73 47 Z" fill="#7cc4ff"/>
+  <!-- PAULDRONS -->
+  <path d="M16 34 Q12 46 20 50 L28 46 L28 36 Q22 32 18 32 Q16 32 16 34 Z" fill="url(#m-plate)"/>
+  <path d="M80 34 Q84 46 76 50 L68 46 L68 36 Q74 32 78 32 Q80 32 80 34 Z" fill="url(#m-plate)"/>
+  <path d="M16 40 Q20 44 26 42" fill="none" stroke="#4a4a50" stroke-width="0.6"/>
+  <path d="M80 40 Q76 44 70 42" fill="none" stroke="#4a4a50" stroke-width="0.6"/>
+  <circle cx="22" cy="44" r="1.6" fill="#0a0a0c"/>
+  <path d="M22 43 L21 45 L22 45.5 L23 45 Z" fill="url(#m-gold)"/>
+  <circle cx="74" cy="44" r="1.6" fill="#0a0a0c"/>
+  <path d="M74 43 L73 45 L74 45.5 L75 45 Z" fill="url(#m-gold)"/>
 
-  <!-- FUR MANTLE (lighter, more elegant) -->
-  <path d="M14 30 Q16 36 22 38 L34 36 Q40 34 48 34 Q56 34 62 36 L74 38 Q80 36 82 30
-           Q80 26 70 26 Q60 28 48 28 Q36 28 26 26 Q16 26 14 30 Z" fill="url(#m-fur)"/>
-  <path d="M14 30 L16 34 L18 30 L20 34 L22 30 L24 34 L26 30 L28 34 L30 30 L32 34 L34 30
-           L36 34 L38 30 L40 34 L42 30 L44 34 L46 30 L48 34 L50 30 L52 34 L54 30 L56 34
-           L58 30 L60 34 L62 30 L64 34 L66 30 L68 34 L70 30 L72 34 L74 30 L76 34 L78 30 L80 34 L82 30"
-        fill="none" stroke="#2a2414" stroke-width="0.6"/>
-  <path d="M20 34 Q48 38 76 34" fill="none" stroke="#4a3e28" stroke-width="1"/>
+  <!-- LARGE BROWN FUR MANTLE (defining feature for Mystic - she wears the biggest) -->
+  <path d="M6 34 Q10 42 20 44 L28 42 L28 32 Q14 28 8 30 Q4 30 6 34 Z" fill="url(#m-fur)"/>
+  <path d="M90 34 Q86 42 76 44 L68 42 L68 32 Q82 28 88 30 Q92 30 90 34 Z" fill="url(#m-fur)"/>
+  <!-- fur rear drape -->
+  <path d="M14 42 Q10 60 14 78 L22 76 L24 46 Z" fill="url(#m-fur)"/>
+  <path d="M82 42 Q86 60 82 78 L74 76 L72 46 Z" fill="url(#m-fur)"/>
+  <!-- shaggy fur tufts (many zig-zag edges for texture) -->
+  <path d="M6 34 L8 40 L10 34 L12 40 L14 34 L16 40 L18 34 L20 40 L22 34 L24 40 L26 34 L28 40"
+        fill="none" stroke="#1a1008" stroke-width="0.5"/>
+  <path d="M68 40 L70 34 L72 40 L74 34 L76 40 L78 34 L80 40 L82 34 L84 40 L86 34 L88 40 L90 34"
+        fill="none" stroke="#1a1008" stroke-width="0.5"/>
+  <!-- fur clumps on drape -->
+  <path d="M14 50 L12 54 L14 58 L12 64 L14 68 L12 72 L14 76" fill="none" stroke="#1a1008" stroke-width="0.5"/>
+  <path d="M82 50 L84 54 L82 58 L84 64 L82 68 L84 72 L82 76" fill="none" stroke="#1a1008" stroke-width="0.5"/>
+  <!-- fur highlights -->
+  <path d="M10 36 Q16 40 22 38" fill="none" stroke="#a88658" stroke-width="0.5" opacity=".6"/>
+  <path d="M86 36 Q80 40 74 38" fill="none" stroke="#a88658" stroke-width="0.5" opacity=".6"/>
 
-  <!-- SCARF (longer drape, ceremonial) -->
-  <path d="M34 36 Q48 42 62 36 L62 50 Q48 56 34 50 Z" fill="url(#m-scarf)"/>
-  <!-- scarf drape hanging to side -->
-  <path d="M32 44 L26 64 L30 64 L34 48 Z" fill="url(#m-scarf)"/>
-  <path d="M64 44 L70 64 L66 64 L62 48 Z" fill="url(#m-scarf)"/>
-  <!-- scarf folds -->
-  <path d="M36 40 Q48 44 60 40" fill="none" stroke="#7a6e52" stroke-width="0.4"/>
-  <path d="M36 46 Q48 50 60 46" fill="none" stroke="#7a6e52" stroke-width="0.4"/>
-  <!-- fae trim on scarf -->
-  <path d="M34 38 L62 38" stroke="#c79aff" stroke-width="0.4" opacity=".6"/>
+  <!-- DESERT SCARF / shemagh wrapped around neck and face -->
+  <!-- front scarf wrap -->
+  <path d="M34 28 Q48 26 62 28 L62 38 Q48 44 34 38 Z" fill="url(#m-scarf)"/>
+  <!-- scarf covering lower face (up to nose) -->
+  <path d="M38 22 Q48 20 58 22 L58 30 L38 30 Z" fill="url(#m-scarf)"/>
+  <!-- scarf texture lines -->
+  <path d="M36 32 L60 32 M36 34 L60 34 M36 36 L60 36" stroke="#5a4828" stroke-width="0.3" opacity=".5"/>
+  <path d="M40 24 L56 24 M40 26 L56 26" stroke="#5a4828" stroke-width="0.3" opacity=".5"/>
+  <!-- scarf loose ends -->
+  <path d="M34 36 L28 44 L32 46 L36 38 Z" fill="url(#m-scarf)"/>
+  <path d="M62 36 L68 44 L64 46 L60 38 Z" fill="url(#m-scarf)"/>
 
-  <!-- HEAD / ORNATE BONE MASK (more delicate, butterfly motif) -->
-  <ellipse cx="48" cy="22" rx="13" ry="15" fill="url(#m-bone)"/>
-  <!-- forehead ridges -->
-  <path d="M34 12 Q48 4 62 12 L60 18 Q48 10 36 18 Z" fill="url(#m-bone-dark)"/>
-  <!-- butterfly / scarab-wing engraving on forehead -->
-  <path d="M42 10 Q40 14 42 16 L48 14 Z" fill="none" stroke="#5a4a30" stroke-width="0.5"/>
-  <path d="M54 10 Q56 14 54 16 L48 14 Z" fill="none" stroke="#5a4a30" stroke-width="0.5"/>
-  <path d="M48 8 L48 18" stroke="#5a4a30" stroke-width="0.5"/>
-  <!-- crest gem -->
-  <path d="M48 6 L50 8 L48 10 L46 8 Z" fill="#c79aff"/>
-  <path d="M48 7 L49 8 L48 9 L47 8 Z" fill="#fff0ff"/>
-  <!-- temple filigree (ornate scroll) -->
-  <path d="M34 18 Q32 22 34 26 Q36 24 36 22 Q34 20 36 18 Z" fill="none" stroke="#5a4a30" stroke-width="0.5"/>
-  <path d="M62 18 Q64 22 62 26 Q60 24 60 22 Q62 20 60 18 Z" fill="none" stroke="#5a4a30" stroke-width="0.5"/>
-  <!-- side rails -->
-  <rect x="32" y="18" width="2" height="8" fill="#1a1410"/>
-  <rect x="62" y="18" width="2" height="8" fill="#1a1410"/>
-  <circle cx="33" cy="20" r="0.7" fill="#c79aff"/>
-  <!-- SLIM VISOR SLIT (horizontal, tinted violet) -->
-  <path d="M36 22 L60 22 L60 26 L36 26 Z" fill="#0a0806"/>
-  <path d="M36 22 L60 22" stroke="#3a2f3e" stroke-width="0.8"/>
-  <!-- fae violet lens glow inside slit -->
-  <rect x="36" y="23" width="24" height="2" fill="#3a1a55"/>
-  <path d="M38 24 L44 24" stroke="#c79aff" stroke-width="0.8" opacity=".8"/>
-  <path d="M52 24 L58 24" stroke="#c79aff" stroke-width="0.6" opacity=".8"/>
-  <!-- bridge ornament -->
-  <path d="M46 22 L50 22 L50 26 L46 26 Z" fill="url(#m-bone-dark)"/>
-  <path d="M48 22 L48 26" stroke="#5a4a30" stroke-width="0.4"/>
-  <!-- cheek engraving (delicate curls) -->
-  <path d="M36 28 Q38 30 40 29 Q42 27 44 28" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
-  <path d="M60 28 Q58 30 56 29 Q54 27 52 28" fill="none" stroke="#5a4a30" stroke-width="0.4"/>
-  <!-- mouth vent (narrow) -->
-  <path d="M44 30 L52 30 L51 34 L45 34 Z" fill="#1a1410"/>
-  <rect x="45" y="31" width="6" height="0.4" fill="#3a3228"/>
-  <rect x="45" y="32.5" width="6" height="0.4" fill="#3a3228"/>
-  <!-- chin point -->
-  <path d="M45 34 L48 38 L51 34 Z" fill="url(#m-bone-dark)"/>
-  <!-- crown/circlet arc above mask -->
-  <path d="M36 6 Q48 0 60 6" fill="none" stroke="#c79aff" stroke-width="0.8"/>
-  <circle cx="48" cy="2" r="1.4" fill="#c79aff"/>
-  <circle cx="48" cy="2" r="0.6" fill="#fff0ff"/>
-  <circle cx="42" cy="4" r="0.7" fill="#c79aff"/>
-  <circle cx="54" cy="4" r="0.7" fill="#c79aff"/>
-  <!-- mask weathering (light) -->
-  <path d="M34 20 L32 24" stroke="#6a5a40" stroke-width="0.3" opacity=".5"/>
-  <path d="M62 20 L64 24" stroke="#6a5a40" stroke-width="0.3" opacity=".5"/>
+  <!-- HEAD: EXPOSED FACE (main distinguishing feature from reference) -->
+  <!-- face (showing above the scarf) -->
+  <ellipse cx="48" cy="15" rx="10" ry="10" fill="url(#m-skin)"/>
+  <!-- jaw shadow -->
+  <path d="M40 18 Q48 24 56 18 L56 20 Q48 26 40 20 Z" fill="#7a4830" opacity=".5"/>
+  <!-- eyes (intense, narrow) -->
+  <path d="M41 14 Q43 13 45 14" stroke="#1a0e06" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+  <path d="M51 14 Q53 13 55 14" stroke="#1a0e06" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+  <circle cx="43" cy="14.3" r="0.8" fill="#5a3a7a"/>
+  <circle cx="53" cy="14.3" r="0.8" fill="#5a3a7a"/>
+  <!-- eye glint -->
+  <circle cx="43.5" cy="14" r="0.3" fill="#fff"/>
+  <circle cx="53.5" cy="14" r="0.3" fill="#fff"/>
+  <!-- brow (sharp) -->
+  <path d="M40 11 L46 10" stroke="#2a1a0e" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M50 10 L56 11" stroke="#2a1a0e" stroke-width="1.3" stroke-linecap="round"/>
+  <!-- nose bridge -->
+  <path d="M48 16 L47 20" stroke="#7a4830" stroke-width="0.5" opacity=".5"/>
+  <!-- pointed ear -->
+  <path d="M37 14 L34 12 L37 18 Z" fill="url(#m-skin)"/>
+  <!-- hair/temple (silver-brown wisps) -->
+  <path d="M38 8 Q36 12 38 16" fill="none" stroke="#8a7866" stroke-width="1.5"/>
+  <path d="M58 8 Q60 12 58 16" fill="none" stroke="#8a7866" stroke-width="1.5"/>
 
-  <!-- ARMS: undersuit + slim bone bracers -->
-  <path d="M20 44 Q18 46 18 48 L16 68 Q18 72 22 72 L26 70 L26 40 Z" fill="url(#m-under)"/>
-  <path d="M76 44 Q78 46 78 48 L80 68 Q78 72 74 72 L70 70 L70 40 Z" fill="url(#m-under)"/>
-  <!-- upper arm plate -->
-  <path d="M18 48 L26 48 L26 54 L18 54 Z" fill="url(#m-bone)"/>
-  <path d="M78 48 L70 48 L70 54 L78 54 Z" fill="url(#m-bone)"/>
-  <!-- forearm bracer (ornate) -->
-  <path d="M16 60 L26 60 L26 70 L16 70 Z" fill="url(#m-bone)"/>
-  <path d="M80 60 L70 60 L70 70 L80 70 Z" fill="url(#m-bone)"/>
-  <path d="M18 62 L24 62 M18 68 L24 68" stroke="#6a5a40" stroke-width="0.3"/>
-  <path d="M72 62 L78 62 M72 68 L78 68" stroke="#6a5a40" stroke-width="0.3"/>
-  <!-- fae trim on bracer -->
-  <path d="M19 65 L25 65" stroke="#c79aff" stroke-width="0.4" opacity=".7"/>
-  <path d="M71 65 L77 65" stroke="#c79aff" stroke-width="0.4" opacity=".7"/>
-  <!-- gloves (dark) -->
-  <path d="M14 70 Q12 74 16 78 L22 78 Q24 74 22 70 Z" fill="#0a0806"/>
-  <path d="M82 70 Q84 74 80 78 L74 78 Q72 74 74 70 Z" fill="#0a0806"/>
+  <!-- GOGGLES PUSHED UP on forehead (key reference detail) -->
+  <rect x="36" y="5" width="24" height="6" rx="1.5" fill="#0a0a0c"/>
+  <!-- left lens -->
+  <circle cx="42" cy="8" r="2.4" fill="#000"/>
+  <circle cx="42" cy="8" r="1.6" fill="#2a4060"/>
+  <circle cx="42" cy="7" r="0.5" fill="#c79aff"/>
+  <!-- right lens -->
+  <circle cx="54" cy="8" r="2.4" fill="#000"/>
+  <circle cx="54" cy="8" r="1.6" fill="#2a4060"/>
+  <circle cx="54" cy="7" r="0.5" fill="#c79aff"/>
+  <!-- goggle strap around head -->
+  <path d="M36 8 L32 10 L30 14" stroke="#0a0a0c" stroke-width="1.5" fill="none"/>
+  <path d="M60 8 L64 10 L66 14" stroke="#0a0a0c" stroke-width="1.5" fill="none"/>
+  <!-- strap elastic highlight -->
+  <path d="M33 11 L31 13" stroke="#2a2a2e" stroke-width="0.4"/>
+  <path d="M63 11 L65 13" stroke="#2a2a2e" stroke-width="0.4"/>
+  <!-- patch on strap -->
+  <rect x="45" y="5" width="6" height="3" fill="#2a2a2e"/>
+  <path d="M48 6 L47 7.5 L48 8 L49 7.5 Z" fill="url(#m-gold)"/>
 
-  <!-- ARCLIGHT MARKSMAN (dark tactical sniper with suppressor) -->
-  <path d="M4 66 L16 64 L18 76 L4 78 Z" fill="url(#m-gun)"/>
-  <path d="M6 68 L14 67 M6 74 L14 73" stroke="#0a0806" stroke-width="0.4"/>
-  <path d="M8 62 L16 61 L16 66 L8 66 Z" fill="#1a1410"/>
-  <path d="M16 66 L56 64 L56 76 L16 76 Z" fill="url(#m-gun)"/>
-  <rect x="20" y="62" width="36" height="2" fill="#0a0806"/>
-  <path d="M22 62 L22 64 M26 62 L26 64 M30 62 L30 64 M34 62 L34 64 M38 62 L38 64 M42 62 L42 64 M46 62 L46 64 M50 62 L50 64 M54 62 L54 64" stroke="#1a1410" stroke-width="0.4"/>
+  <!-- ARMS: black plate + tan accents -->
+  <path d="M18 42 L26 40 L26 54 L18 56 Z" fill="url(#m-plate)"/>
+  <path d="M78 42 L70 40 L70 54 L78 56 Z" fill="url(#m-plate)"/>
+  <path d="M18 56 L26 54 L26 58 L18 60 Z" fill="url(#m-tan)"/>
+  <path d="M78 56 L70 54 L70 58 L78 60 Z" fill="url(#m-tan)"/>
+  <path d="M16 58 L26 58 L26 72 L18 72 Z" fill="url(#m-plate)"/>
+  <path d="M80 58 L70 58 L70 72 L78 72 Z" fill="url(#m-plate)"/>
+  <path d="M18 62 L24 62 M18 68 L24 68" stroke="#4a4a50" stroke-width="0.3" opacity=".5"/>
+  <path d="M72 62 L78 62 M72 68 L78 68" stroke="#4a4a50" stroke-width="0.3" opacity=".5"/>
+  <!-- tactical gloves -->
+  <path d="M14 72 Q12 76 16 78 L22 78 Q24 74 22 72 Z" fill="#0a0a0c"/>
+  <path d="M82 72 Q84 76 80 78 L74 78 Q72 74 74 72 Z" fill="#0a0a0c"/>
+
+  <!-- ARCLIGHT MARKSMAN sniper (tactical suppressed) -->
+  <path d="M4 58 L16 56 L18 66 L4 68 Z" fill="url(#m-gun)"/>
+  <path d="M8 52 L16 51 L16 56 L8 56 Z" fill="#1a1a1c"/>
+  <path d="M16 56 L56 54 L56 66 L16 66 Z" fill="url(#m-gun)"/>
+  <rect x="20" y="52" width="36" height="2" fill="#0a0a0c"/>
+  <path d="M22 52 L22 54 M26 52 L26 54 M30 52 L30 54 M34 52 L34 54 M38 52 L38 54 M42 52 L42 54 M46 52 L46 54 M50 52 L50 54 M54 52 L54 54" stroke="#1a1a1c" stroke-width="0.4"/>
   <!-- large scope -->
-  <rect x="28" y="54" width="20" height="8" rx="1.2" fill="#141210"/>
-  <rect x="24" y="56" width="4" height="4" rx="0.8" fill="#0a0806"/>
-  <rect x="48" y="56" width="4" height="4" rx="0.8" fill="#0a0806"/>
-  <circle cx="38" cy="58" r="3" fill="#0a0806"/>
-  <circle cx="38" cy="58" r="2" fill="#7cc4ff"/>
-  <circle cx="38" cy="58" r="0.7" fill="#eaf6ff"/>
-  <!-- scope turrets -->
-  <rect x="34" y="51" width="2" height="4" fill="#0a0806"/>
-  <rect x="40" y="51" width="2" height="4" fill="#0a0806"/>
+  <rect x="28" y="44" width="20" height="8" rx="1.2" fill="#0a0a0c"/>
+  <circle cx="38" cy="48" r="3" fill="#000"/>
+  <circle cx="38" cy="48" r="2" fill="#c79aff"/>
+  <circle cx="38" cy="48" r="0.7" fill="#fff0ff"/>
+  <rect x="34" y="41" width="2" height="4" fill="#0a0a0c"/>
+  <rect x="40" y="41" width="2" height="4" fill="#0a0a0c"/>
   <!-- magazine -->
-  <path d="M30 76 L40 76 L39 88 L31 88 Z" fill="#141210"/>
-  <!-- trigger guard -->
-  <path d="M40 76 Q44 80 48 76" fill="none" stroke="#0a0806" stroke-width="1.4"/>
-  <!-- grip -->
-  <path d="M46 76 L52 76 L52 86 L48 88 Z" fill="#141210"/>
+  <path d="M30 66 L40 66 L39 80 L31 80 Z" fill="#0a0a0c"/>
+  <!-- trigger -->
+  <path d="M40 66 Q44 70 48 66" fill="none" stroke="#0a0a0c" stroke-width="1.4"/>
+  <path d="M46 66 L52 66 L52 78 L48 80 Z" fill="#0a0a0c"/>
   <!-- bipod -->
-  <path d="M52 76 L50 86 L54 84" fill="none" stroke="#0a0806" stroke-width="1"/>
-  <!-- barrel with COILED rune wrap + suppressor -->
-  <rect x="56" y="68" width="18" height="3" fill="url(#m-gun)"/>
-  <path d="M58 68 Q60 66 62 68 Q64 70 66 68 Q68 66 70 68 Q72 70 74 68" fill="none" stroke="#7cc4ff" stroke-width="0.7"/>
-  <!-- suppressor -->
-  <rect x="74" y="66" width="14" height="6" rx="1" fill="#141210"/>
-  <path d="M76 67 L86 67 M76 69 L86 69 M76 71 L86 71" stroke="#0a0806" stroke-width="0.3"/>
-  <!-- muzzle rune -->
-  <circle cx="88" cy="69" r="4" fill="url(#m-rune)"/>
-  <circle cx="88" cy="69" r="1.6" fill="#eaf6ff"/>
-  <!-- lightning arc from muzzle -->
-  <path d="M86 65 L88 68 L86 70 L88 72" fill="none" stroke="#eaf6ff" stroke-width="0.6"/>
-
-  <!-- FLOATING WISPS -->
-  <circle cx="14" cy="18" r="2" fill="url(#m-fae)" opacity=".7"/>
-  <circle cx="14" cy="18" r="0.7" fill="#fff0ff"/>
-  <circle cx="82" cy="14" r="1.6" fill="url(#m-fae)" opacity=".6"/>
-  <circle cx="82" cy="14" r="0.6" fill="#fff0ff"/>
-  <circle cx="84" cy="40" r="1.2" fill="url(#m-fae)" opacity=".5"/>
+  <path d="M52 66 L50 76 L54 74" fill="none" stroke="#0a0a0c" stroke-width="1"/>
+  <!-- barrel + long suppressor -->
+  <rect x="56" y="58" width="16" height="3" fill="url(#m-gun)"/>
+  <rect x="72" y="56" width="16" height="7" rx="1" fill="#1a1a1c"/>
+  <path d="M74 58 L86 58 M74 60 L86 60 M74 62 L86 62" stroke="#0a0a0c" stroke-width="0.3"/>
+  <!-- muzzle rune (runic blue, weapon tag) -->
+  <circle cx="88" cy="59" r="3.5" fill="url(#m-rune)"/>
+  <circle cx="88" cy="59" r="1.3" fill="#eaf6ff"/>
 </svg>

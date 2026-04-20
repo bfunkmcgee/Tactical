@@ -1,10 +1,10 @@
 # Sprite Style Exploration
 
-Full roster rebuilt to match the bone-white operator reference: carved ivory plate with ornamental engraving (crown / scroll / butterfly motifs), fur-edged shoulder mantles, full-face bone masks with visor lenses, heavy weathering, and dark tactical undersuit / weapons in stark contrast. Each class keeps its own silhouette and tag color as a small accent on specialist gear.
+Squad rebuilt from the new reference — **matte-black hard-shell armor with gold double-headed eagle emblem**, desert-tan underlayer, brown fur mantles (scout-varies), modern tactical helmets, realistic AR-platform weapons. Elite imperial desert commandos vibe.
 
 ---
 
-## Desert Scout Unit — bone-operator aesthetic
+## Desert Scout Unit (Eagle Corps)
 
 ### Ranger · Kestrel — Runeweave Carbine (runic blue)
 
@@ -12,7 +12,7 @@ Full roster rebuilt to match the bone-white operator reference: carved ivory pla
   <img src="public/styles/flat/soldier.svg" width="260" alt="Ranger Kestrel"/>
 </p>
 
-Scout mask with wide goggle visor, ridged brow crest, carved scout emblem, respirator vent. Fur mantle collar. Bone chest plate with engraved crown sigil (runic-blue gem centered). Suppressed modern carbine.
+Full-face modern operator helmet: smooth black shell, visor slit with small blue sensor glow, cheek-mounted filter canister with mouth-vent grille, NVG mount up top, side antenna rails, gold-eagle helmet patch on the forehead. Segmented black chest plate with gold double-eagle emblem, tan chest-rig webbing with mag pouches, black pauldrons with gold sigil medallions. Modern suppressed carbine.
 
 ### Warden · Brannock — Dragonmaw Autocannon (draconic orange)
 
@@ -20,7 +20,7 @@ Scout mask with wide goggle visor, ridged brow crest, carved scout emblem, respi
   <img src="public/styles/flat/soldier_warden.svg" width="260" alt="Warden Brannock"/>
 </p>
 
-Heavy bone skull helm with crown-spike ridge, forehead sigil, twin draconic visor lenses, chin respirator. Oversized scalloped pauldrons with bone horns. Layered ornate chest plate with a large engraved crown sigil (ember gem). Bone tabard hanging over the hips. Bone gauntlets with ember knuckle studs.
+Curved full-face knight-helm with pointed crown and engraved gold crown ornament on the forehead; narrow visor slit with draconic-orange glow; cheek guard plates; mouth-vent. Oversized glossy pauldrons with gold eagle medallions. Massive segmented abdominal plate, large gold eagle front-and-center, hanging dark tabard with big eagle crest. Belt-fed autocannon with ember muzzle.
 
 ### Mystic · Seraphine — Arclight Marksman (fae violet + runic blue)
 
@@ -28,7 +28,7 @@ Heavy bone skull helm with crown-spike ridge, forehead sigil, twin draconic viso
   <img src="public/styles/flat/soldier_mystic.svg" width="260" alt="Mystic Seraphine"/>
 </p>
 
-Slim ornate mask with butterfly/scarab-wing forehead engraving, temple scrolls, violet-lens slit visor, delicate chin point. Silver circlet with fae gems above the mask. Flowing bone-fur cloak trailing to the ground, fae-violet trim along the edges, ornate scarf draped over the shoulders. Slim bone plate with filigree swirls. Suppressed sniper with copper-rune coils.
+**Exposed face** — the one scout who doesn't wear a closed helmet. Desert shemagh wrapped up over the nose, sharp eyes visible above the scarf, pointed ear, goggles pushed up on the forehead (dark lenses with a violet reflection), goggle strap wrapping behind, small gold-eagle patch on the strap. Largest brown fur mantle of the squad spilling off both shoulders into a rear drape. Same matte-black plate + gold eagle beneath. Suppressed sniper with a large scope and a fae-violet lens.
 
 ### Sapper · Orin — Hexbore Scattergun (alchemical green)
 
@@ -36,32 +36,29 @@ Slim ornate mask with butterfly/scarab-wing forehead engraving, temple scrolls, 
   <img src="public/styles/flat/soldier_sapper.svg" width="260" alt="Sapper Orin"/>
 </p>
 
-Bone mask with twin round alchemical-green goggle lenses and a prominent **respirator canister** at the mouth, dual hoses running to the shoulders. Fur mantle. Utility belt loaded with four **Embercore Orbs** (glowing orange) + tool pouches. Alchemical-vial bandolier crosses a shotgun-shell bandolier over the bone chest plate. Tactical double-barrel scattergun with side alchemical vial and green muzzle glow. The grimiest of the four — heavier weathering streaks.
+**Hawk-beak helmet** — pointed-down front snout, faceted beak ridges, wide upper visor slit with alchemical-green lens glow, respirator vent under the beak, side filter canister with hose, small gold-eagle forehead crest. Scout fur tufts on both shoulders and a rear drape, tan shotgun-shell bandolier rig on the lower chest, alchemical vial tube on the upper chest, four glowing Embercore Orbs hanging from the belt. Tactical double-barrel scattergun with green muzzle glow.
 
 ---
 
-## Unit identity
+## Unit identity (Eagle Corps)
 
-Shared across all four:
-- **Bone-white carved plate** (`#f0ead8` → `#4a3e28`) with weathering streaks and engraved filigree
-- **Dark tactical undersuit** (`#2a251e` → `#0a0806`) at joints and neck
-- **Fur-edged shoulder mantle** in desert tones (`#d4c8b0` → `#3a3020`) with zig-zag shaggy edge
-- **Cream scarf / shemagh** tucked under the mask
-- **Full-face bone mask** with visor lens + respirator / mouth vent
-- **NVG/rangefinder mount** on top of every helmet
-- **Runic-blue squad sigil** (small diamond) carved into both pauldrons
-- **Dark modern tactical weapons** with suppressors / optics, and a class-tag muzzle-core glow
+All four share:
+- **Matte-black hard-shell plate** (`#2a2a2e` → `#0a0a0c`) with sheen highlights and segment seams
+- **Gold double-headed eagle emblem** (`#e8c488` → `#8a6838`) centered on every chest, with a class-tag gem between its heads (blue/orange/violet/green)
+- **Desert-tan webbing, chest rig, pants** (`#a88c5c` → `#5a4828`)
+- **Light tan combat boots** with visible laces
+- **Black hard-shell knee pads** over tan cargo pants
+- **Gold-eagle medallion** on both pauldrons as the squad sigil
+- **Modern tactical weapons** — suppressors, rail systems, optics, with a class-tag muzzle-core glow
 
-Class tag color appears only on:
+Per-class read:
 
-| Class  | Tag              | Class-specific accents                                             |
-|--------|------------------|---------------------------------------------------------------------|
-| Ranger | Runic blue       | chest sigil gem, visor sensor, carbine muzzle                       |
-| Warden | Draconic orange  | visor lenses, crown-sigil gem, knuckle studs, autocannon muzzle     |
-| Mystic | Fae violet       | visor lens, crest gem, sigil gem, circlet, cloak trim, pauldron gem |
-| Sapper | Alchemical green | both goggle lenses, filter glow, chest sigil gem, scattergun muzzle |
-
-(Independent weapon-tag rule: the Mystic's Arclight Marksman is a *runic* weapon, so its coil wraps and muzzle core remain runic-blue even though she's a fae class.)
+| Class  | Helmet type                 | Fur mantle                | Tag accent location                 |
+|--------|-----------------------------|---------------------------|-------------------------------------|
+| Ranger | Operator respirator + NVG   | None                      | Visor sensor, carbine muzzle core   |
+| Warden | Curved knight helm + crown  | None (has cloth tabard)   | Visor glow, chest gem, autocannon   |
+| Mystic | **Exposed face + goggles**  | **Large, both shoulders + rear drape** | Goggle lenses, chest gem, sniper scope |
+| Sapper | **Hawk beak with vent**     | Small tufts + rear drape  | Goggles, chest gem, scattergun muzzle |
 
 ---
 
@@ -73,7 +70,7 @@ Class tag color appears only on:
 ### Gutter Troll
 <p><img src="public/styles/flat/enemy_troll.svg" width="240"/></p>
 
-(Enemies not yet re-skinned to match the bone-operator direction — they'll be updated next pass so the squad reads heroic against a distinct enemy silhouette.)
+(Still need a pass to stay distinct against the new squad silhouette.)
 
 ## Tiles
 <p><img src="public/styles/flat/tiles.svg" width="480"/></p>
@@ -82,10 +79,9 @@ Class tag color appears only on:
 
 ## Next steps once you confirm the squad
 
-1. Re-skin enemies (Wraith, Troll) to be visually distinct from the squad — darker tones, cruder armor, no carved filigree.
+1. Re-skin enemies to be visually distinct from the matte-black squad.
 2. Swap the placeholder rectangles in `PixiStage.tsx` for these SVGs.
 3. Add idle bob + aim-at-target variants per character.
-4. Second tile biome (sand-ruin oasis) matching the unit.
 
 ---
 
