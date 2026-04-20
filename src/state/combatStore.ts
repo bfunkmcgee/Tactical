@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { GridMap, LogEntry, TurnPhase, Unit, UnitId, Utility, Vec2, ShotPreview } from '../game/types';
-import { RUINED_MARKET } from '../game/data/maps/ruined_market';
+import { RUINED_MARKET, pickRandomMap } from '../game/data/maps';
 import { SOLDIERS } from '../game/data/soldiers';
 import { ENEMIES } from '../game/data/enemies';
 import { WEAPONS } from '../game/data/weapons';
@@ -173,7 +173,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   init: () => {
     nextUnitId = 1; nextLogId = 1; nextFloaterId = 1;
     const roster = useGameStore.getState().roster;
-    const map = RUINED_MARKET;
+    const map = pickRandomMap();
     const units: Unit[] = [];
     roster.forEach((id, i) => {
       const u = mkSoldierUnit(id);

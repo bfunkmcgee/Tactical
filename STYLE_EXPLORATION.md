@@ -91,6 +91,52 @@ Towering gray-brown hulk that fills the frame. **Full bucket helm** with narrow 
 
 ---
 
+## Maps
+
+Every mission now rolls a random map from the pool. Two biomes at launch:
+
+### Ruined Market *(16×12, mixed cover)*
+
+Chaotic civilian outpost with scattered cover. `ruined_market` uses an irregular floor variant pattern so tiles don't line up. 4 player spawns along the west wall; 2 goblins, 1 orc, 1 troll scattered across the east.
+
+```
+################
+#P..h......h..G#
+#..H....h....H.#
+#P...h....H...G#
+#......hh......#
+#..h........H..#
+#....HH....h...#
+#P.........h..T#
+#..h....hh....h#
+#....H.......H.#
+#P..........h.O#
+################
+```
+
+### Rust Chapel *(16×12, nave layout)* — NEW
+
+Deep in Rust Choir territory. A long nave flanked by paired pillars (full cover) with two rows of pews (half cover) running down it; the troll war-priest stands at the altar steps at the far end. Regular `(x + y) % 3` floor pattern evokes aligned flagstones so it reads visually distinct from the market.
+
+```
+################
+#.P.H......H.P.#
+#..H........H..#
+#..............#
+#..hhh....hhh..#
+#.G.H......H.G.#
+#..hhhh..hhhh..#
+#..H........H..#
+#P...G.O..G...P#
+#....HHHHH.....#
+#....H.T.H.....#
+################
+```
+
+**Roster:** 4 player spawns (2 in the entrance row, 2 in the back), **4 goblins + 1 orc + 1 troll**. Harder than the market to reflect fighting the cult on home turf. Long central aisle with cross-cover creates a classic advance-under-fire pressure — the altar is the obvious objective but the pews offer flanking routes.
+
+---
+
 ## Next steps once you confirm the squad
 
 1. Re-skin enemies to be visually distinct from the matte-black squad.
