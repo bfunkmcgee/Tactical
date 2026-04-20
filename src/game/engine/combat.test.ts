@@ -18,6 +18,8 @@ function mkUnit(partial: Partial<Unit> & { pos: Unit['pos'] }): Unit {
   return {
     id: 1, faction: 'player', templateId: 't', name: 'T',
     hp: 10, hpMax: 10, aim: 0, mobility: 4, ap: 2, apMax: 2, ammo: 4,
+    sidearmAmmo: 0, utilityCharges: [],
+    dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
     status: { overwatch: false, blinded: false, suppressed: false },
     alive: true, color: '#fff',
     ...partial,

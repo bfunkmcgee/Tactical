@@ -121,7 +121,17 @@ export type Unit = {
   apMax: number;
   /** For player units: full loadout with resolved item objects. */
   loadout?: Loadout;
+  /** Primary weapon ammo (players) / inherent attack ammo (enemies — usually infinite). */
   ammo: number;
+  /** Sidearm magazine for players. Unused by enemies. */
+  sidearmAmmo: number;
+  /** Per-utility remaining charges, parallel to loadout.utilityIds. */
+  utilityCharges: number[];
+  /** Enemy innate attack stats (resolved from template at spawn); zero for players. */
+  dmgMin: number;
+  dmgMax: number;
+  rangeShort: number;
+  rangeLong: number;
   /** Runtime flags (overwatch active, stunned, etc.). */
   status: {
     overwatch: boolean;
@@ -142,6 +152,12 @@ export type LogEntry = {
 
 export type CoverState = 'none' | 'half' | 'full';
 
+/** A single contribution to the final hit%, surfaced in the preview card. */
+export type HitModifier = {
+  label: string;
+  value: number; // signed percentage points
+};
+
 export type ShotPreview = {
   hitChance: number;
   critChance: number;
@@ -150,4 +166,6 @@ export type ShotPreview = {
   dmgMax: number;
   inRange: boolean;
   hasLOS: boolean;
+  /** Breakdown of the hit% stack for UI display. */
+  modifiers: HitModifier[];
 };

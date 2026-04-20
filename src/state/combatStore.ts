@@ -70,8 +70,10 @@ function mkSoldierUnit(templateId: string): Unit {
   const store = useGameStore.getState();
   const loadout = store.loadouts[templateId] ?? t.defaultLoadout;
   const primary = WEAPONS[loadout.primaryId]!;
+  const sidearm = WEAPONS[loadout.sidearmId]!;
   const armor = ARMOR[loadout.armorId]!;
   const hpMax = t.hpMax + armor.hpBonus;
+  const utilityCharges = loadout.utilityIds.map((id) => UTILITIES[id]?.charges ?? 0);
   return {
     id: nextUnitId++,
     faction: 'player',
@@ -85,6 +87,10 @@ function mkSoldierUnit(templateId: string): Unit {
     ap: 2, apMax: 2,
     loadout,
     ammo: primary.ammo,
+    sidearmAmmo: sidearm.ammo,
+    utilityCharges,
+    // Players don't use innate attack stats — combat resolves through their weapon.
+    dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
     status: { overwatch: false, blinded: false, suppressed: false },
     alive: true,
     color: t.portraitColor,
@@ -104,6 +110,12 @@ function mkEnemyUnit(templateId: string): Unit {
     mobility: t.mobility,
     ap: 2, apMax: 2,
     ammo: 99,
+    sidearmAmmo: 0,
+    utilityCharges: [],
+    dmgMin: t.dmgMin,
+    dmgMax: t.dmgMax,
+    rangeShort: t.rangeShort,
+    rangeLong: t.rangeLong,
     status: { overwatch: false, blinded: false, suppressed: false },
     alive: true,
     color: t.color,

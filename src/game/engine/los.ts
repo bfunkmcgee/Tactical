@@ -1,5 +1,5 @@
 import type { GridMap, Vec2, CoverState } from '../types';
-import { blocksLos, tileAt, inBounds } from './grid';
+import { blocksLos, tileAt, inBounds, keyOf } from './grid';
 
 /** Bresenham line, inclusive of endpoints. */
 export function line(a: Vec2, b: Vec2): Vec2[] {
@@ -23,11 +23,20 @@ export function line(a: Vec2, b: Vec2): Vec2[] {
 /**
  * LOS from shooter to target. Endpoints are excluded from blocking checks
  * so a unit can shoot out of its own tile and at a target in cover.
+ * `extraBlockers` is an optional set of tile keys that block LOS (used for
+ * smoke clouds) — any intermediate tile in the set will break line of sight.
  */
-export function hasLineOfSight(m: GridMap, from: Vec2, to: Vec2): boolean {
+export function hasLineOfSight(
+  m: GridMap,
+  from: Vec2,
+  to: Vec2,
+  extraBlockers?: ReadonlySet<number>
+): boolean {
   const pts = line(from, to);
   for (let i = 1; i < pts.length - 1; i++) {
-    if (blocksLos(m, pts[i].x, pts[i].y)) return false;
+    const p = pts[i];
+    if (blocksLos(m, p.x, p.y)) return false;
+    if (extraBlockers && extraBlockers.has(keyOf(p.x, p.y))) return false;
   }
   return true;
 }
