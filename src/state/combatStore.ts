@@ -1,12 +1,10 @@
 import { create } from 'zustand';
 import type { GridMap, LogEntry, TurnPhase, Unit, UnitId, Utility, Vec2, ShotPreview, Weapon } from '../game/types';
-import { RUINED_MARKET, pickRandomMap } from '../game/data/maps';
-import { SOLDIERS } from '../game/data/soldiers';
-import { ENEMIES } from '../game/data/enemies';
-import { WEAPONS } from '../game/data/weapons';
-import { ARMOR } from '../game/data/armor';
-import { UTILITIES } from '../game/data/utilities';
-import { KITS } from '../game/data/kits';
+import { RUINED_MARKET, pickRandomMap } from '../game/maps';
+import {
+  useContent, getSoldierTemplate, getEnemyTemplate, getWeapon, getArmor,
+  getKit, resolveSpawn,
+} from '../content/registry';
 import { modsFromIds, totalMobilityDeltaFromMods } from '../game/engine/loadout';
 import type { ModSlot } from '../game/types';
 import { useGameStore } from './gameStore';
@@ -82,18 +80,18 @@ let nextLogId = 1;
 let nextFloaterId = 1;
 
 function mkSoldierUnit(templateId: string): Unit {
-  const t = SOLDIERS[templateId]!;
+  const t = getSoldierTemplate(templateId);
   const store = useGameStore.getState();
   const loadout = store.loadouts[templateId] ?? t.defaultLoadout;
-  const primary = WEAPONS[loadout.primaryId]!;
-  const sidearm = WEAPONS[loadout.sidearmId]!;
-  const armor = ARMOR[loadout.armorId]!;
-  const kit = loadout.kitId ? KITS[loadout.kitId] : null;
+  const primary = getWeapon(loadout.primaryId);
+  const sidearm = getWeapon(loadout.sidearmId);
+  const armor = getArmor(loadout.armorId);
+  const kit = loadout.kitId ? getKit(loadout.kitId) : null;
   const k = kit?.effects ?? {};
   // Kit folds into spawn-time stats — no runtime hooks needed in phase 1.
   const hpMax = Math.max(1, t.hpMax + armor.hpBonus + (k.hpBonus ?? 0));
   const utilityCharges = loadout.utilityIds.map((id) =>
-    (UTILITIES[id]?.charges ?? 0) + (k.extraUtilityCharges ?? 0)
+    (useContent().utilities[id]?.charges ?? 0) + (k.extraUtilityCharges ?? 0)
   );
   // Mods can also nudge wielder mobility (heavy stock −1, folding +1, etc.).
   const modMobility = totalMobilityDeltaFromMods(loadout.primaryMods, loadout.sidearmMods);
@@ -121,7 +119,7 @@ function mkSoldierUnit(templateId: string): Unit {
 }
 
 function mkEnemyUnit(templateId: string): Unit {
-  const t = ENEMIES[templateId]!;
+  const t = getEnemyTemplate(templateId);
   return {
     id: nextUnitId++,
     faction: 'enemy',
@@ -147,21 +145,21 @@ function mkEnemyUnit(templateId: string): Unit {
 
 function unitArmor(u: Unit): number {
   if (!u.loadout) return 0;
-  return ARMOR[u.loadout.armorId]?.dr ?? 0;
+  return useContent().armor[u.loadout.armorId]?.dr ?? 0;
 }
 
 function unitPrimary(u: Unit) {
-  return u.loadout ? WEAPONS[u.loadout.primaryId]! : null;
+  return u.loadout ? getWeapon(u.loadout.primaryId) : null;
 }
 
 function unitSidearm(u: Unit) {
-  return u.loadout ? WEAPONS[u.loadout.sidearmId]! : null;
+  return u.loadout ? getWeapon(u.loadout.sidearmId) : null;
 }
 
 function unitUtility(u: Unit, idx: number): Utility | null {
   if (!u.loadout) return null;
   const id = u.loadout.utilityIds[idx];
-  return id ? UTILITIES[id] ?? null : null;
+  return id ? useContent().utilities[id] ?? null : null;
 }
 
 /** Equipped mods for a soldier's primary or sidearm. Empty for enemies. */
@@ -228,7 +226,12 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       units.push(u);
     });
     for (const es of map.enemySpawns) {
-      const e = mkEnemyUnit(es.enemyId);
+      const enemyId = resolveSpawn(es.spawnKey);
+      if (!enemyId) {
+        console.warn(`[combat] no spawn legend entry for key '${es.spawnKey}'`);
+        continue;
+      }
+      const e = mkEnemyUnit(enemyId);
       e.pos = es.pos;
       units.push(e);
     }
@@ -358,7 +361,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const sidearm = unitSidearm(u);
     if (!primary) return false;
     // Honour the kit's extra-ammo bonuses — otherwise reload would shrink the magazine.
-    const kit = u.loadout?.kitId ? KITS[u.loadout.kitId] : null;
+    const kit = u.loadout?.kitId ? getKit(u.loadout.kitId) : null;
     const primaryCap = primary.ammo + (kit?.effects.extraAmmoPrimary ?? 0);
     const sidearmCap = (sidearm?.ammo ?? 0) + (kit?.effects.extraAmmoSidearm ?? 0);
     // Reload tops up both weapons (one action covers the loadout).

@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { useCombatStore } from '../state/combatStore';
-import { UTILITIES } from '../game/data/utilities';
-import { WEAPONS } from '../game/data/weapons';
-import { KITS } from '../game/data/kits';
-import { MODS } from '../game/data/mods';
+import { useContent, getWeapon, getMod } from '../content/registry';
 import { SIDEARM_MOD_SLOTS } from '../game/types';
 import type { ModSlot } from '../game/types';
 import ModPicker from './components/ModPicker';
@@ -37,9 +34,9 @@ export default function CombatHUD() {
 
   const selected = units.find((u) => u.id === selectedId);
   const playerUnits = units.filter((u) => u.faction === 'player');
-  const primary = selected?.loadout ? WEAPONS[selected.loadout.primaryId] : null;
-  const sidearm = selected?.loadout ? WEAPONS[selected.loadout.sidearmId] : null;
-  const kit = selected?.loadout?.kitId ? KITS[selected.loadout.kitId] : null;
+  const primary = selected?.loadout ? getWeapon(selected.loadout.primaryId) : null;
+  const sidearm = selected?.loadout ? getWeapon(selected.loadout.sidearmId) : null;
+  const kit = selected?.loadout?.kitId ? useContent().kits[selected.loadout.kitId] ?? null : null;
   // Magazine caps include any Kit bonus ammo so Reload disables correctly.
   const primaryCap = (primary?.ammo ?? 0) + (kit?.effects.extraAmmoPrimary ?? 0);
   const sidearmCap = (sidearm?.ammo ?? 0) + (kit?.effects.extraAmmoSidearm ?? 0);
@@ -50,7 +47,7 @@ export default function CombatHUD() {
   const shotTarget = pendingShotTargetId !== null
     ? units.find((u) => u.id === pendingShotTargetId) : null;
   const pendingUtilityDef = (pendingUtility && selected?.loadout)
-    ? UTILITIES[selected.loadout.utilityIds[pendingUtility.idx]]
+    ? useContent().utilities[selected.loadout.utilityIds[pendingUtility.idx]]
     : null;
 
   return (
@@ -180,7 +177,7 @@ export default function CombatHUD() {
           Sidearm {sidearm ? `(${selected!.sidearmAmmo}/${sidearmCap})` : ''}
         </button>
         {selected?.loadout?.utilityIds.map((uid, i) => {
-          const u = UTILITIES[uid]!;
+          const u = useContent().utilities[uid]!;
           const active = mode === 'utility' && selectedUtilityIdx === i;
           const charges = selected.utilityCharges[i] ?? 0;
           return (
@@ -208,8 +205,8 @@ export default function CombatHUD() {
 
       {/* Refit overlay */}
       {refitOpen && selected?.loadout && (() => {
-        const p = WEAPONS[selected.loadout.primaryId];
-        const s = WEAPONS[selected.loadout.sidearmId];
+        const p = getWeapon(selected.loadout.primaryId);
+        const s = getWeapon(selected.loadout.sidearmId);
         return (
           <div onClick={() => setRefitOpen(false)} style={{
             position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 50,
@@ -242,8 +239,8 @@ export default function CombatHUD() {
 
       {refitPicker && selected?.loadout && (() => {
         const wpn = refitPicker.sidearm
-          ? WEAPONS[selected.loadout.sidearmId]
-          : WEAPONS[selected.loadout.primaryId];
+          ? getWeapon(selected.loadout.sidearmId)
+          : getWeapon(selected.loadout.primaryId);
         if (!wpn) return null;
         const cur = (refitPicker.sidearm ? selected.loadout.sidearmMods : selected.loadout.primaryMods)[refitPicker.slot] ?? null;
         return (
@@ -276,7 +273,7 @@ function RefitWeaponPanel({ name, subtitle, slots, slotMap, disabled, onSlotClic
       <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
         {slots.map((slot) => {
           const id = slotMap[slot];
-          const mod = id ? MODS[id] : null;
+          const mod = id ? getMod(id) : null;
           return (
             <button key={slot} onClick={() => onSlotClick(slot)} disabled={disabled}
               style={{

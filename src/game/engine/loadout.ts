@@ -1,5 +1,5 @@
 import type { HitModifier, ModSlot, Weapon, WeaponFlag, WeaponMod } from '../types';
-import { MODS } from '../data/mods';
+import { useContent } from '../../content/registry';
 
 export type ResolvedWeapon = {
   effective: Weapon;            // base + summed mod stats
@@ -38,11 +38,12 @@ export function resolveWeapon(base: Weapon, mods: WeaponMod[]): ResolvedWeapon {
 
 /** Look up the WeaponMods currently equipped to a weapon's slot map. */
 export function modsFromIds(slotMap: Partial<Record<ModSlot, string>>): WeaponMod[] {
+  const mods = useContent().mods;
   const out: WeaponMod[] = [];
   for (const slot of Object.keys(slotMap) as ModSlot[]) {
     const id = slotMap[slot];
     if (!id) continue;
-    const m = MODS[id];
+    const m = mods[id];
     if (m) out.push(m);
   }
   return out;

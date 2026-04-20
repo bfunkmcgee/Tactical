@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { resolveWeapon } from './loadout';
-import { MODS } from '../data/mods';
-import { WEAPONS } from '../data/weapons';
+import { useContent } from '../../content/registry';
+
+const MODS = useContent().mods;
+const WEAPONS = useContent().weapons;
 
 const carbine = WEAPONS.runeweave_carbine!;
 

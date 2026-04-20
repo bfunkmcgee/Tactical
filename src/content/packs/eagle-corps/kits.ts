@@ -1,4 +1,4 @@
-import type { Kit } from '../types';
+import type { Kit } from '../../../game/types';
 
 /**
  * Phase-1 Kit catalog — passive equipment in a single slot.

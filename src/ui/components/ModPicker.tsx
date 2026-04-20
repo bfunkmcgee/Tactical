@@ -1,5 +1,5 @@
 import type { ModSlot, WeaponClass, WeaponMod } from '../../game/types';
-import { modsFor } from '../../game/data/mods';
+import { modsFor } from '../../content/registry';
 
 const TAG_COLORS: Record<string, string> = {
   runic: 'var(--accent)',

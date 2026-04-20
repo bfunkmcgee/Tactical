@@ -1,4 +1,4 @@
-import type { EnemyTemplate } from '../types';
+import type { EnemyTemplate } from '../../../game/types';
 
 /**
  * The Rust Choir — a scavenger cult of goblinoid raiders clad in welded scrap.

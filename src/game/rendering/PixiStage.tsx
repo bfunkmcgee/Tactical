@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { useCombatStore } from '../../state/combatStore';
-import { UTILITIES } from '../data/utilities';
+import { useContent } from '../../content/registry';
 import type { GridMap, Unit, Vec2 } from '../types';
 import { TILE_W, TILE_H, gridToScreen, screenToGrid } from './isoProjection';
 import { chebyshev, keyOf, tileAt } from '../engine/grid';
@@ -298,7 +298,7 @@ function redrawOverlays(layer: Container, st: ReturnType<typeof useCombatStore.g
 
   // Utility mode: shade tiles within throw range; highlight AoE if a target is pending.
   if (st.mode === 'utility' && st.selectedUtilityIdx !== null && sel.loadout) {
-    const util = UTILITIES[sel.loadout.utilityIds[st.selectedUtilityIdx]];
+    const util = useContent().utilities[sel.loadout.utilityIds[st.selectedUtilityIdx]];
     if (util) {
       for (let y = 0; y < st.map.height; y++) {
         for (let x = 0; x < st.map.width; x++) {

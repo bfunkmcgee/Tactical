@@ -19,7 +19,12 @@ export type GridMap = {
   height: number;
   tiles: Tile[]; // row-major: tiles[y * width + x]
   playerSpawns: Vec2[];
-  enemySpawns: { pos: Vec2; enemyId: string }[];
+  /**
+   * Each spawn carries an abstract key (`'G'`, `'O'`, `'T'`, etc.) that is
+   * resolved to a concrete enemy template id through the active ContentPack's
+   * `spawnLegend`. Keeps maps engine-owned and pack-agnostic.
+   */
+  enemySpawns: { pos: Vec2; spawnKey: string }[];
 };
 
 export type WeaponClass = 'rifle' | 'smg' | 'shotgun' | 'sniper' | 'pistol' | 'heavy';

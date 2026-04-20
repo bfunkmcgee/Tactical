@@ -1,4 +1,4 @@
-import type { Armor } from '../types';
+import type { Armor } from '../../../game/types';
 
 export const ARMOR: Record<string, Armor> = {
   warded_plate: {

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Loadout } from '../game/types';
-import { SOLDIERS } from '../game/data/soldiers';
+import { useContent, allSoldierTemplates } from '../content/registry';
 
 type Screen = 'menu' | 'loadout' | 'combat' | 'debrief';
 
@@ -9,8 +9,8 @@ type SquadLoadouts = Record<string, Loadout>;
 const LS_KEY = 'tactical.squadLoadouts.v1';
 
 /**
- * Older saved loadouts (pre-Kit phase) lack `kitId`. Normalise on load so the
- * runtime always sees a complete Loadout shape — null kit means "no kit".
+ * Older saved loadouts (pre-Kit / pre-mods) lack newer fields. Normalise on
+ * load so the runtime always sees a complete Loadout shape.
  */
 function normalise(loadout: Partial<Loadout>): Loadout {
   return {
@@ -35,7 +35,7 @@ function loadPersisted(): SquadLoadouts {
     }
   } catch {}
   const defaults: SquadLoadouts = {};
-  for (const s of Object.values(SOLDIERS)) defaults[s.id] = { ...s.defaultLoadout };
+  for (const s of allSoldierTemplates()) defaults[s.id] = { ...s.defaultLoadout };
   return defaults;
 }
 
@@ -59,7 +59,7 @@ type GameState = {
 
 export const useGameStore = create<GameState>((set) => ({
   screen: 'menu',
-  roster: ['ranger_kestrel', 'warden_brannock', 'mystic_seraphine', 'sapper_orin'],
+  roster: useContent().defaultRoster.slice(),
   loadouts: loadPersisted(),
   lastOutcome: null,
   lastKills: 0,
@@ -75,7 +75,7 @@ export const useGameStore = create<GameState>((set) => ({
   resetLoadouts: () =>
     set(() => {
       const defaults: SquadLoadouts = {};
-      for (const s of Object.values(SOLDIERS)) defaults[s.id] = { ...s.defaultLoadout };
+      for (const s of allSoldierTemplates()) defaults[s.id] = { ...s.defaultLoadout };
       persist(defaults);
       return { loadouts: defaults };
     }),

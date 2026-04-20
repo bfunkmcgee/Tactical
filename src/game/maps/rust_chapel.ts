@@ -1,14 +1,16 @@
-import type { GridMap, Tile, TileKind } from '../../types';
+import type { GridMap, Tile, TileKind } from '../types';
 
-// Rust Chapel — a ruined choir hall deep in Rust Choir territory.
-// Long nave flanked by pillars (full cover), two rows of pews (half cover),
-// and an altar at the far end where the troll war-priest stands.
+// Long nave flanked by paired pillars (full cover) and two pew rows (half
+// cover); altar at the south end. Spawn keys are pack-agnostic — the active
+// ContentPack's `spawnLegend` resolves them to enemy template ids at deploy.
 //
 // Legend:
 //  .  floor       #  wall
 //  h  half cover  H  full cover
 //  P  player spawn
-//  G  Rust Goblin spawn    O  Rust Orc spawn    T  Rust Troll spawn
+//  G  spawn key 'G' · common grunt
+//  O  spawn key 'O' · uncommon mid-tier
+//  T  spawn key 'T' · rare elite (war-priest)
 const ASCII = [
   '################',
   '#.P.H......H.P.#',
@@ -24,16 +26,17 @@ const ASCII = [
   '################',
 ];
 
-function classify(ch: string): { kind: TileKind; spawn?: 'P' | 'G' | 'O' | 'T' } {
+const SPAWN_KEYS = new Set(['G', 'O', 'T']);
+
+function classify(ch: string): { kind: TileKind; spawn?: 'P' | string } {
   switch (ch) {
     case '#': return { kind: 'wall' };
     case 'h': return { kind: 'cover_half' };
     case 'H': return { kind: 'cover_full' };
     case 'P': return { kind: 'floor', spawn: 'P' };
-    case 'G': return { kind: 'floor', spawn: 'G' };
-    case 'O': return { kind: 'floor', spawn: 'O' };
-    case 'T': return { kind: 'floor', spawn: 'T' };
-    default:  return { kind: 'floor' };
+    default:
+      if (SPAWN_KEYS.has(ch)) return { kind: 'floor', spawn: ch };
+      return { kind: 'floor' };
   }
 }
 
@@ -41,18 +44,15 @@ function build(): GridMap {
   const height = ASCII.length;
   const width = ASCII[0].length;
   const tiles: Tile[] = new Array(width * height);
-  const playerSpawns = [];
+  const playerSpawns: GridMap['playerSpawns'] = [];
   const enemySpawns: GridMap['enemySpawns'] = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const c = ASCII[y][x];
       const { kind, spawn } = classify(c);
-      // Regular repeating tile pattern evokes the aligned flagstones of a nave.
       tiles[y * width + x] = { kind, variant: (x + y) % 3 };
       if (spawn === 'P') playerSpawns.push({ x, y });
-      if (spawn === 'G') enemySpawns.push({ pos: { x, y }, enemyId: 'rust_goblin' });
-      if (spawn === 'O') enemySpawns.push({ pos: { x, y }, enemyId: 'rust_orc' });
-      if (spawn === 'T') enemySpawns.push({ pos: { x, y }, enemyId: 'rust_troll' });
+      else if (spawn) enemySpawns.push({ pos: { x, y }, spawnKey: spawn });
     }
   }
   return { id: 'rust_chapel', name: 'Rust Chapel', width, height, tiles, playerSpawns, enemySpawns };

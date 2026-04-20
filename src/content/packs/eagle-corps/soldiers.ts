@@ -1,4 +1,4 @@
-import type { SoldierTemplate } from '../types';
+import type { SoldierTemplate } from '../../../game/types';
 
 export const SOLDIERS: Record<string, SoldierTemplate> = {
   ranger_kestrel: {

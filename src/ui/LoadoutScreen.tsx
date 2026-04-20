@@ -1,11 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../state/gameStore';
-import { SOLDIERS } from '../game/data/soldiers';
-import { WEAPONS, PRIMARY_WEAPONS, SIDEARMS } from '../game/data/weapons';
-import { ARMOR, ALL_ARMOR } from '../game/data/armor';
-import { ALL_UTILITIES } from '../game/data/utilities';
-import { KITS, ALL_KITS } from '../game/data/kits';
-import { MODS } from '../game/data/mods';
+import {
+  useContent, getSoldierTemplate, getWeapon, getArmor, getMod,
+  allArmor, allUtilities, allKits, primaryWeapons, sidearms,
+} from '../content/registry';
 import type { Loadout, ModSlot, WeaponClass } from '../game/types';
 import { SIDEARM_MOD_SLOTS } from '../game/types';
 import ModPicker from './components/ModPicker';
@@ -24,13 +22,13 @@ export default function LoadoutScreen() {
   const [picker, setPicker] = useState<{ slot: ModSlot; sidearm: boolean } | null>(null);
 
   const soldierId = roster[idx];
-  const soldier = SOLDIERS[soldierId]!;
+  const soldier = getSoldierTemplate(soldierId);
   const current = loadouts[soldierId];
 
-  const armor = ARMOR[current.armorId];
-  const primary = WEAPONS[current.primaryId];
-  const sidearm = WEAPONS[current.sidearmId];
-  const kit = current.kitId ? KITS[current.kitId] : null;
+  const armor = getArmor(current.armorId);
+  const primary = getWeapon(current.primaryId);
+  const sidearm = getWeapon(current.sidearmId);
+  const kit = current.kitId ? useContent().kits[current.kitId] ?? null : null;
 
   const derived = useMemo(() => {
     const k = kit?.effects ?? {};
@@ -73,7 +71,7 @@ export default function LoadoutScreen() {
 
       <div className="row scroll-x" style={{ gap: 'var(--s-2)', paddingBottom: 4 }}>
         {roster.map((sid, i) => {
-          const s = SOLDIERS[sid]!;
+          const s = getSoldierTemplate(sid);
           return (
             <button key={sid} onClick={() => setIdx(i)}
               style={{
@@ -128,7 +126,7 @@ export default function LoadoutScreen() {
                 slotMap={current.primaryMods}
                 onSlotClick={(slot) => setPicker({ slot, sidearm: false })} />
               <Grid>
-                {PRIMARY_WEAPONS.map((w) => (
+                {primaryWeapons().map((w) => (
                   <Card key={w.id} selected={current.primaryId === w.id}
                     onClick={() => set({ primaryId: w.id, primaryMods: {} })}
                     title={w.name} tag={w.tag}
@@ -146,7 +144,7 @@ export default function LoadoutScreen() {
                 slotMap={current.sidearmMods}
                 onSlotClick={(slot) => setPicker({ slot, sidearm: true })} />
               <Grid>
-                {SIDEARMS.map((w) => (
+                {sidearms().map((w) => (
                   <Card key={w.id} selected={current.sidearmId === w.id}
                     onClick={() => set({ sidearmId: w.id, sidearmMods: {} })}
                     title={w.name} tag={w.tag}
@@ -163,7 +161,7 @@ export default function LoadoutScreen() {
         {tab === 'armor' && (
           <Section title="Armor">
             <Grid>
-              {ALL_ARMOR.map((a) => (
+              {allArmor().map((a) => (
                 <Card key={a.id} selected={current.armorId === a.id} onClick={() => set({ armorId: a.id })}
                   title={a.name} tag={a.tag}
                   lines={[
@@ -181,7 +179,7 @@ export default function LoadoutScreen() {
               <Card selected={current.kitId === null} onClick={() => set({ kitId: null })}
                 title="No Kit" tag="mundane"
                 lines={['No passive equipment.', 'Free up the slot for a clean run.']} />
-              {ALL_KITS.map((k) => (
+              {allKits().map((k) => (
                 <Card key={k.id} selected={current.kitId === k.id} onClick={() => set({ kitId: k.id })}
                   title={k.name} tag={k.tag}
                   lines={[describeKitEffects(k.effects), k.flavor]} />
@@ -193,7 +191,7 @@ export default function LoadoutScreen() {
         {tab === 'utilities' && (
           <Section title={`Utilities (${current.utilityIds.length}/${MAX_UTILITIES})`}>
             <Grid>
-              {ALL_UTILITIES.map((u) => {
+              {allUtilities().map((u) => {
                 const count = current.utilityIds.filter((x) => x === u.id).length;
                 return (
                   <Card key={u.id} selected={count > 0} onClick={() => toggleUtility(u.id)}
@@ -237,7 +235,7 @@ function ModSlotRow({ weapon, slots, slotMap, onSlotClick }:
     <div className="row" style={{ gap: 'var(--s-2)', marginBottom: 'var(--s-3)', flexWrap: 'wrap' }}>
       {slots.map((slot) => {
         const id = slotMap[slot];
-        const mod = id ? MODS[id] : null;
+        const mod = id ? getMod(id) : null;
         return (
           <button key={slot} onClick={() => onSlotClick(slot)}
             style={{

@@ -1,4 +1,4 @@
-import type { Weapon } from '../types';
+import type { Weapon } from '../../../game/types';
 
 export const WEAPONS: Record<string, Weapon> = {
   runeweave_carbine: {

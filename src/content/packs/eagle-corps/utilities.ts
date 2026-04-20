@@ -1,4 +1,4 @@
-import type { Utility } from '../types';
+import type { Utility } from '../../../game/types';
 
 export const UTILITIES: Record<string, Utility> = {
   embercore_orb: {

@@ -1,4 +1,4 @@
-import type { WeaponMod } from '../types';
+import type { WeaponMod } from '../../../game/types';
 
 /**
  * Phase-2 weapon modifications. A mod fits a slot if its `slot` matches and
@@ -142,8 +142,4 @@ export const MODS: Record<string, WeaponMod> = {
 };
 
 export const ALL_MODS = Object.values(MODS);
-
-/** All mods that fit a given weapon class + slot. */
-export function modsFor(slot: import('../types').ModSlot, weaponClass: import('../types').WeaponClass): WeaponMod[] {
-  return ALL_MODS.filter((m) => m.slot === slot && m.fits.includes(weaponClass));
-}
+// Note: `modsFor()` now lives in src/content/registry.ts (pack-aware).
