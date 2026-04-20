@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGameStore } from '../state/gameStore';
 import { useCampaignStore } from '../state/campaignStore';
 import { useCombatStore } from '../state/combatStore';
@@ -13,6 +14,7 @@ export default function ExcursionScreen() {
   const excursion = useCampaignStore((s) => s.excursion);
   const extract = useCampaignStore((s) => s.extract);
   const pack = useContent();
+  const [abortConfirm, setAbortConfirm] = useState(false);
 
   if (!excursion) {
     // Safety net — user refreshed or state got out of sync.
@@ -36,9 +38,11 @@ export default function ExcursionScreen() {
       console.warn(`[excursion] missing map '${mission.mapId}' for mission '${mission.id}'`);
       return;
     }
-    // Translate excursion carry into combatStore's carry format.
+    // Downed soldiers sit the mission out — they stay in the excursion's
+    // carry list but aren't deployed onto the map.
+    const aliveSquad = excursion!.squad.filter((s) => s.alive);
     const carries: Record<string, { hp: number; ammoPrimary: number; ammoSidearm: number; utilityCharges: number[] }> = {};
-    for (const s of excursion!.squad) {
+    for (const s of aliveSquad) {
       carries[s.soldierId] = {
         hp: s.hp,
         ammoPrimary: s.ammoPrimary,
@@ -48,11 +52,19 @@ export default function ExcursionScreen() {
     }
     useCombatStore.getState().initMission({
       map,
-      rosterIds: excursion!.squad.map((s) => s.soldierId),
+      rosterIds: aliveSquad.map((s) => s.soldierId),
       carries,
       briefing: `${mission.name}: ${mission.briefing}`,
     });
     setScreen('combat');
+  }
+
+  /** Abort confirmation — honest retreat. extract() applies the normal
+   * wound logic per HP%. Zone progress only records completion if all
+   * missions were cleared, so an aborted excursion doesn't "bank" kills. */
+  function abortExcursion() {
+    extract();
+    setScreen('menu');
   }
 
   function requestExtract() {
@@ -67,7 +79,7 @@ export default function ExcursionScreen() {
   return (
     <div className="screen stack" style={{ padding: 'var(--s-3)', gap: 'var(--s-3)', overflow: 'hidden' }}>
       <div className="row" style={{ justifyContent: 'space-between' }}>
-        <button onClick={() => setScreen('menu')} style={{ opacity: .6 }}>Abort</button>
+        <button onClick={() => setAbortConfirm(true)} style={{ opacity: .6 }}>Abort</button>
         <h2>{zone.name}</h2>
         {allDone
           ? <button className="primary" onClick={requestExtract}>Extract</button>
@@ -81,12 +93,18 @@ export default function ExcursionScreen() {
           {excursion.squad.map((s) => {
             const t = pack.soldierTemplates[s.soldierId];
             return (
-              <div key={s.soldierId} className="row" style={{ gap: 'var(--s-3)', alignItems: 'center' }}>
+              <div key={s.soldierId} className="row"
+                style={{ gap: 'var(--s-3)', alignItems: 'center',
+                         opacity: s.alive ? 1 : 0.45 }}>
                 <div style={{ width: 12, height: 12, background: t?.portraitColor ?? '#fff', borderRadius: 3 }} />
                 <div style={{ flex: 1, fontSize: 13 }}>{t?.name ?? s.soldierId}</div>
-                <div style={{ fontSize: 11, color: 'var(--fg-1)' }}>
-                  HP {s.hp}/{t?.hpMax ?? '?'} · ammo {s.ammoPrimary}/{s.ammoSidearm}
-                </div>
+                {s.alive
+                  ? <div style={{ fontSize: 11, color: 'var(--fg-1)' }}>
+                      HP {s.hp}/{t?.hpMax ?? '?'} · ammo {s.ammoPrimary}/{s.ammoSidearm}
+                    </div>
+                  : <div style={{ fontSize: 11, color: 'var(--danger)', fontWeight: 600 }}>
+                      DOWN · benched
+                    </div>}
               </div>
             );
           })}
@@ -148,6 +166,27 @@ export default function ExcursionScreen() {
           </section>
         )}
       </div>
+
+      {abortConfirm && (
+        <div onClick={() => setAbortConfirm(false)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 60,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--s-3)',
+        }}>
+          <div onClick={(e) => e.stopPropagation()} className="panel stack"
+            style={{ maxWidth: 340, padding: 'var(--s-3)', gap: 'var(--s-3)', textAlign: 'center' }}>
+            <h2 style={{ fontSize: 18 }}>Abort excursion?</h2>
+            <p style={{ fontSize: 13, color: 'var(--fg-1)' }}>
+              Squad retreats from the zone. Soldiers still take their wounds home,
+              downed operatives go on the long bench, and <strong>no zone completion is recorded</strong>.
+            </p>
+            <div className="row" style={{ gap: 'var(--s-2)' }}>
+              <button style={{ flex: 1 }} onClick={() => setAbortConfirm(false)}>Stay</button>
+              <button className="primary" style={{ flex: 1, background: 'var(--danger)', borderColor: 'var(--danger)' }}
+                onClick={abortExcursion}>Retreat</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

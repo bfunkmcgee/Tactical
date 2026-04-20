@@ -38,13 +38,17 @@ export default function CombatScreen() {
       const t = setTimeout(() => {
         if (excursion) {
           // Merge the mission-end state back into the excursion carry.
+          // Soldiers that didn't deploy this mission (already downed) stay
+          // downed — we don't touch their entry.
           const carries = snapshotSquadCarry();
           const updatedSquad = excursion.squad.map((s) => {
+            if (!s.alive) return s; // already downed; preserve
             const c = carries.find((cc) => cc.soldierId === s.soldierId);
             if (!c) return s;
             return {
               ...s,
-              hp: c.hp,
+              alive: c.alive,
+              hp: c.alive ? c.hp : 0,
               ammoPrimary: c.ammoPrimary,
               ammoSidearm: c.ammoSidearm,
               utilityCharges: c.utilityCharges,
@@ -64,7 +68,24 @@ export default function CombatScreen() {
       setOutcome('defeat', kills, damageTaken);
       const t = setTimeout(() => {
         if (excursion) {
-          recordDefeat();
+          // Same merge as victory — preserves per-soldier alive/HP so
+          // the extract() wound roll uses the real final state.
+          const carries = snapshotSquadCarry();
+          const updatedSquad = excursion.squad.map((s) => {
+            if (!s.alive) return s;
+            const c = carries.find((cc) => cc.soldierId === s.soldierId);
+            if (!c) return s;
+            return {
+              ...s,
+              alive: c.alive,
+              hp: c.alive ? c.hp : 0,
+              ammoPrimary: c.ammoPrimary,
+              ammoSidearm: c.ammoSidearm,
+              utilityCharges: c.utilityCharges,
+              dirt: Math.min(100, s.dirt + 15),
+            };
+          });
+          recordDefeat(updatedSquad);
           setScreen('debrief');
         } else {
           setScreen('debrief');

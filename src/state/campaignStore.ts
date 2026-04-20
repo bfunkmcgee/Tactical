@@ -8,6 +8,8 @@ import { useContent, onPackChange } from '../content/registry';
  */
 export interface SquadCarry {
   soldierId: string;
+  /** False once the soldier has been downed this excursion. Sits out the rest of the deployment. */
+  alive: boolean;
   hp: number;
   ammoPrimary: number;
   ammoSidearm: number;
@@ -46,7 +48,7 @@ export interface CampaignState {
   startExcursion: (zone: Zone) => void;
   /** Record the end of the active mission and advance (or flag ready for extract). */
   recordMissionVictory: (squad: SquadCarry[]) => void;
-  recordMissionDefeat: () => void;
+  recordMissionDefeat: (squad?: SquadCarry[]) => void;
   /** Finalise the excursion, merge survivors back to campaign, return to base. */
   extract: () => void;
   /** Reload campaign defaults from the active pack — called on pack swap. */
@@ -76,6 +78,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     const roster = get().rosterIds.filter((id) => !get().woundedIds[id]);
     const squad: SquadCarry[] = roster.map((soldierId) => ({
       soldierId,
+      alive: true,
       hp: pack.soldierTemplates[soldierId]?.hpMax ?? 10,
       ammoPrimary: 99,   // refilled at mission start from weapon + kit caps
       ammoSidearm: 99,
@@ -124,7 +127,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     });
   },
 
-  recordMissionDefeat: () => {
+  recordMissionDefeat: (squad?: SquadCarry[]) => {
     const e = get().excursion;
     if (!e) return;
     const zone = useContent().zones?.find((z) => z.id === e.zoneId);
@@ -132,6 +135,8 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     set({
       excursion: {
         ...e,
+        // Merge final squad state so extract() sees the correct alive/HP.
+        squad: squad ?? e.squad,
         history: mission
           ? [...e.history, { id: mission.id, kind: 'mission' as const, outcome: 'defeat' as const }]
           : e.history,
@@ -143,11 +148,13 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     const e = get().excursion;
     if (!e) return;
     // Wound soldiers whose HP is low at extraction — phase-6 will render this.
+    // Downed (`!alive`) soldiers always take the max-wound penalty regardless of HP.
     const nextWounded: Record<string, number> = { ...get().woundedIds };
     for (const s of e.squad) {
       const pack = useContent();
       const template = pack.soldierTemplates[s.soldierId];
       if (!template) continue;
+      if (!s.alive) { nextWounded[s.soldierId] = 3; continue; }
       const hpPct = s.hp / template.hpMax;
       if (hpPct <= 0.3) nextWounded[s.soldierId] = 3;
       else if (hpPct <= 0.6) nextWounded[s.soldierId] = 1;

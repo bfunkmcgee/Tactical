@@ -89,6 +89,7 @@ type CombatState = {
   /** Snapshot player-unit state for the excursion's squad-carry record. */
   snapshotSquadCarry: () => Array<{
     soldierId: string;
+    alive: boolean;
     hp: number;
     ammoPrimary: number;
     ammoSidearm: number;
@@ -571,7 +572,8 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       .filter((u) => u.faction === 'player')
       .map((u) => ({
         soldierId: u.templateId,
-        hp: u.hp,
+        alive: u.alive,
+        hp: u.alive ? u.hp : 0,
         ammoPrimary: u.ammo,
         ammoSidearm: u.sidearmAmmo,
         utilityCharges: [...u.utilityCharges],
