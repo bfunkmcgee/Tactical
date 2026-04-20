@@ -46,4 +46,19 @@ export const pack: ContentPack = {
   zones: ZONES,
   consumables: CONSUMABLES,
   initialStockpile: INITIAL_STOCKPILE,
+
+  theme: {
+    /** Resolve a unit's templateId to its authored SVG in public/styles/flat. */
+    spritePath: (templateId) => SPRITES[templateId],
+  },
+};
+
+const SPRITES: Record<string, string> = {
+  ranger_kestrel:    '/styles/flat/soldier.svg',
+  warden_brannock:   '/styles/flat/soldier_warden.svg',
+  mystic_seraphine:  '/styles/flat/soldier_mystic.svg',
+  sapper_orin:       '/styles/flat/soldier_sapper.svg',
+  rust_goblin:       '/styles/flat/enemy_goblin.svg',
+  rust_orc:          '/styles/flat/enemy_orc.svg',
+  rust_troll:        '/styles/flat/enemy_troll.svg',
 };

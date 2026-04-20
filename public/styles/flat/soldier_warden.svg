@@ -27,7 +27,6 @@
       <stop offset="1" stop-color="#8a3010" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="96" height="128" fill="#1b2331"/>
   <ellipse cx="48" cy="120" rx="28" ry="5" fill="#000" opacity=".55"/>
 
   <!-- HANGING TABARD / cloth panel behind legs -->

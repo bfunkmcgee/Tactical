@@ -1,11 +1,32 @@
 import { useEffect, useRef } from 'react';
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Application, Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { useCombatStore } from '../../state/combatStore';
 import { useContent } from '../../content/registry';
 import type { GridMap, Unit, Vec2 } from '../types';
 import { TILE_W, TILE_H, gridToScreen, screenToGrid } from './isoProjection';
 import { chebyshev, keyOf, tileAt } from '../engine/grid';
 import { hasLineOfSight } from '../engine/los';
+
+/** Texture cache keyed by unit templateId — shared across mount cycles. */
+const spriteCache = new Map<string, Texture>();
+
+/** Preload every templateId the active pack provides a spritePath for. */
+async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): Promise<void> {
+  const resolve = pack.theme?.spritePath;
+  if (!resolve) return;
+  const ids = [...Object.keys(pack.soldierTemplates), ...Object.keys(pack.enemyTemplates)];
+  await Promise.all(ids.map(async (id) => {
+    if (spriteCache.has(id)) return;
+    const url = resolve(id);
+    if (!url) return;
+    try {
+      const tex = await Assets.load<Texture>(url);
+      spriteCache.set(id, tex);
+    } catch (err) {
+      console.warn(`[sprites] failed to load ${id} from ${url}`, err);
+    }
+  }));
+}
 
 /** Mounts a single Pixi application and reflects store state each tick. */
 export default function PixiStage() {
@@ -45,6 +66,12 @@ export default function PixiStage() {
       const initialState = useCombatStore.getState();
       drawMap(tileLayer, initialState.map);
       applyCam();
+
+      // Kick off sprite preload; re-render units when it lands.
+      ensureSpritesLoaded(useContent()).then(() => {
+        if (destroyed) return;
+        redrawUnits(unitLayer, useCombatStore.getState());
+      });
 
       // ---- Input ----
       const pointers = new Map<number, { x: number; y: number }>();
@@ -335,37 +362,34 @@ function drawUnit(layer: Container, u: Unit, selected: boolean) {
   const c = new Container();
   c.position.set(p.x, p.y);
 
-  const shadow = new Graphics();
-  shadow.ellipse(0, 6, 14, 6).fill({ color: 0x000000, alpha: 0.5 });
-  c.addChild(shadow);
-
-  const body = new Graphics();
-  const color = parseInt(u.color.slice(1), 16);
-  body.roundRect(-10, -30, 20, 30, 4).fill(color).stroke({ color: 0x0b0f14, width: 1 });
-  body.circle(0, -36, 8).fill(color).stroke({ color: 0x0b0f14, width: 1 });
-  c.addChild(body);
-
+  // Selection ring sits on the ground plane regardless of rendering mode.
   if (selected) {
     const ring = new Graphics();
     ring.ellipse(0, 6, 18, 8).stroke({ color: 0x7cc4ff, width: 2 });
     c.addChild(ring);
   }
+
+  // Sprite if we have one for this templateId; otherwise the colored placeholder.
+  const tex = spriteCache.get(u.templateId);
+  const spriteTop = drawUnitBody(c, u, tex);
+
   if (u.status.overwatch) {
     const ow = new Graphics();
-    ow.circle(0, -46, 4).fill(0xf5c55a);
+    ow.circle(0, spriteTop - 10, 4).fill(0xf5c55a);
     c.addChild(ow);
   }
   if (u.status.blinded) {
     const bl = new Graphics();
-    bl.circle(-6, -46, 3).fill(0xc79aff);
-    bl.circle(6, -46, 3).fill(0xc79aff);
+    bl.circle(-6, spriteTop - 10, 3).fill(0xc79aff);
+    bl.circle(6, spriteTop - 10, 3).fill(0xc79aff);
     c.addChild(bl);
   }
 
   const bar = new Graphics();
   const pct = u.hp / u.hpMax;
-  bar.rect(-14, -48, 28, 4).fill(0x0b0f14);
-  bar.rect(-14, -48, 28 * pct, 4).fill(u.faction === 'player' ? 0x57d18b : 0xff5a6a);
+  const barY = spriteTop - 12;
+  bar.rect(-14, barY, 28, 4).fill(0x0b0f14);
+  bar.rect(-14, barY, 28 * pct, 4).fill(u.faction === 'player' ? 0x57d18b : 0xff5a6a);
   c.addChild(bar);
 
   const label = new Text({
@@ -373,10 +397,42 @@ function drawUnit(layer: Container, u: Unit, selected: boolean) {
     style: { fill: 0xaab4c4, fontSize: 10, fontFamily: 'system-ui' },
   });
   label.anchor.set(0.5, 1);
-  label.position.set(0, -52);
+  label.position.set(0, barY - 4);
   c.addChild(label);
 
   layer.addChild(c);
+}
+
+/**
+ * Draw the unit body — sprite when a texture is cached, colored rectangle
+ * fallback otherwise. Returns the y-offset of the sprite's top edge so HP
+ * bars and status markers can sit just above the character.
+ */
+function drawUnitBody(c: Container, u: Unit, tex: Texture | undefined): number {
+  const shadow = new Graphics();
+  shadow.ellipse(0, 6, 14, 6).fill({ color: 0x000000, alpha: 0.45 });
+  c.addChild(shadow);
+
+  if (tex) {
+    // Sprite is authored in a 96×128 viewBox. At scale 0.42 it renders ~40×54
+    // — roughly one tile wide, a little over one tile tall. Anchor bottom-
+    // center and nudge down 3px so the feet overlap the tile top.
+    const sprite = new Sprite(tex);
+    sprite.anchor.set(0.5, 1);
+    sprite.scale.set(0.42);
+    sprite.position.set(0, 4);
+    c.addChild(sprite);
+    // Top of rendered sprite in container-local coords: y = 4 - 128*0.42 ≈ -49.
+    return -50;
+  }
+
+  // Fallback rectangle for packs without sprites (Void-Watch right now).
+  const body = new Graphics();
+  const color = parseInt(u.color.slice(1), 16);
+  body.roundRect(-10, -30, 20, 30, 4).fill(color).stroke({ color: 0x0b0f14, width: 1 });
+  body.circle(0, -36, 8).fill(color).stroke({ color: 0x0b0f14, width: 1 });
+  c.addChild(body);
+  return -44;
 }
 
 function renderActiveFloaters(

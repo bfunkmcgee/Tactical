@@ -24,7 +24,6 @@
       <stop offset="1" stop-color="#4a1808" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="96" height="128" fill="#1b2331"/>
   <ellipse cx="48" cy="120" rx="28" ry="4.5" fill="#000" opacity=".6"/>
 
   <!-- BIG BRUTE LEGS -->

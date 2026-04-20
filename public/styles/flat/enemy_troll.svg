@@ -24,7 +24,6 @@
       <stop offset="1" stop-color="#3a0808" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="96" height="128" fill="#1b2331"/>
   <ellipse cx="48" cy="124" rx="34" ry="5" fill="#000" opacity=".65"/>
 
   <!-- MASSIVE STANCE: wider legs, fills frame -->

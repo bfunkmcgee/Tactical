@@ -27,7 +27,6 @@
       <stop offset="1" stop-color="#2a6aa0" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="96" height="128" fill="#1b2331"/>
   <ellipse cx="48" cy="120" rx="22" ry="4" fill="#000" opacity=".55"/>
 
   <!-- LEGS: desert tan pants -->
