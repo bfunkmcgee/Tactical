@@ -3,7 +3,11 @@
 html, body, #root {
   margin: 0;
   padding: 0;
-  height: 100%;
+  /* `100svh` = smallest viewport, i.e. with the URL bar showing. Prevents the
+   * bottom action bar from sliding below the visible area on mobile Chrome.
+   * Falls back to `100vh` on older browsers that don't support svh. */
+  height: 100vh;
+  height: 100svh;
   width: 100%;
   overflow: hidden;
   background: var(--bg-0);

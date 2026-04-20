@@ -53,7 +53,7 @@ export default function CombatHUD() {
   return (
     <>
       {/* Top status */}
-      <div style={{ position: 'absolute', top: 'calc(var(--safe-top) + var(--s-2))', left: 'var(--s-2)', right: 'var(--s-2)', display: 'flex', gap: 'var(--s-2)', pointerEvents: 'none' }}>
+      <div style={{ position: 'fixed', top: 'calc(var(--safe-top) + var(--s-2))', left: 'var(--s-2)', right: 'var(--s-2)', display: 'flex', gap: 'var(--s-2)', pointerEvents: 'none', zIndex: 10 }}>
         <div className="panel" style={{ padding: '6px 10px', fontSize: 13, pointerEvents: 'auto' }}>
           <strong>Round {round}</strong> · {phase === 'player' ? 'Your turn' : phase === 'enemy' ? 'Enemy turn' : phase === 'won' ? 'Victory' : 'Defeat'}
         </div>
@@ -75,10 +75,10 @@ export default function CombatHUD() {
 
       {/* Log */}
       <div className="panel scroll-y" style={{
-        position: 'absolute', right: 'var(--s-2)',
+        position: 'fixed', right: 'var(--s-2)',
         top: 'calc(var(--safe-top) + 72px)',
         width: 220, maxHeight: 140, fontSize: 12, pointerEvents: 'auto',
-        display: 'flex', flexDirection: 'column-reverse',
+        display: 'flex', flexDirection: 'column-reverse', zIndex: 10,
       }}>
         <div>
           {log.slice(-10).map((l) => (
@@ -90,8 +90,8 @@ export default function CombatHUD() {
       {/* Shot preview card with hit-modifier breakdown */}
       {shotPreview && shotTarget && (
         <div className="panel" style={{
-          position: 'absolute', left: '50%', transform: 'translateX(-50%)',
-          bottom: 'calc(var(--safe-bottom) + 92px)',
+          position: 'fixed', left: '50%', transform: 'translateX(-50%)',
+          bottom: 'calc(var(--safe-bottom) + 92px)', zIndex: 11,
           minWidth: 260, maxWidth: 320, padding: 'var(--s-3)', pointerEvents: 'auto',
           borderColor: 'var(--danger)',
         }}>
@@ -131,8 +131,8 @@ export default function CombatHUD() {
       {/* Utility preview card */}
       {pendingUtility && pendingUtilityDef && (
         <div className="panel" style={{
-          position: 'absolute', left: '50%', transform: 'translateX(-50%)',
-          bottom: 'calc(var(--safe-bottom) + 92px)',
+          position: 'fixed', left: '50%', transform: 'translateX(-50%)',
+          bottom: 'calc(var(--safe-bottom) + 92px)', zIndex: 11,
           minWidth: 240, padding: 'var(--s-3)', pointerEvents: 'auto',
           borderColor: 'var(--accent-2)',
         }}>
@@ -156,12 +156,12 @@ export default function CombatHUD() {
         </div>
       )}
 
-      {/* Bottom action bar */}
+      {/* Bottom action bar — fixed so it stays above the mobile URL bar. */}
       <div style={{
-        position: 'absolute', bottom: 'calc(var(--safe-bottom) + var(--s-2))',
-        left: 'var(--s-2)', right: 'var(--s-2)',
+        position: 'fixed', bottom: 'calc(var(--safe-bottom) + var(--s-2))',
+        left: 'var(--s-2)', right: 'var(--s-2)', zIndex: 10,
         display: 'flex', gap: 'var(--s-2)', flexWrap: 'wrap',
-        background: 'rgba(11,15,20,0.7)', border: '1px solid var(--bg-3)', borderRadius: 'var(--r-lg)',
+        background: 'rgba(11,15,20,0.85)', border: '1px solid var(--bg-3)', borderRadius: 'var(--r-lg)',
         padding: 'var(--s-2)', backdropFilter: 'blur(6px)',
       }}>
         <button onClick={() => setMode(mode === 'move' ? 'idle' : 'move')} disabled={disabled}
