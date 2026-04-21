@@ -344,6 +344,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       log: [{ id: nextLogId++, text: opts?.briefing ?? `Mission: ${map.name}. Neutralize all hostiles.`, kind: 'info' }],
       rng: makeRng(Date.now() & 0xffffffff),
       kills: 0, damageTaken: 0, floaters: [], fireEvents: [],
+      shakeFrames: 0,
       isSkirmish: opts?.isSkirmish ?? false,
     });
     set((st) => ({ reach: recalcReach(st) }));
