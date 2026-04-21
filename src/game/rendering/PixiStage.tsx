@@ -560,12 +560,18 @@ const FIRE_STYLES: Record<WeaponClass | 'default', FireStyle> = {
   default: { totalMs: 440, windupMs: 200, shotSpacingMs: 0,  shotWindowMs: 90,  shots: 1, windupRad: 0.40, kickRad: 0.28, recoilPx: 3, bodyLiftPx: 2, flashScale: 1.0 },
 };
 
-/** Pick the fire style for a unit's current shot. Enemies default. */
+/** Pick the fire style for a unit's current shot. */
 function fireStyleFor(u: Unit, primaryFired: boolean): FireStyle {
   if (u.loadout) {
+    // Player: derive from the equipped weapon's class.
     const weaponId = primaryFired ? u.loadout.primaryId : u.loadout.sidearmId;
     const weapon = useContent().weapons[weaponId];
     if (weapon) return FIRE_STYLES[weapon.class] ?? FIRE_STYLES.default;
+  } else if (u.faction === 'enemy') {
+    // Enemy: derive from the template's fireClass (scrap blunderbuss,
+    // scrap assault rifle, scrap MG — each gets its own choreography).
+    const tmpl = useContent().enemyTemplates[u.templateId];
+    if (tmpl?.fireClass) return FIRE_STYLES[tmpl.fireClass] ?? FIRE_STYLES.default;
   }
   return FIRE_STYLES.default;
 }

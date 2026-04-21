@@ -170,6 +170,12 @@ export type EnemyTemplate = {
   rangeLong: number;
   kind: 'ranged' | 'melee';
   color: string;
+  /**
+   * Drives the renderer's fire animation (windup duration, burst vs single
+   * shot, muzzle-flash size). Defaults to 'rifle' for ranged enemies when
+   * omitted. Melee enemies can leave this unset.
+   */
+  fireClass?: WeaponClass;
 };
 
 export type Faction = 'player' | 'enemy';

@@ -16,6 +16,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     rangeShort: 5, rangeLong: 10,
     kind: 'ranged',
     color: '#9aa054', // sickly yellow-green
+    fireClass: 'shotgun', // short-barrel scrap blunderbuss — wide cone blast.
   },
   rust_orc: {
     id: 'rust_orc',
@@ -27,6 +28,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     rangeShort: 6, rangeLong: 12,
     kind: 'ranged',
     color: '#6a7048', // deeper moss green
+    fireClass: 'rifle', // scrap assault rifle — single shouldered shot.
   },
   rust_troll: {
     id: 'rust_troll',
@@ -38,5 +40,6 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     rangeShort: 7, rangeLong: 14,
     kind: 'ranged',
     color: '#7a6a50', // gray-brown hide
+    fireClass: 'heavy', // scrap MG — rips 4-round bursts.
   },
 };

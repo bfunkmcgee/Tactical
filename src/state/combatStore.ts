@@ -510,7 +510,10 @@ export const useCombatStore = create<CombatState>((set, get) => ({
           if (!target || !target.alive) break;
           const armorDr = target.faction === 'player' ? unitArmor(target) : 0;
           const result = resolveEnemyAttack(get().map, actor, target, armorDr, get().rng, smokeSet());
-          let units = get().units.map((o) => o.id === actor!.id ? { ...o, ap: o.ap - 1 } : o);
+          // Decrement ammo even though enemies never reload — the renderer
+          // watches ammo deltas to trigger the fire animation. Enemies start
+          // at 99 rounds so this never gates them in practice.
+          let units = get().units.map((o) => o.id === actor!.id ? { ...o, ap: o.ap - 1, ammo: o.ammo - 1 } : o);
           let damageTaken = get().damageTaken;
           let entry: LogEntry;
           const floaters = [...get().floaters];
