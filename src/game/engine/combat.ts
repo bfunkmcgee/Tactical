@@ -72,9 +72,29 @@ export function previewShot(
 }
 
 export type ShotResult =
-  | { kind: 'miss'; hitRoll: number }
-  | { kind: 'hit'; damage: number; critical: boolean; hitRoll: number; ammoRefund: boolean };
+  | { kind: 'miss'; hitRoll: number; burstRounds?: number }
+  | {
+      kind: 'hit';
+      damage: number;
+      critical: boolean;
+      hitRoll: number;
+      ammoRefund: boolean;
+      /** Rounds that connected out of `burstRounds` total. Single-shot
+       *  weapons omit both for backward compat. */
+      hits?: number;
+      burstRounds?: number;
+    };
 
+/**
+ * Roll a shot. Automatic weapons (Weapon.burstShots > 1) roll each
+ * round independently at the shot's hit chance — per-round damage is
+ * `dmg/burstShots` so total burst damage tracks the listed value but
+ * with lower variance than a single-shot weapon. Armor DR applies
+ * per round (armour is stronger against spray).
+ *
+ * The returned `hits` + `burstRounds` surface "2/3 rounds connected"
+ * for HUD copy; callers that don't care can ignore them.
+ */
 export function resolveShot(
   preview: ShotPreview,
   weapon: Weapon,
@@ -84,23 +104,58 @@ export function resolveShot(
 ): ShotResult {
   const resolved = resolveWeapon(weapon, mods);
   const eff = resolved.effective;
-  const hitRoll = rng.int(100) + 1;
-  if (hitRoll > preview.hitChance) return { kind: 'miss', hitRoll };
-  const critRoll = rng.int(100) + 1;
-  const critical = critRoll <= preview.critChance;
-  const base = eff.dmgMin + rng.int(eff.dmgMax - eff.dmgMin + 1);
-  const raw = critical ? Math.round(base * 1.5) : base;
+  const burstShots = Math.max(1, weapon.burstShots ?? 1);
   const armorDr = armor ? armor.dr : 0;
   const effectiveDr = Math.max(0,
     armorDr - (resolved.flags.has('piercing') ? PIERCING_DR_REDUCTION : 0));
-  const damage = Math.max(1, raw - effectiveDr);
-  const ammoRefund = critical && resolved.flags.has('recover_ammo_on_crit');
-  return { kind: 'hit', damage, critical, hitRoll, ammoRefund };
+
+  // Per-round damage band. Floor of 1 for tiny-damage bursts so rounds
+  // always contribute when they connect.
+  const perRoundMin = Math.max(1, Math.ceil(eff.dmgMin / burstShots));
+  const perRoundMax = Math.max(perRoundMin, Math.ceil(eff.dmgMax / burstShots));
+
+  let totalDamage = 0;
+  let hits = 0;
+  let anyCrit = false;
+  let firstRoll = 0;
+
+  for (let i = 0; i < burstShots; i++) {
+    const hitRoll = rng.int(100) + 1;
+    if (i === 0) firstRoll = hitRoll;
+    if (hitRoll > preview.hitChance) continue;
+    hits++;
+    const critRoll = rng.int(100) + 1;
+    const critical = critRoll <= preview.critChance;
+    if (critical) anyCrit = true;
+    const base = perRoundMin + rng.int(perRoundMax - perRoundMin + 1);
+    const raw = critical ? Math.round(base * 1.5) : base;
+    totalDamage += Math.max(1, raw - effectiveDr);
+  }
+
+  if (hits === 0) {
+    return burstShots > 1
+      ? { kind: 'miss', hitRoll: firstRoll, burstRounds: burstShots }
+      : { kind: 'miss', hitRoll: firstRoll };
+  }
+  const ammoRefund = anyCrit && resolved.flags.has('recover_ammo_on_crit');
+  const result: ShotResult = {
+    kind: 'hit', damage: totalDamage, critical: anyCrit, hitRoll: firstRoll, ammoRefund,
+  };
+  if (burstShots > 1) {
+    result.hits = hits;
+    result.burstRounds = burstShots;
+  }
+  return result;
 }
 
 /**
  * Enemy attack resolution uses the enemy's own stats from its template.
  * Enemies have no mod system, so flags/contributions don't apply here.
+ *
+ * If the shooter's template carries `burstShots > 1` the attack is a
+ * burst: each round rolls independently and per-round damage is the
+ * shooter's dmg stat divided by the burst count. Same model the player
+ * weapons use.
  */
 export function resolveEnemyAttack(
   m: GridMap,
@@ -108,7 +163,8 @@ export function resolveEnemyAttack(
   target: Unit,
   targetArmorDr: number,
   rng: RNG,
-  smokeTiles?: ReadonlySet<number>
+  smokeTiles?: ReadonlySet<number>,
+  burstShotsOverride?: number,
 ): ShotResult & { preview: ShotPreview } {
   const dist = chebyshev(shooter.pos, target.pos);
   const los = hasLineOfSight(m, shooter.pos, target.pos, smokeTiles);
@@ -132,11 +188,39 @@ export function resolveEnemyAttack(
     modifiers,
   };
 
-  const roll = rng.int(100) + 1;
-  if (roll > hitChance) return { kind: 'miss', hitRoll: roll, preview };
-  const base = shooter.dmgMin + rng.int(shooter.dmgMax - shooter.dmgMin + 1);
-  const critical = (rng.int(100) + 1) <= critChance;
-  const raw = critical ? Math.round(base * 1.5) : base;
-  const damage = Math.max(1, raw - targetArmorDr);
-  return { kind: 'hit', damage, critical, hitRoll: roll, ammoRefund: false, preview };
+  const burstShots = Math.max(1, burstShotsOverride ?? 1);
+  const perRoundMin = Math.max(1, Math.ceil(shooter.dmgMin / burstShots));
+  const perRoundMax = Math.max(perRoundMin, Math.ceil(shooter.dmgMax / burstShots));
+
+  let totalDamage = 0;
+  let hits = 0;
+  let anyCrit = false;
+  let firstRoll = 0;
+
+  for (let i = 0; i < burstShots; i++) {
+    const roll = rng.int(100) + 1;
+    if (i === 0) firstRoll = roll;
+    if (roll > hitChance) continue;
+    hits++;
+    const critical = (rng.int(100) + 1) <= critChance;
+    if (critical) anyCrit = true;
+    const base = perRoundMin + rng.int(perRoundMax - perRoundMin + 1);
+    const raw = critical ? Math.round(base * 1.5) : base;
+    totalDamage += Math.max(1, raw - targetArmorDr);
+  }
+
+  if (hits === 0) {
+    return burstShots > 1
+      ? { kind: 'miss', hitRoll: firstRoll, burstRounds: burstShots, preview }
+      : { kind: 'miss', hitRoll: firstRoll, preview };
+  }
+  const result: ShotResult & { preview: ShotPreview } = {
+    kind: 'hit', damage: totalDamage, critical: anyCrit,
+    hitRoll: firstRoll, ammoRefund: false, preview,
+  };
+  if (burstShots > 1) {
+    result.hits = hits;
+    result.burstRounds = burstShots;
+  }
+  return result;
 }

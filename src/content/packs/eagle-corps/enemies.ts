@@ -40,6 +40,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     rangeShort: 7, rangeLong: 14,
     kind: 'ranged',
     color: '#7a6a50', // gray-brown hide
-    fireClass: 'heavy', // scrap MG — rips 4-round bursts.
+    fireClass: 'heavy',
+    burstShots: 4, // scrap MG rips a 4-round burst; each round rolled separately.
   },
 };

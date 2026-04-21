@@ -51,6 +51,14 @@ export type Weapon = {
   endsTurn?: boolean; // e.g., snipers often end the turn if first-action
   tag: ElementTag;
   /**
+   * Number of physical rounds that leave the barrel on a single fire
+   * action. Each round rolls independently against the shot's hit
+   * chance; per-round damage = dmgMin/burstShots..dmgMax/burstShots so
+   * total burst damage tracks the listed stat. Defaults to 1 (single
+   * shot) when omitted. Automatic weapons (SMG, heavy MG) set > 1.
+   */
+  burstShots?: number;
+  /**
    * Optional URL to the weapon's SVG. When set, the renderer and the
    * armory preview both show this sprite instead of a character-
    * specific weapon — so the same weapon looks identical regardless of
@@ -183,6 +191,12 @@ export type EnemyTemplate = {
    * omitted. Melee enemies can leave this unset.
    */
   fireClass?: WeaponClass;
+  /**
+   * Rounds fired per attack action. Mirrors Weapon.burstShots for enemies
+   * that don't carry a player-style weapon — heavy MGs / SMGs roll each
+   * round independently. Defaults to 1 when omitted.
+   */
+  burstShots?: number;
 };
 
 export type Faction = 'player' | 'enemy';

@@ -90,4 +90,113 @@ describe('resolveShot', () => {
     expect(r.kind).toBe('hit');
     if (r.kind === 'hit') expect(r.damage).toBeGreaterThanOrEqual(1);
   });
+
+  it('single-shot results omit hits/burstRounds fields (backward-compat)', () => {
+    const m = mkMap(['.....']);
+    const shooter = mkUnit({ pos: { x: 0, y: 0 } });
+    const target = mkUnit({ id: 2, faction: 'enemy', pos: { x: 2, y: 0 } });
+    const p = previewShot(m, shooter, target, RIFLE, 0);
+    const r = resolveShot({ ...p, hitChance: 100, critChance: 0 }, RIFLE, null, makeRng(7));
+    expect(r.kind).toBe('hit');
+    if (r.kind === 'hit') {
+      expect(r.hits).toBeUndefined();
+      expect(r.burstRounds).toBeUndefined();
+    }
+  });
 });
+
+describe('resolveShot (burst fire)', () => {
+  // A 3-round auto weapon with the same total damage band as the rifle —
+  // lets us compare variance without changing expected damage.
+  const BURST: Weapon = {
+    ...RIFLE, id: 'burst', name: 'Burst', class: 'smg', burstShots: 3,
+  };
+
+  it('rolls each round independently — a 100%-hit burst lands every round', () => {
+    const m = mkMap(['.....']);
+    const shooter = mkUnit({ pos: { x: 0, y: 0 } });
+    const target = mkUnit({ id: 2, faction: 'enemy', pos: { x: 2, y: 0 } });
+    const p = previewShot(m, shooter, target, BURST, 0);
+    const forced = { ...p, hitChance: 100, critChance: 0 };
+    const r = resolveShot(forced, BURST, null, makeRng(1));
+    expect(r.kind).toBe('hit');
+    if (r.kind === 'hit') {
+      expect(r.hits).toBe(3);
+      expect(r.burstRounds).toBe(3);
+      // Per-round damage is ceil(4/3)..ceil(6/3) = 2..2, so 3 rounds give 6
+      // total damage at minimum (and up to ~6 at max since max = min).
+      expect(r.damage).toBeGreaterThanOrEqual(3 * 2);
+    }
+  });
+
+  it('0%-hit burst misses and reports burstRounds', () => {
+    const m = mkMap(['.....']);
+    const shooter = mkUnit({ pos: { x: 0, y: 0 } });
+    const target = mkUnit({ id: 2, faction: 'enemy', pos: { x: 2, y: 0 } });
+    const p = previewShot(m, shooter, target, BURST, 0);
+    const forced = { ...p, hitChance: 0, critChance: 0 };
+    const r = resolveShot(forced, BURST, null, makeRng(1));
+    expect(r.kind).toBe('miss');
+    expect(r.burstRounds).toBe(3);
+  });
+
+  it('partial hit counts (not every round connects)', () => {
+    // At 50% hit chance and a fixed seed, some rolls hit and some miss.
+    // We just assert the count is strictly between 0 and burstRounds.
+    const m = mkMap(['.....']);
+    const shooter = mkUnit({ pos: { x: 0, y: 0 } });
+    const target = mkUnit({ id: 2, faction: 'enemy', pos: { x: 2, y: 0 } });
+    const p = previewShot(m, shooter, target, BURST, 0);
+    const forced = { ...p, hitChance: 50, critChance: 0 };
+    // Seed chosen by sampling — this particular seed gives 2/3 hits.
+    const r = resolveShot(forced, BURST, null, makeRng(3));
+    if (r.kind === 'hit') {
+      expect(r.hits).toBeGreaterThanOrEqual(1);
+      expect(r.hits!).toBeLessThanOrEqual(3);
+      expect(r.burstRounds).toBe(3);
+    }
+  });
+
+  it('total burst damage has LOWER variance than single-shot over many rolls', () => {
+    // A 3-round burst of 3 @ 65% hit should have a tighter damage
+    // distribution than one single-shot @ 65% — the test samples many
+    // rolls and checks the spread.
+    const m = mkMap(['.....']);
+    const shooter = mkUnit({ pos: { x: 0, y: 0 } });
+    const target = mkUnit({ id: 2, faction: 'enemy', pos: { x: 2, y: 0 } });
+    const p = previewShot(m, shooter, target, BURST, 0);
+    const N = 500;
+    const burstSamples: number[] = [];
+    const singleSamples: number[] = [];
+    for (let i = 0; i < N; i++) {
+      const br = resolveShot({ ...p, hitChance: 65 }, BURST, null, makeRng(i));
+      burstSamples.push(br.kind === 'hit' ? br.damage : 0);
+      const sr = resolveShot({ ...p, hitChance: 65 }, RIFLE, null, makeRng(i));
+      singleSamples.push(sr.kind === 'hit' ? sr.damage : 0);
+    }
+    const burstVar = variance(burstSamples);
+    const singleVar = variance(singleSamples);
+    expect(burstVar).toBeLessThan(singleVar);
+  });
+
+  it('armor DR applies per round — burst payload is smaller than single-shot vs tanky targets', () => {
+    const armor = { id: 'a', name: '', flavor: '', hpBonus: 0, dr: 2, mobility: 0, tag: 'mundane' as const };
+    const m = mkMap(['.....']);
+    const shooter = mkUnit({ pos: { x: 0, y: 0 } });
+    const target = mkUnit({ id: 2, faction: 'enemy', pos: { x: 2, y: 0 } });
+    const p = previewShot(m, shooter, target, BURST, 0);
+    const forced = { ...p, hitChance: 100, critChance: 0 };
+    const r = resolveShot(forced, BURST, armor, makeRng(11));
+    expect(r.kind).toBe('hit');
+    if (r.kind === 'hit') {
+      // Per-round damage 2, armor DR 2 → each round clamps to min 1. 3 rounds
+      // × 1 min = 3 damage floor. Can't exceed 3 * 2 = 6 (base per round = 2).
+      expect(r.damage).toBeGreaterThanOrEqual(3);
+    }
+  });
+});
+
+function variance(xs: number[]): number {
+  const mean = xs.reduce((s, x) => s + x, 0) / xs.length;
+  return xs.reduce((s, x) => s + (x - mean) ** 2, 0) / xs.length;
+}

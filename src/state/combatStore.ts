@@ -555,7 +555,11 @@ export const useCombatStore = create<CombatState>((set, get) => ({
           const target = get().units.find((u) => u.id === intent.target.id);
           if (!target || !target.alive) break;
           const armorDr = target.faction === 'player' ? unitArmor(target) : 0;
-          const result = resolveEnemyAttack(get().map, actor, target, armorDr, get().rng, smokeSet());
+          const enemyTmpl = useContent().enemyTemplates[actor.templateId];
+          const result = resolveEnemyAttack(
+            get().map, actor, target, armorDr, get().rng, smokeSet(),
+            enemyTmpl?.burstShots,
+          );
           let units = get().units.map((o) => o.id === actor!.id ? { ...o, ap: o.ap - 1 } : o);
           let damageTaken = get().damageTaken;
           let entry: LogEntry;
@@ -568,16 +572,24 @@ export const useCombatStore = create<CombatState>((set, get) => ({
             fireClass: fireClassFor(actor, null),
           }];
           if (result.kind === 'miss') {
-            entry = { id: nextLogId++, text: `${actor.name} misses ${target.name} (${result.preview.hitChance}%).`, kind: 'miss' };
+            const burstMiss = result.burstRounds ? ` — 0/${result.burstRounds} rounds hit` : '';
+            entry = {
+              id: nextLogId++,
+              text: `${actor.name} misses ${target.name} (${result.preview.hitChance}%)${burstMiss}.`,
+              kind: 'miss',
+            };
             floaters.push(floaterFor(target.pos, 'MISS', 0x6b7689));
           } else {
             const newHp = Math.max(0, target.hp - result.damage);
             const died = newHp <= 0;
             units = units.map((o) => o.id === target.id ? { ...o, hp: newHp, alive: !died } : o);
             if (target.faction === 'player') damageTaken += result.damage;
+            const burstTag = result.hits && result.burstRounds
+              ? ` — ${result.hits}/${result.burstRounds} rounds hit`
+              : '';
             entry = {
               id: nextLogId++,
-              text: `${actor.name} ${result.critical ? 'critically ' : ''}hits ${target.name} for ${result.damage}${died ? ' — down!' : ''}.`,
+              text: `${actor.name} ${result.critical ? 'critically ' : ''}hits ${target.name} for ${result.damage}${burstTag}${died ? ' — down!' : ''}.`,
               kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
             };
             floaters.push(floaterFor(target.pos, `-${result.damage}`, result.critical ? 0xff9a3c : 0xff5a6a));
@@ -682,7 +694,12 @@ function applyShotResult(
   let entry: LogEntry;
   const verb = useSidearm ? `draws ${weapon.name} and ` : '';
   if (result.kind === 'miss') {
-    entry = { id: nextLogId++, text: `${u.name} ${verb}misses ${t.name} (${preview.hitChance}%).`, kind: 'miss' };
+    const burstMissTag = result.burstRounds ? ` — 0/${result.burstRounds} rounds hit` : '';
+    entry = {
+      id: nextLogId++,
+      text: `${u.name} ${verb}misses ${t.name} (${preview.hitChance}%)${burstMissTag}.`,
+      kind: 'miss',
+    };
     floaters.push(floaterFor(t.pos, 'MISS', 0x6b7689));
   } else {
     const newHp = Math.max(0, t.hp - result.damage);
@@ -690,9 +707,12 @@ function applyShotResult(
     units = units.map((o) => o.id === t.id ? { ...o, hp: newHp, alive: !died } : o);
     if (died) kills += 1;
     const refundTag = ammoRefund ? ' (round salvaged)' : '';
+    const burstTag = result.hits && result.burstRounds
+      ? ` — ${result.hits}/${result.burstRounds} rounds hit`
+      : '';
     entry = {
       id: nextLogId++,
-      text: `${u.name} ${verb}${result.critical ? 'critically ' : ''}hits ${t.name} for ${result.damage}${refundTag}${died ? ' — eliminated!' : ''}.`,
+      text: `${u.name} ${verb}${result.critical ? 'critically ' : ''}hits ${t.name} for ${result.damage}${burstTag}${refundTag}${died ? ' — eliminated!' : ''}.`,
       kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
     };
     floaters.push(floaterFor(t.pos, `-${result.damage}`, result.critical ? 0xff9a3c : 0x57d18b));
@@ -843,16 +863,24 @@ function triggerOverwatch(set: Setter, get: Getter, enemyId: UnitId): boolean {
   let entry: LogEntry;
   let kills = st.kills;
   if (result.kind === 'miss') {
-    entry = { id: nextLogId++, text: `${watcher.name} reacts — misses ${enemy.name}.`, kind: 'miss' };
+    const burstMiss = result.burstRounds ? ` — 0/${result.burstRounds} rounds hit` : '';
+    entry = {
+      id: nextLogId++,
+      text: `${watcher.name} reacts — misses ${enemy.name}${burstMiss}.`,
+      kind: 'miss',
+    };
     floaters.push(floaterFor(enemy.pos, 'MISS', 0xf5c55a));
   } else {
     const newHp = Math.max(0, enemy.hp - result.damage);
     const died = newHp <= 0;
     units = units.map((o) => o.id === enemy.id ? { ...o, hp: newHp, alive: !died } : o);
     if (died) kills += 1;
+    const burstTag = result.hits && result.burstRounds
+      ? ` — ${result.hits}/${result.burstRounds} rounds hit`
+      : '';
     entry = {
       id: nextLogId++,
-      text: `${watcher.name} reacts — ${result.critical ? 'crits ' : 'hits '}${enemy.name} for ${result.damage}${died ? ' — eliminated!' : ''}.`,
+      text: `${watcher.name} reacts — ${result.critical ? 'crits ' : 'hits '}${enemy.name} for ${result.damage}${burstTag}${died ? ' — eliminated!' : ''}.`,
       kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
     };
     floaters.push(floaterFor(enemy.pos, `-${result.damage}`, 0xf5c55a));
