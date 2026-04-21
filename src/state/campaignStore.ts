@@ -37,6 +37,12 @@ export interface ExcursionState {
   /** Soldier ids who went down during this excursion (may overlap with
    *  squad entries where alive === false). */
   soldiersLost: string[];
+  /**
+   * Skirmish id currently in progress (between Field Camp "March on" and
+   * the Combat screen detecting the win). Null when not in a skirmish.
+   * Cleared when the skirmish ends or the excursion finalises.
+   */
+  activeSkirmishId: string | null;
 }
 
 export interface CampaignState {
@@ -57,6 +63,15 @@ export interface CampaignState {
    *  `kills` + `damageTaken` get added to the excursion-wide totals. */
   recordMissionVictory: (squad: SquadCarry[], kills: number, damageTaken: number) => void;
   recordMissionDefeat: (squad?: SquadCarry[], kills?: number, damageTaken?: number) => void;
+  /**
+   * Record a road-skirmish outcome. Unlike recordMissionVictory, this does
+   * NOT advance currentMissionIdx or flag extractionReady — skirmishes are
+   * detours, not objectives — but it does accumulate stats, merge squad
+   * carry, and append to the history log with kind='skirmish'.
+   */
+  recordSkirmishVictory: (squad: SquadCarry[], kills: number, damageTaken: number, skirmishId: string) => void;
+  /** Mark a skirmish as pending so CombatScreen can close it out correctly. */
+  beginSkirmish: (skirmishId: string) => void;
   /** Finalise the excursion, merge survivors back to campaign, return to base. */
   extract: () => void;
   /**
@@ -117,8 +132,16 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         totalKills: 0,
         totalDamageTaken: 0,
         soldiersLost: [],
+        activeSkirmishId: null,
       },
     });
+  },
+
+  /** Mark a skirmish as active; cleared by recordSkirmishVictory. */
+  beginSkirmish: (skirmishId: string) => {
+    const e = get().excursion;
+    if (!e) return;
+    set({ excursion: { ...e, activeSkirmishId: skirmishId } });
   },
 
   recordMissionVictory: (squad, kills, damageTaken) => {
@@ -171,6 +194,27 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         totalKills: e.totalKills + kills,
         totalDamageTaken: e.totalDamageTaken + damageTaken,
         soldiersLost: [...e.soldiersLost, ...newlyLost],
+      },
+    });
+  },
+
+  recordSkirmishVictory: (squad, kills, damageTaken, skirmishId) => {
+    const e = get().excursion;
+    if (!e) return;
+    const newlyLost = squad
+      .filter((s) => !s.alive && !e.soldiersLost.includes(s.soldierId))
+      .map((s) => s.soldierId);
+    set({
+      excursion: {
+        ...e,
+        squad,
+        // Skirmishes do NOT change currentMissionIdx or extractionReady.
+        history: [...e.history,
+          { id: skirmishId, kind: 'skirmish' as const, outcome: 'victory' as const }],
+        totalKills: e.totalKills + kills,
+        totalDamageTaken: e.totalDamageTaken + damageTaken,
+        soldiersLost: [...e.soldiersLost, ...newlyLost],
+        activeSkirmishId: null,
       },
     });
   },

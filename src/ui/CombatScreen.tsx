@@ -24,6 +24,8 @@ export default function CombatScreen() {
   const excursion = useCampaignStore((s) => s.excursion);
   const recordVictory = useCampaignStore((s) => s.recordMissionVictory);
   const recordDefeat = useCampaignStore((s) => s.recordMissionDefeat);
+  const recordSkirmishVictory = useCampaignStore((s) => s.recordSkirmishVictory);
+  const isSkirmish = useCombatStore((s) => s.isSkirmish);
 
   // Only call init() when we're NOT in an excursion — the excursion path
   // explicitly calls initMission() before navigating here.
@@ -56,11 +58,19 @@ export default function CombatScreen() {
               // damage accumulates from hits in phase 5; left at 0 for now.
             };
           });
-          recordVictory(updatedSquad, kills, damageTaken);
-          // Every mission now routes through the Field Camp so the squad
-          // can spend rations and supplies before pushing on or
-          // extracting.
-          setScreen('fieldCamp');
+          if (isSkirmish && excursion.activeSkirmishId) {
+            // Road skirmish win — record as a detour, do NOT advance
+            // missions, and slide directly to the excursion map so the
+            // player can deploy the next real objective.
+            recordSkirmishVictory(updatedSquad, kills, damageTaken, excursion.activeSkirmishId);
+            setScreen('excursion');
+          } else {
+            recordVictory(updatedSquad, kills, damageTaken);
+            // Every mission now routes through the Field Camp so the squad
+            // can spend rations and supplies before pushing on or
+            // extracting.
+            setScreen('fieldCamp');
+          }
         } else {
           setScreen('debrief');
         }
@@ -97,8 +107,8 @@ export default function CombatScreen() {
       }, 900);
       return () => clearTimeout(t);
     }
-  }, [phase, kills, damageTaken, setOutcome, setScreen, excursion,
-      snapshotSquadCarry, recordVictory, recordDefeat]);
+  }, [phase, kills, damageTaken, setOutcome, setScreen, excursion, isSkirmish,
+      snapshotSquadCarry, recordVictory, recordDefeat, recordSkirmishVictory]);
 
   return (
     <div className="screen" style={{ position: 'relative' }}>

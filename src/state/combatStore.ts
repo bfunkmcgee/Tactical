@@ -66,6 +66,13 @@ type CombatState = {
   // stats
   kills: number;
   damageTaken: number;
+  /**
+   * True when the current combat is a road-skirmish rather than a real
+   * mission. Drives post-combat routing: skirmish victories go back to
+   * the excursion map, not to Field Camp (no re-resupply between the
+   * skirmish and the next real mission plot point).
+   */
+  isSkirmish: boolean;
   // pending confirm
   pendingShotTargetId: UnitId | null;
   /** When set, the pending shot uses the soldier's sidearm instead of primary. */
@@ -104,6 +111,8 @@ type CombatState = {
     rosterIds?: string[];
     carries?: Record<string, SoldierCarry>;
     briefing?: string;
+    /** Mark as a skirmish so post-combat routing skips Field Camp. */
+    isSkirmish?: boolean;
   }) => void;
 
   /** Snapshot player-unit state for the excursion's squad-carry record. */
@@ -280,6 +289,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   rng: makeRng(0xC0FFEE),
   kills: 0,
   damageTaken: 0,
+  isSkirmish: false,
   pendingShotTargetId: null,
   pendingShotUsesSidearm: false,
   pendingUtility: null,
@@ -331,6 +341,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       log: [{ id: nextLogId++, text: opts?.briefing ?? `Mission: ${map.name}. Neutralize all hostiles.`, kind: 'info' }],
       rng: makeRng(Date.now() & 0xffffffff),
       kills: 0, damageTaken: 0, floaters: [], fireEvents: [],
+      isSkirmish: opts?.isSkirmish ?? false,
     });
     set((st) => ({ reach: recalcReach(st) }));
   },
