@@ -455,14 +455,38 @@ const DESERT_PALETTE: TilePalette = {
   rimHighlight: 0xe0c089,                 // golden sunlit NE edge
 };
 
+/**
+ * Desert with industrial wreckage — same warm palette as the base desert
+ * biome, but walls are rusted sheet-metal, half cover is pipe-runs, and
+ * full cover is storage tanks. Used by Eldersands Refinery.
+ */
+const REFINERY_PALETTE: TilePalette = {
+  floor: [0xc9a874, 0xb3935c, 0x8a724e], // sand + concrete pad + oil-stained apron
+  floorStroke: 0x5a4428,
+  wall: 0x5a3828,                         // rusted steel plate
+  wallHighlight: 0xa87248,                // sunlit rust edge
+  wallStain: 0x1a0a04,                    // dark oil / char streaks
+  halfCover: 0x9a5a2e,                    // rusted pipe orange
+  fullCover: 0x8a7868,                    // grey-steel tank
+  coverHighlight: 0xd4c4a4,               // metal sheen
+  coverShade: 0x3a2a1c,                   // deep shadow
+  coverStroke: 0x1a0e08,
+  accent: 0x3a2a1c,                       // rivets / concrete cracks
+  accentLight: 0xd4c4a4,                  // metal glint
+  rimHighlight: 0xe0c089,                 // shared golden NE-edge rim
+};
+
 function paletteFor(tileset: GridMap['tileset']): TilePalette {
-  return tileset === 'desert' ? DESERT_PALETTE : URBAN_PALETTE;
+  if (tileset === 'desert') return DESERT_PALETTE;
+  if (tileset === 'desert-refinery') return REFINERY_PALETTE;
+  return URBAN_PALETTE;
 }
 
 function drawMap(layer: Container, map: GridMap) {
   layer.removeChildren();
   const pal = paletteFor(map.tileset);
   const desert = map.tileset === 'desert';
+  const refinery = map.tileset === 'desert-refinery';
   const g = new Graphics();
   for (let y = 0; y < map.height; y++) {
     for (let x = 0; x < map.width; x++) {
@@ -475,16 +499,21 @@ function drawMap(layer: Container, map: GridMap) {
       else if (t.kind === 'cover_half') fill = pal.halfCover;
       else if (t.kind === 'cover_full') fill = pal.fullCover;
       diamond(g, p.x, p.y, fill, 1, pal.floorStroke);
-      // Biome-specific detail pass — sandstone bricks, dune flecks, etc.
-      if (desert) {
-        drawDesertDetail(g, t.kind, variant, p.x, p.y, x, y, pal);
-      }
+      // Biome-specific detail pass on the ground-plane diamond.
+      if (desert)        drawDesertDetail(g, t.kind, variant, p.x, p.y, x, y, pal);
+      else if (refinery) drawRefineryGroundDetail(g, t.kind, variant, p.x, p.y, x, y, pal);
+
       if (t.kind === 'cover_half' || t.kind === 'cover_full') {
         const h = t.kind === 'cover_full' ? 22 : 12;
-        g.rect(p.x - 14, p.y - h, 28, h)
-          .fill({ color: fill, alpha: 0.95 })
-          .stroke({ color: pal.coverStroke, width: 1 });
-        if (desert) drawDesertCoverDetail(g, t.kind, p.x, p.y, h, x, y, pal);
+        if (refinery) {
+          // Refinery cover: cylindrical pipes (half) or storage tanks (full).
+          drawRefineryCover(g, t.kind, p.x, p.y, h, pal);
+        } else {
+          g.rect(p.x - 14, p.y - h, 28, h)
+            .fill({ color: fill, alpha: 0.95 })
+            .stroke({ color: pal.coverStroke, width: 1 });
+          if (desert) drawDesertCoverDetail(g, t.kind, p.x, p.y, h, x, y, pal);
+        }
       }
     }
   }
@@ -627,6 +656,129 @@ function drawDesertCoverDetail(
     // Two dominant vertical seams for the column structure.
     g.rect(left + 9, top, 0.6, h).fill({ color: pal.coverStroke, alpha: 0.55 });
     g.rect(left + 19, top, 0.6, h).fill({ color: pal.coverStroke, alpha: 0.55 });
+  }
+}
+
+/**
+ * Ground-plane detail for refinery tiles — concrete pads on variant-0
+ * floors, oil stains on variant-2, rusted-steel plate seams + rivet
+ * rows on walls. Same deterministic (x,y) hash trick the desert
+ * detail uses so the pattern is stable across re-renders.
+ */
+function drawRefineryGroundDetail(
+  g: Graphics, kind: TileKind, variant: number,
+  px: number, py: number, gx: number, gy: number, pal: TilePalette,
+) {
+  const h = (gx * 73856093 ^ gy * 19349663) >>> 0;
+  const rand = (salt: number) => ((h + salt * 2654435761) >>> 0) / 0xffffffff;
+
+  if (kind === 'floor') {
+    // Shared golden rim on the NE edge — sun direction cue.
+    g.moveTo(px, py - TILE_H / 2);
+    g.lineTo(px + TILE_W / 2, py);
+    g.stroke({ color: pal.rimHighlight, width: 0.8, alpha: 0.35 });
+
+    if (variant === 2) {
+      // Oil stain — irregular dark splotch.
+      g.ellipse(px + 1, py + 1, 8, 3).fill({ color: pal.coverShade, alpha: 0.55 });
+      g.ellipse(px - 4, py - 1, 3, 1.5).fill({ color: pal.coverShade, alpha: 0.45 });
+    } else if (variant === 0) {
+      // Concrete pad — fine crack through the middle.
+      g.moveTo(px - 10, py);
+      g.lineTo(px - 2, py + 1);
+      g.lineTo(px + 4, py - 1);
+      g.lineTo(px + 10, py + 1);
+      g.stroke({ color: pal.accent, width: 0.5, alpha: 0.5 });
+    }
+    // A couple of scattered rivet / bolt heads common to refinery pads.
+    if (rand(3) < 0.25) {
+      const rx = px + (rand(4) * 16 - 8), ry = py + (rand(5) * 6 - 3);
+      g.circle(rx, ry, 0.7).fill({ color: pal.accentLight, alpha: 0.7 });
+      g.circle(rx, ry, 0.3).fill({ color: pal.accent, alpha: 0.8 });
+    }
+  } else if (kind === 'wall') {
+    // Steel plate: two horizontal panel seams + a staggered column of rivets
+    // running up the face.
+    g.rect(px - 11, py - 3, 22, 0.6).fill({ color: pal.accent, alpha: 0.7 });
+    g.rect(px - 11, py + 2, 22, 0.6).fill({ color: pal.accent, alpha: 0.7 });
+    // Rivets (alternating left / right column).
+    for (let i = -4; i <= 4; i += 2) {
+      const rx = px + (i % 4 === 0 ? -8 : 8);
+      g.circle(rx, py + i * 0.9, 0.7).fill({ color: pal.accentLight, alpha: 0.8 });
+    }
+    // Sun-hit NE edge on the diamond top.
+    g.moveTo(px - TILE_W / 2, py);
+    g.lineTo(px, py - TILE_H / 2);
+    g.stroke({ color: pal.wallHighlight, width: 1.1, alpha: 0.6 });
+    g.moveTo(px, py - TILE_H / 2);
+    g.lineTo(px + TILE_W / 2, py);
+    g.stroke({ color: pal.wallHighlight, width: 1.1, alpha: 0.55 });
+    // Occasional oil-streak drip.
+    if (rand(9) < 0.35) {
+      const dx = (rand(10) * 16 - 8) | 0;
+      g.rect(px + dx, py - 4, 0.6, 8).fill({ color: pal.wallStain, alpha: 0.55 });
+    }
+  }
+}
+
+/**
+ * Raised refinery cover silhouettes — cylindrical pipe for half cover,
+ * storage tank for full cover. Drawn with explicit rounded caps + rib
+ * bands so the shapes read as industrial equipment instead of the
+ * desert-biome's brick blocks.
+ */
+function drawRefineryCover(
+  g: Graphics, kind: TileKind,
+  px: number, py: number, h: number, pal: TilePalette,
+) {
+  const left = px - 14, right = px + 14, top = py - h, bot = py;
+  if (kind === 'cover_half') {
+    // Horizontal pipe spanning the tile. A rounded body, an end-cap on
+    // each side, two highlight lines along the top, and a shadow along
+    // the bottom so it reads as 3D.
+    const bodyTop = top + 1;
+    const bodyBot = bot - 1;
+    // Main body + rounded caps.
+    g.roundRect(left, bodyTop, 28, bodyBot - bodyTop, Math.min(6, (bodyBot - bodyTop) / 2))
+      .fill({ color: pal.halfCover, alpha: 1 })
+      .stroke({ color: pal.coverStroke, width: 1 });
+    // Top sheen.
+    g.rect(left + 3, bodyTop + 1, 22, 1).fill({ color: pal.coverHighlight, alpha: 0.75 });
+    // Bottom shadow.
+    g.rect(left + 3, bodyBot - 2, 22, 1).fill({ color: pal.coverShade, alpha: 0.65 });
+    // Flange collars at each end (welded joints).
+    g.rect(left - 1, bodyTop - 1, 3, bodyBot - bodyTop + 2)
+      .fill({ color: pal.coverShade, alpha: 0.9 })
+      .stroke({ color: pal.coverStroke, width: 1 });
+    g.rect(right - 2, bodyTop - 1, 3, bodyBot - bodyTop + 2)
+      .fill({ color: pal.coverShade, alpha: 0.9 })
+      .stroke({ color: pal.coverStroke, width: 1 });
+  } else {
+    // Storage tank — taller and wider than the pipe. Cylindrical rib
+    // bands at top, middle, and bottom; a rust streak running down the
+    // side; an "E" tank label block for flavour.
+    g.rect(left - 1, top - 1, 30, h + 1)
+      .fill({ color: pal.fullCover, alpha: 1 })
+      .stroke({ color: pal.coverStroke, width: 1 });
+    // Top dome hint (lighter strip).
+    g.rect(left, top, 28, 2).fill({ color: pal.coverHighlight, alpha: 0.85 });
+    // Rib bands at three heights.
+    for (const ry of [top + 5, top + Math.floor(h * 0.55), bot - 3]) {
+      g.rect(left - 1, ry, 30, 1).fill({ color: pal.coverShade, alpha: 0.65 });
+      g.rect(left - 1, ry + 1, 30, 0.5).fill({ color: pal.coverHighlight, alpha: 0.5 });
+    }
+    // Right-edge shadow column for 3D weight.
+    g.rect(right - 3, top + 2, 3, h - 3)
+      .fill({ color: pal.coverShade, alpha: 0.55 });
+    // Rust streak down the left face.
+    g.rect(left + 5, top + 3, 0.8, h - 5)
+      .fill({ color: pal.halfCover, alpha: 0.7 });
+    g.rect(left + 6, top + 8, 0.6, h - 10)
+      .fill({ color: pal.wallStain, alpha: 0.65 });
+    // Hazard-triangle placard on the face.
+    const plaqX = px - 2, plaqY = top + Math.floor(h * 0.3);
+    g.rect(plaqX, plaqY, 4, 4).fill({ color: pal.wallHighlight, alpha: 0.85 });
+    g.rect(plaqX + 1, plaqY + 1, 2, 2).fill({ color: pal.coverStroke, alpha: 0.95 });
   }
 }
 

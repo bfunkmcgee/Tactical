@@ -47,6 +47,69 @@ export const ZONES: Zone[] = [
       },
     ],
   },
+
+  /**
+   * Deeper desert push culminating at the Eldersands Refinery. Four
+   * missions — market approach, chapel breach, rearguard hold, and
+   * finally the oil-tank redoubt. Slightly more generous stockpile
+   * since the last fight is a grinder.
+   */
+  {
+    id: 'refinery-raid',
+    name: 'Refinery Raid',
+    description: 'Cut a path through Choir territory to the old Eldersands Refinery and break the scrap-cult stronghold.',
+    biome: 'desert',
+    skirmishChance: 0.4,
+    consumableGrant: { ammo_crate: 2, med_cache: 2, armor_patch: 1, field_wash: 1, reinforcement: 1 },
+    missions: [
+      {
+        id: 'rr-market-approach',
+        name: 'Market Approach',
+        briefing: 'Scavenger pickets hold the caravan approach. Clear them off the stalls before pushing inland.',
+        mapId: 'ruined_market',
+        objective: { kind: 'eliminate_all' },
+      },
+      {
+        id: 'rr-chapel-breach',
+        name: 'Chapel Breach',
+        briefing: 'A Choir war-priest has dug in at the rust chapel. Break their line at the altar.',
+        mapId: 'rust_chapel',
+        objective: { kind: 'eliminate_all' },
+      },
+      {
+        id: 'rr-rearguard',
+        name: 'Rearguard Hold',
+        briefing: 'The Choir is regrouping at the market aisles to cut our retreat. Hold the approach one more time.',
+        mapId: 'ruined_market',
+        objective: { kind: 'eliminate_all' },
+      },
+      {
+        id: 'rr-eldersands-refinery',
+        name: 'Eldersands Refinery',
+        briefing: 'The Choir has fortified the old Eldersands refinery — storage tanks turned into bunkers. Root them out.',
+        mapId: 'desert_refinery',
+        objective: { kind: 'eliminate_all' },
+      },
+    ],
+    skirmishes: [
+      {
+        id: 'rr-pipe-ambush',
+        name: 'Pipe-run Ambush',
+        flavor: 'Goblins swarm from behind a row of steam pipes as the squad pushes on.',
+        mapId: 'desert_refinery',
+        objective: { kind: 'eliminate_all' },
+        weight: 1,
+      },
+      {
+        id: 'rr-raider-ambush',
+        name: 'Raider Ambush',
+        flavor: 'A goblin band drops out of the rafters between missions.',
+        mapId: 'ruined_market',
+        objective: { kind: 'eliminate_all' },
+        weight: 1,
+      },
+    ],
+  },
 ];
 
 export const CONSUMABLES: Record<string, Consumable> = {

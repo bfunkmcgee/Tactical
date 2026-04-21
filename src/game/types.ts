@@ -19,9 +19,10 @@ export type GridMap = {
   height: number;
   /**
    * Visual biome key. The renderer maps this to a palette + detail pass
-   * (sandstone bricks, dune lines, etc). Omit for the default urban palette.
+   * (sandstone bricks, dune lines, rusted refinery pipes, etc). Omit for
+   * the default urban palette.
    */
-  tileset?: 'urban' | 'desert';
+  tileset?: 'urban' | 'desert' | 'desert-refinery';
   tiles: Tile[]; // row-major: tiles[y * width + x]
   playerSpawns: Vec2[];
   /**
