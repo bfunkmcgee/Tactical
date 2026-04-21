@@ -284,6 +284,34 @@ export default function PixiStage() {
       const active: ActiveFloater[] = [];
       const FLOATER_MS = 900;
 
+      // Per-impact blood spurts. One entry holds a pre-rolled set of droplets
+      // with initial velocities; the ticker integrates them + renders.
+      type BloodDroplet = { x: number; y: number; vx: number; vy: number; r: number };
+      type ActiveBlood = { bornMs: number; droplets: BloodDroplet[] };
+      const bloods: ActiveBlood[] = [];
+      const BLOOD_MS = 620;
+
+      function spawnBlood(pos: Vec2, damage: number) {
+        const origin = gridToScreen(pos);
+        // One droplet per ~2 damage, clamped 3..8 so a 1-dmg pistol tap still
+        // reads as a hit and a 12-dmg sniper doesn't flood the screen.
+        const count = Math.max(3, Math.min(8, 2 + Math.round(damage / 2)));
+        const droplets: BloodDroplet[] = [];
+        for (let i = 0; i < count; i++) {
+          // Spray biased upward + outward; gravity arcs them back down.
+          const angle = (Math.random() * 1.2 - 0.6) - Math.PI / 2; // -162° .. -108°
+          const speed = 70 + Math.random() * 70;                   // 70..140 px/s
+          droplets.push({
+            x: origin.x + (Math.random() - 0.5) * 4,
+            y: origin.y - 26 + (Math.random() - 0.5) * 6,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            r: 1.6 + Math.random() * 1.4,
+          });
+        }
+        bloods.push({ bornMs: performance.now(), droplets });
+      }
+
       const unsub = useCombatStore.subscribe(() => {
         const s = useCombatStore.getState();
         if (s.floaters.length > 0) {
@@ -292,7 +320,7 @@ export default function PixiStage() {
           useCombatStore.setState({ floaters: [] });
         }
         redrawOverlays(overlayLayer, s);
-        if (spritesReady) syncUnits(unitLayer, unitNodes, s);
+        if (spritesReady) syncUnits(unitLayer, unitNodes, s, spawnBlood);
         // Drain shot events to trigger fire animations with authoritative
         // target + weapon class. Must run AFTER syncUnits so nodes exist
         // for any shooter just spawned by initMission.
@@ -319,11 +347,25 @@ export default function PixiStage() {
         }
         // Advance unit animations (bob, movement tween, hit flash, death fade).
         tickUnitAnimations(unitLayer, unitNodes, dtMs, now);
-        // Prune aged floaters in the local list, then render.
+
+        // Integrate blood droplet physics + drop expired bloods.
+        const dtSec = dtMs / 1000;
+        const GRAVITY = 600; // px/s²
+        for (const b of bloods) {
+          for (const d of b.droplets) {
+            d.x += d.vx * dtSec;
+            d.y += d.vy * dtSec;
+            d.vy += GRAVITY * dtSec;
+          }
+        }
+        for (let i = bloods.length - 1; i >= 0; i--) {
+          if (now - bloods[i].bornMs > BLOOD_MS) bloods.splice(i, 1);
+        }
+        // Prune aged floaters in the local list, then render both layers.
         for (let i = active.length - 1; i >= 0; i--) {
           if (now - active[i].bornMs > FLOATER_MS) active.splice(i, 1);
         }
-        renderActiveFloaters(fxLayer, active, now, FLOATER_MS);
+        renderFx(fxLayer, active, bloods, now, FLOATER_MS, BLOOD_MS);
       });
 
       (app as unknown as { __cleanup?: () => void }).__cleanup = () => {
@@ -757,7 +799,8 @@ const MUZZLE_OFFSET = { x: 22, y: -2 };
 function syncUnits(
   layer: Container,
   nodes: Map<UnitId, UnitNode>,
-  st: ReturnType<typeof useCombatStore.getState>
+  st: ReturnType<typeof useCombatStore.getState>,
+  onHit?: (pos: Vec2, damage: number) => void,
 ) {
   const seen = new Set<UnitId>();
   for (const u of st.units) {
@@ -768,7 +811,7 @@ function syncUnits(
       layer.addChild(node.container);
       nodes.set(u.id, node);
     }
-    updateUnitNode(node, u, u.id === st.selectedId);
+    updateUnitNode(node, u, u.id === st.selectedId, onHit);
   }
   // Units dropped by initMission — destroy their nodes outright.
   for (const [id, node] of nodes) {
@@ -899,7 +942,10 @@ function createUnitNode(u: Unit): UnitNode {
   };
 }
 
-function updateUnitNode(node: UnitNode, u: Unit, selected: boolean) {
+function updateUnitNode(
+  node: UnitNode, u: Unit, selected: boolean,
+  onHit?: (pos: Vec2, damage: number) => void,
+) {
   // ---- Movement: grid position changed → tween from wherever we're rendered now.
   const target = gridToScreen(u.pos);
   if (target.x !== node.targetScreen.x || target.y !== node.targetScreen.y) {
@@ -911,8 +957,11 @@ function updateUnitNode(node: UnitNode, u: Unit, selected: boolean) {
     if (Math.abs(dx) > 0.5) node.facing = dx > 0 ? 1 : -1;
   }
 
-  // ---- Hit: HP dropped this sync → flash red + jitter.
-  if (u.hp < node.prevHp && u.alive) node.hitFlashMs = HIT_FLASH_MS;
+  // ---- Hit: HP dropped this sync → flash red + jitter + spurt blood.
+  if (u.hp < node.prevHp) {
+    node.hitFlashMs = HIT_FLASH_MS;
+    if (onHit) onHit(u.pos, node.prevHp - u.hp);
+  }
   node.prevHp = u.hp;
 
   // ---- Grime: recompute the dirt tint each sync so mid-mission cleans
@@ -1116,23 +1165,32 @@ function tickUnitAnimations(
       !!node.weaponWrap, node.fireStyle.flashScale,
     );
 
-    // ----- Death fade: alpha out + slump + slight fall-sideways rotation.
+    // ----- Death: fade to a dim corpse + slump + fall-sideways rotation.
+    // The container stays visible after the fade so the body remains on
+    // the ground for the rest of the mission. A final alpha of 0.5 plus
+    // a dusty tint reads as "down, not gone" without drawing attention
+    // away from live units.
     if (node.deathMs !== null) {
-      node.deathMs += dtMs;
+      // Once the slump completes, stop ticking — no point incrementing
+      // forever for every corpse on the map.
+      if (node.deathMs < DEATH_DURATION_MS) node.deathMs += dtMs;
       const t = Math.min(1, node.deathMs / DEATH_DURATION_MS);
-      node.container.alpha = 1 - t;
-      node.body.position.y = t * 14; // overrides live bob — they're dead
-      node.body.rotation = node.facing * 0.6 * t; // tip over toward facing
+      // Fade to 0.5 (corpse), not 0.
+      node.container.alpha = 1 - t * 0.5;
+      node.body.position.y = t * 14;              // slump to the ground
+      node.body.rotation = node.facing * 0.9 * t; // tip over 50°, feels flatter
       // Weapon drops below the grip as the character collapses.
       if (node.weaponWrap) {
-        node.weaponWrap.rotation = node.facing * 1.2 * t;
+        node.weaponWrap.rotation = node.facing * 1.4 * t;
         node.weaponWrap.position.y = node.weaponRestY + t * 4;
       }
-      node.shadow.alpha = 1 - t * 0.8;
+      node.shadow.alpha = 1 - t * 0.35;           // shadow dims but stays
       node.hpBar.visible = false;
       node.label.visible = false;
       node.muzzleFlash.clear();
-      if (t >= 1) node.container.visible = false;
+      // Once the slump completes, dim the sprite toward a cold grey-brown so
+      // it reads as a corpse rather than a dim-but-alive character.
+      if (t >= 1) applyTint(node, 0x6a5a4a);
     } else {
       node.container.alpha = 1;
       node.container.visible = true;
@@ -1218,15 +1276,42 @@ function tintForDirt(dirt: number): number {
   return (r << 16) | (g << 8) | b;
 }
 
-function renderActiveFloaters(
+/**
+ * Per-frame pass over the fx layer: draws active blood-spurt droplets
+ * underneath damage-number floaters, then clears and redraws the layer
+ * in a single removeChildren call. Ticker integrates the droplet
+ * positions + prunes aged entries before this runs.
+ */
+function renderFx(
   layer: Container,
-  active: Array<{ text: string; color: number; pos: Vec2; bornMs: number }>,
+  floaters: Array<{ text: string; color: number; pos: Vec2; bornMs: number }>,
+  bloods: Array<{ bornMs: number; droplets: Array<{ x: number; y: number; vx: number; vy: number; r: number }> }>,
   now: number,
-  totalMs: number
+  floaterTotalMs: number,
+  bloodTotalMs: number,
 ) {
   layer.removeChildren();
-  for (const f of active) {
-    const progress = Math.min(1, (now - f.bornMs) / totalMs);
+  // Blood first so damage numbers read on top.
+  if (bloods.length > 0) {
+    const g = new Graphics();
+    for (const b of bloods) {
+      const age = now - b.bornMs;
+      // Keep full alpha for the first third, fade through the rest.
+      const alpha = age < bloodTotalMs * 0.33
+        ? 1
+        : Math.max(0, 1 - (age - bloodTotalMs * 0.33) / (bloodTotalMs * 0.67));
+      if (alpha <= 0) continue;
+      for (const d of b.droplets) {
+        // Darker core + lighter rim for a bit of shape at small sizes.
+        g.circle(d.x, d.y, d.r * 1.25).fill({ color: 0x5a0808, alpha: alpha * 0.9 });
+        g.circle(d.x, d.y, d.r).fill({ color: 0xb21a1a, alpha });
+      }
+    }
+    layer.addChild(g);
+  }
+  // Damage numbers.
+  for (const f of floaters) {
+    const progress = Math.min(1, (now - f.bornMs) / floaterTotalMs);
     const p = gridToScreen(f.pos);
     const t = new Text({
       text: f.text,
