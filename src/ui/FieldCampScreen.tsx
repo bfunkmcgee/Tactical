@@ -55,11 +55,11 @@ export default function FieldCampScreen() {
     const map = ALL_MAPS.find((m) => m.id === skirmish.mapId);
     if (!map) { setScreen('excursion'); return; }
     const aliveSquad = excursion!.squad.filter((s) => s.alive);
-    const carries: Record<string, { hp: number; ammoPrimary: number; ammoSidearm: number; utilityCharges: number[] }> = {};
+    const carries: Record<string, { hp: number; ammoPrimary: number; ammoSidearm: number; utilityCharges: number[]; dirt: number }> = {};
     for (const s of aliveSquad) {
       carries[s.soldierId] = {
         hp: s.hp, ammoPrimary: s.ammoPrimary, ammoSidearm: s.ammoSidearm,
-        utilityCharges: s.utilityCharges,
+        utilityCharges: s.utilityCharges, dirt: s.dirt,
       };
     }
     // Skirmishes run on the same maps as missions, but with fewer and

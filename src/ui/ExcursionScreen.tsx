@@ -49,11 +49,11 @@ export default function ExcursionScreen() {
       return;
     }
     const aliveSquad = excursion!.squad.filter((s) => s.alive);
-    const carries: Record<string, { hp: number; ammoPrimary: number; ammoSidearm: number; utilityCharges: number[] }> = {};
+    const carries: Record<string, { hp: number; ammoPrimary: number; ammoSidearm: number; utilityCharges: number[]; dirt: number }> = {};
     for (const s of aliveSquad) {
       carries[s.soldierId] = {
         hp: s.hp, ammoPrimary: s.ammoPrimary, ammoSidearm: s.ammoSidearm,
-        utilityCharges: s.utilityCharges,
+        utilityCharges: s.utilityCharges, dirt: s.dirt,
       };
     }
     useCombatStore.getState().initMission({

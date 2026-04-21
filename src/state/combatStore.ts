@@ -150,6 +150,8 @@ export interface SoldierCarry {
   ammoPrimary?: number;
   ammoSidearm?: number;
   utilityCharges?: number[];
+  /** Accumulated grime 0..100. Fed through to Unit.dirt for rendering. */
+  dirt?: number;
 }
 
 function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
@@ -195,6 +197,7 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
     status: { overwatch: false, blinded: false, suppressed: false },
     alive: true,
     color: t.portraitColor,
+    dirt: carry?.dirt ?? 0,
   };
 }
 

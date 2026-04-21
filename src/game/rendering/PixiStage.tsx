@@ -60,6 +60,9 @@ type UnitNode = {
   // Visual state.
   facing: 1 | -1;
   prevHp: number;
+  /** Composite tint reflecting accumulated grime on the unit. Starts at
+   * 0xffffff (clean) and shifts toward a dusty brown as Unit.dirt rises. */
+  dirtTint: number;
   hitFlashMs: number;
   fireAnimMs: number;                   // countdown for fire sequence.
   fireStyle: FireStyle;                 // per-weapon-class choreography.
@@ -885,6 +888,7 @@ function createUnitNode(u: Unit): UnitNode {
     moveMs: 0, moveDurationMs: 0,
     facing: 1,
     prevHp: u.hp,
+    dirtTint: tintForDirt(u.dirt ?? 0),
     hitFlashMs: 0,
     fireAnimMs: 0,
     fireStyle: FIRE_STYLES.default,
@@ -910,6 +914,11 @@ function updateUnitNode(node: UnitNode, u: Unit, selected: boolean) {
   // ---- Hit: HP dropped this sync → flash red + jitter.
   if (u.hp < node.prevHp && u.alive) node.hitFlashMs = HIT_FLASH_MS;
   node.prevHp = u.hp;
+
+  // ---- Grime: recompute the dirt tint each sync so mid-mission cleans
+  // (future Field Wash consumable) show instantly, and so newly spawned
+  // units pick up their excursion-accumulated dirt at mission start.
+  node.dirtTint = tintForDirt(u.dirt ?? 0);
 
   // (Fire-animation triggers are driven by FireEvent stream, not ammo deltas —
   // see applyFireEvents() below. Ammo tracking is no longer needed here.)
@@ -1073,7 +1082,10 @@ function tickUnitAnimations(
       jitterX = (Math.random() - 0.5) * 3 * a;
       applyTint(node, blendRed(a));
     } else {
-      applyTint(node, 0xffffff);
+      // No hit flash: reflect the unit's accumulated grime as a dusty
+      // brown tint. Dirt level is set by updateUnitNode from u.dirt, so
+      // changes between missions show instantly when the sprite spawns.
+      applyTint(node, node.dirtTint);
     }
 
     // ----- Compose body transform. Body is unaffected by fire windup —
@@ -1187,6 +1199,22 @@ function blendRed(alpha: number): number {
   const r = 255;
   const g = Math.round(255 - 165 * alpha);
   const b = Math.round(255 - 149 * alpha);
+  return (r << 16) | (g << 8) | b;
+}
+
+/**
+ * Convert a 0..100 dirt score into a multiplicative sprite tint — shifts
+ * white toward dusty brown (#b4986a) as dirt climbs. Capped at dirt=100
+ * which still leaves ~60% of each channel intact so the character stays
+ * readable through the grime.
+ */
+function tintForDirt(dirt: number): number {
+  const t = Math.max(0, Math.min(1, dirt / 100));
+  if (t === 0) return 0xffffff;
+  // Lerp white (255,255,255) → dusty brown (180,152,106).
+  const r = Math.round(255 + (180 - 255) * t);
+  const g = Math.round(255 + (152 - 255) * t);
+  const b = Math.round(255 + (106 - 255) * t);
   return (r << 16) | (g << 8) | b;
 }
 

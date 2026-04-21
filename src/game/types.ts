@@ -222,6 +222,13 @@ export type Unit = {
   };
   alive: boolean;
   color: string;
+  /**
+   * Grime accumulated across the current excursion (0..100). Drives a
+   * dusty-brown sprite tint — cosmetic only. Cleared when the unit is
+   * freshly spawned (enemies) or at the start of a new excursion
+   * (players); a Field Wash consumable could also strip it later.
+   */
+  dirt?: number;
 };
 
 export type TurnPhase = 'player' | 'enemy' | 'won' | 'lost';
