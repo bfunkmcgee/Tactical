@@ -2,13 +2,52 @@ import { useEffect, useRef } from 'react';
 import { Application, Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { useCombatStore } from '../../state/combatStore';
 import { useContent } from '../../content/registry';
-import type { GridMap, Unit, Vec2 } from '../types';
+import type { GridMap, Unit, UnitId, Vec2 } from '../types';
 import { TILE_W, TILE_H, gridToScreen, screenToGrid } from './isoProjection';
 import { chebyshev, keyOf, tileAt } from '../engine/grid';
 import { hasLineOfSight } from '../engine/los';
 
 /** Texture cache keyed by unit templateId — shared across mount cycles. */
 const spriteCache = new Map<string, Texture>();
+
+/**
+ * Per-unit render node. Persists across store updates so animations
+ * (idle bob, selection pulse, movement tween, hit flash, fire lunge,
+ * death fade) can tween continuously without being torn down each frame.
+ *
+ * `container` is the outer positioned transform (world-space). `body`
+ * holds the sprite + shadow and handles facing-flip / bob / pulse so
+ * the HP bar and labels above it stay upright.
+ */
+type UnitNode = {
+  container: Container;
+  body: Container;
+  shadow: Graphics;
+  sprite: Sprite | null;
+  fallback: Graphics | null;
+  hpBar: Graphics;
+  label: Text;
+  ornaments: Container;
+  selectionRing: Graphics;
+  spriteTop: number;
+
+  // Movement tween — screen-space, measured in world coords (pre-camera).
+  currentScreen: { x: number; y: number };
+  targetScreen: { x: number; y: number };
+  moveMs: number;
+  moveDurationMs: number;
+
+  // Visual state.
+  facing: 1 | -1;       // body.scale.x sign; -1 flips the sprite horizontally.
+  prevHp: number;
+  prevAmmo: number;
+  hitFlashMs: number;   // red-tint + jitter countdown (target of an attack).
+  fireLungeMs: number;  // forward-lunge countdown (shooter).
+  lungeDir: { x: number; y: number }; // unit vector toward the shot target.
+  deathMs: number | null; // counts up to DEATH_DURATION_MS once alive=false.
+  selected: boolean;
+  bobPhase: number;     // randomized so squad doesn't bob in lockstep.
+};
 
 /** Preload every templateId the active pack provides a spritePath for. */
 async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): Promise<void> {
@@ -53,8 +92,14 @@ export default function PixiStage() {
       const overlayLayer = new Container();
       const unitLayer = new Container();
       const fxLayer = new Container();
+      // Z-sort units by iso depth so taller sprites occlude correctly.
+      unitLayer.sortableChildren = true;
       world.addChild(tileLayer, overlayLayer, unitLayer, fxLayer);
       app.stage.addChild(world);
+
+      // Per-unit animated nodes. Mission re-init wipes this; the mount effect
+      // owns it via closure so no module-level leak survives tab changes.
+      const unitNodes = new Map<UnitId, UnitNode>();
 
       const cam = { x: app.screen.width / 2, y: 80, zoom: 1 };
       const shakeOffset = { x: 0, y: 0 };
@@ -67,10 +112,14 @@ export default function PixiStage() {
       drawMap(tileLayer, initialState.map);
       applyCam();
 
-      // Kick off sprite preload; re-render units when it lands.
+      // Defer unit rendering until sprite preload settles. For packs without
+      // theme.spritePath (e.g. Void-Watch), ensureSpritesLoaded resolves on
+      // the next microtask, so the unit layer still populates quickly.
+      let spritesReady = false;
       ensureSpritesLoaded(useContent()).then(() => {
         if (destroyed) return;
-        redrawUnits(unitLayer, useCombatStore.getState());
+        spritesReady = true;
+        syncUnits(unitLayer, unitNodes, useCombatStore.getState());
       });
 
       // ---- Input ----
@@ -199,12 +248,14 @@ export default function PixiStage() {
           useCombatStore.setState({ floaters: [] });
         }
         redrawOverlays(overlayLayer, s);
-        redrawUnits(unitLayer, s);
+        if (spritesReady) syncUnits(unitLayer, unitNodes, s);
       });
       redrawOverlays(overlayLayer, initialState);
-      redrawUnits(unitLayer, initialState);
+      if (spritesReady) syncUnits(unitLayer, unitNodes, initialState);
 
-      app.ticker.add(() => {
+      app.ticker.add((ticker) => {
+        const dtMs = ticker.deltaMS;
+        const now = performance.now();
         const st = useCombatStore.getState();
         if (st.shakeFrames > 0) {
           shakeOffset.x = (Math.random() - 0.5) * 8;
@@ -215,8 +266,9 @@ export default function PixiStage() {
           shakeOffset.x = 0; shakeOffset.y = 0;
           applyCam();
         }
+        // Advance unit animations (bob, movement tween, hit flash, death fade).
+        tickUnitAnimations(unitLayer, unitNodes, dtMs, now);
         // Prune aged floaters in the local list, then render.
-        const now = performance.now();
         for (let i = active.length - 1; i >= 0; i--) {
           if (now - active[i].bornMs > FLOATER_MS) active.splice(i, 1);
         }
@@ -350,89 +402,299 @@ function redrawOverlays(layer: Container, st: ReturnType<typeof useCombatStore.g
   layer.addChild(g);
 }
 
-function redrawUnits(layer: Container, st: ReturnType<typeof useCombatStore.getState>) {
-  layer.removeChildren();
-  const sorted = [...st.units].sort((a, b) => (a.pos.x + a.pos.y) - (b.pos.x + b.pos.y));
-  for (const u of sorted) drawUnit(layer, u, u.id === st.selectedId);
-}
-
-function drawUnit(layer: Container, u: Unit, selected: boolean) {
-  if (!u.alive) return;
-  const p = gridToScreen(u.pos);
-  const c = new Container();
-  c.position.set(p.x, p.y);
-
-  // Selection ring sits on the ground plane regardless of rendering mode.
-  if (selected) {
-    const ring = new Graphics();
-    ring.ellipse(0, 6, 18, 8).stroke({ color: 0x7cc4ff, width: 2 });
-    c.addChild(ring);
-  }
-
-  // Sprite if we have one for this templateId; otherwise the colored placeholder.
-  const tex = spriteCache.get(u.templateId);
-  const spriteTop = drawUnitBody(c, u, tex);
-
-  if (u.status.overwatch) {
-    const ow = new Graphics();
-    ow.circle(0, spriteTop - 10, 4).fill(0xf5c55a);
-    c.addChild(ow);
-  }
-  if (u.status.blinded) {
-    const bl = new Graphics();
-    bl.circle(-6, spriteTop - 10, 3).fill(0xc79aff);
-    bl.circle(6, spriteTop - 10, 3).fill(0xc79aff);
-    c.addChild(bl);
-  }
-
-  const bar = new Graphics();
-  const pct = u.hp / u.hpMax;
-  const barY = spriteTop - 12;
-  bar.rect(-14, barY, 28, 4).fill(0x0b0f14);
-  bar.rect(-14, barY, 28 * pct, 4).fill(u.faction === 'player' ? 0x57d18b : 0xff5a6a);
-  c.addChild(bar);
-
-  const label = new Text({
-    text: u.faction === 'player' ? `${u.name} ${u.ap}/${u.apMax}` : u.name,
-    style: { fill: 0xaab4c4, fontSize: 10, fontFamily: 'system-ui' },
-  });
-  label.anchor.set(0.5, 1);
-  label.position.set(0, barY - 4);
-  c.addChild(label);
-
-  layer.addChild(c);
-}
+/** Durations (ms) for movement / hit / fire / death animations. */
+const MOVE_TWEEN_MS = 220;
+const HIT_FLASH_MS = 240;
+const FIRE_LUNGE_MS = 180;
+const DEATH_DURATION_MS = 520;
 
 /**
- * Draw the unit body — sprite when a texture is cached, colored rectangle
- * fallback otherwise. Returns the y-offset of the sprite's top edge so HP
- * bars and status markers can sit just above the character.
+ * Reconcile `unitNodes` against the store's unit list:
+ *  - Create a persistent node for any new unit.
+ *  - Update per-unit visual state (HP bar text, ornaments, facing, animation triggers).
+ *  - Start movement tween when grid position changes.
+ *  - Trigger hit flash when HP drops, death fade when alive→false, fire lunge when ammo drops.
+ *
+ * The ticker drives the actual frame-by-frame interpolation.
  */
-function drawUnitBody(c: Container, u: Unit, tex: Texture | undefined): number {
+function syncUnits(
+  layer: Container,
+  nodes: Map<UnitId, UnitNode>,
+  st: ReturnType<typeof useCombatStore.getState>
+) {
+  const seen = new Set<UnitId>();
+  for (const u of st.units) {
+    seen.add(u.id);
+    let node = nodes.get(u.id);
+    if (!node) {
+      node = createUnitNode(u);
+      layer.addChild(node.container);
+      nodes.set(u.id, node);
+    }
+    updateUnitNode(node, u, u.id === st.selectedId, st.units);
+  }
+  // Units dropped by initMission — destroy their nodes outright.
+  for (const [id, node] of nodes) {
+    if (seen.has(id)) continue;
+    layer.removeChild(node.container);
+    node.container.destroy({ children: true });
+    nodes.delete(id);
+  }
+}
+
+function createUnitNode(u: Unit): UnitNode {
+  const container = new Container();
+  const body = new Container();
   const shadow = new Graphics();
   shadow.ellipse(0, 6, 14, 6).fill({ color: 0x000000, alpha: 0.45 });
-  c.addChild(shadow);
+  body.addChild(shadow);
 
+  let sprite: Sprite | null = null;
+  let fallback: Graphics | null = null;
+  let spriteTop: number;
+  const tex = spriteCache.get(u.templateId);
   if (tex) {
-    // Sprite is authored in a 96×128 viewBox. At scale 0.42 it renders ~40×54
-    // — roughly one tile wide, a little over one tile tall. Anchor bottom-
-    // center and nudge down 3px so the feet overlap the tile top.
-    const sprite = new Sprite(tex);
+    sprite = new Sprite(tex);
     sprite.anchor.set(0.5, 1);
     sprite.scale.set(0.42);
     sprite.position.set(0, 4);
-    c.addChild(sprite);
-    // Top of rendered sprite in container-local coords: y = 4 - 128*0.42 ≈ -49.
-    return -50;
+    body.addChild(sprite);
+    spriteTop = -50;
+  } else {
+    fallback = new Graphics();
+    const color = parseInt(u.color.slice(1), 16);
+    fallback.roundRect(-10, -30, 20, 30, 4).fill(color).stroke({ color: 0x0b0f14, width: 1 });
+    fallback.circle(0, -36, 8).fill(color).stroke({ color: 0x0b0f14, width: 1 });
+    body.addChild(fallback);
+    spriteTop = -44;
   }
 
-  // Fallback rectangle for packs without sprites (Void-Watch right now).
-  const body = new Graphics();
-  const color = parseInt(u.color.slice(1), 16);
-  body.roundRect(-10, -30, 20, 30, 4).fill(color).stroke({ color: 0x0b0f14, width: 1 });
-  body.circle(0, -36, 8).fill(color).stroke({ color: 0x0b0f14, width: 1 });
-  c.addChild(body);
-  return -44;
+  const selectionRing = new Graphics();
+  const hpBar = new Graphics();
+  const label = new Text({
+    text: '',
+    style: { fill: 0xaab4c4, fontSize: 10, fontFamily: 'system-ui' },
+  });
+  label.anchor.set(0.5, 1);
+  const ornaments = new Container();
+
+  // Order: ring on the ground, then body, then top-of-head ornaments/bar/label.
+  container.addChild(selectionRing, body, ornaments, hpBar, label);
+
+  const p = gridToScreen(u.pos);
+  container.position.set(p.x, p.y);
+
+  return {
+    container, body, shadow, sprite, fallback, hpBar, label, ornaments, selectionRing,
+    spriteTop,
+    currentScreen: { x: p.x, y: p.y },
+    targetScreen: { x: p.x, y: p.y },
+    moveMs: 0, moveDurationMs: 0,
+    facing: 1,
+    prevHp: u.hp,
+    prevAmmo: u.ammo + u.sidearmAmmo,
+    hitFlashMs: 0,
+    fireLungeMs: 0,
+    lungeDir: { x: 0, y: 0 },
+    deathMs: u.alive ? null : 0,
+    selected: false,
+    bobPhase: Math.random() * Math.PI * 2,
+  };
+}
+
+function updateUnitNode(node: UnitNode, u: Unit, selected: boolean, all: Unit[]) {
+  // ---- Movement: grid position changed → tween from wherever we're rendered now.
+  const target = gridToScreen(u.pos);
+  if (target.x !== node.targetScreen.x || target.y !== node.targetScreen.y) {
+    node.currentScreen = { x: node.container.position.x, y: node.container.position.y };
+    node.targetScreen = { x: target.x, y: target.y };
+    node.moveMs = 0;
+    node.moveDurationMs = MOVE_TWEEN_MS;
+    const dx = target.x - node.currentScreen.x;
+    if (Math.abs(dx) > 0.5) node.facing = dx > 0 ? 1 : -1;
+  }
+
+  // ---- Hit: HP dropped this sync → flash red + jitter.
+  if (u.hp < node.prevHp && u.alive) node.hitFlashMs = HIT_FLASH_MS;
+  node.prevHp = u.hp;
+
+  // ---- Fire: total rounds dropped → lunge toward nearest opposing live unit.
+  const ammoNow = u.ammo + u.sidearmAmmo;
+  if (ammoNow < node.prevAmmo && u.alive) {
+    const opp = nearestOpposingLiveUnit(u, all);
+    if (opp) {
+      const tp = gridToScreen(opp.pos);
+      const dx = tp.x - target.x, dy = tp.y - target.y;
+      const len = Math.hypot(dx, dy) || 1;
+      node.lungeDir = { x: dx / len, y: dy / len };
+      node.fireLungeMs = FIRE_LUNGE_MS;
+      if (Math.abs(dx) > 0.5) node.facing = dx > 0 ? 1 : -1;
+    }
+  }
+  node.prevAmmo = ammoNow;
+
+  // ---- Death: transition to dying once, then let the ticker animate the fade.
+  if (!u.alive && node.deathMs === null) node.deathMs = 0;
+
+  // ---- HP bar.
+  const pct = Math.max(0, u.hp) / u.hpMax;
+  const barY = node.spriteTop - 12;
+  node.hpBar.clear();
+  if (u.alive) {
+    node.hpBar.rect(-14, barY, 28, 4).fill(0x0b0f14);
+    node.hpBar.rect(-14, barY, 28 * pct, 4).fill(u.faction === 'player' ? 0x57d18b : 0xff5a6a);
+  }
+
+  // ---- Label.
+  node.label.text = u.faction === 'player' ? `${u.name} ${u.ap}/${u.apMax}` : u.name;
+  node.label.position.set(0, barY - 4);
+  node.label.visible = u.alive;
+
+  // ---- Ornaments (overwatch, blinded).
+  node.ornaments.removeChildren();
+  if (u.alive && u.status.overwatch) {
+    const ow = new Graphics();
+    ow.circle(0, node.spriteTop - 10, 4).fill(0xf5c55a);
+    node.ornaments.addChild(ow);
+  }
+  if (u.alive && u.status.blinded) {
+    const bl = new Graphics();
+    bl.circle(-6, node.spriteTop - 10, 3).fill(0xc79aff);
+    bl.circle(6, node.spriteTop - 10, 3).fill(0xc79aff);
+    node.ornaments.addChild(bl);
+  }
+
+  // ---- Selection ring.
+  node.selectionRing.clear();
+  if (selected && u.alive) {
+    node.selectionRing.ellipse(0, 6, 18, 8).stroke({ color: 0x7cc4ff, width: 2 });
+  }
+  node.selected = selected;
+
+  // ---- Iso depth sort.
+  node.container.zIndex = u.pos.x + u.pos.y;
+}
+
+function nearestOpposingLiveUnit(self: Unit, all: Unit[]): Unit | null {
+  let best: Unit | null = null;
+  let bestD = Infinity;
+  for (const u of all) {
+    if (u.faction === self.faction) continue;
+    if (!u.alive) continue;
+    const d = chebyshev(self.pos, u.pos);
+    if (d < bestD) { bestD = d; best = u; }
+  }
+  return best;
+}
+
+/**
+ * Per-frame animation update. Reads each node's pending timers and interpolates:
+ *  - idle bob (live, not mid-move)
+ *  - selected pulse (live, selected)
+ *  - movement lerp (easeOutQuad)
+ *  - hit flash (red tint + jitter)
+ *  - fire lunge (offset toward target, returns to rest)
+ *  - death fade (alpha + drop + final hide)
+ */
+function tickUnitAnimations(
+  layer: Container,
+  nodes: Map<UnitId, UnitNode>,
+  dtMs: number,
+  nowMs: number
+) {
+  for (const node of nodes.values()) {
+    // Movement interpolation.
+    if (node.moveDurationMs > 0) {
+      node.moveMs += dtMs;
+      const raw = Math.min(1, node.moveMs / node.moveDurationMs);
+      const t = easeOutQuad(raw);
+      const sx = node.currentScreen.x + (node.targetScreen.x - node.currentScreen.x) * t;
+      const sy = node.currentScreen.y + (node.targetScreen.y - node.currentScreen.y) * t;
+      node.container.position.set(sx, sy);
+      if (raw >= 1) {
+        node.currentScreen = { x: node.targetScreen.x, y: node.targetScreen.y };
+        node.moveDurationMs = 0;
+        node.moveMs = 0;
+      }
+    }
+
+    const alive = node.deathMs === null;
+    const moving = node.moveDurationMs > 0;
+
+    // Idle bob — only when alive and not walking. Amplitude bumps when selected.
+    const bobAmp = !alive ? 0 : moving ? 0 : node.selected ? 2.2 : 1.4;
+    const bobY = bobAmp === 0 ? 0 : Math.sin(nowMs * 0.003 + node.bobPhase) * bobAmp;
+
+    // Selected pulse on the body transform (small breathing scale).
+    const pulse = alive && node.selected ? 1 + Math.sin(nowMs * 0.006) * 0.03 : 1;
+
+    // Base body scale honours facing-flip (sprite is authored facing right).
+    node.body.scale.set(node.facing * pulse, pulse);
+
+    // Hit flash: horizontal jitter + red tint that fades with remaining time.
+    let jitterX = 0;
+    if (node.hitFlashMs > 0) {
+      node.hitFlashMs = Math.max(0, node.hitFlashMs - dtMs);
+      const a = node.hitFlashMs / HIT_FLASH_MS;
+      jitterX = (Math.random() - 0.5) * 3 * a;
+      applyTint(node, blendRed(a));
+    } else {
+      applyTint(node, 0xffffff);
+    }
+
+    // Fire lunge: brief forward shove (2px) then return.
+    let lungeX = 0, lungeY = 0;
+    if (node.fireLungeMs > 0) {
+      node.fireLungeMs = Math.max(0, node.fireLungeMs - dtMs);
+      const raw = 1 - node.fireLungeMs / FIRE_LUNGE_MS;
+      // Arc 0→1→0 so the sprite lunges then returns.
+      const arc = Math.sin(raw * Math.PI);
+      lungeX = node.lungeDir.x * 4 * arc;
+      lungeY = node.lungeDir.y * 4 * arc;
+    }
+
+    node.body.position.x = jitterX + lungeX;
+    node.body.position.y = bobY + lungeY;
+
+    // Death fade. Once complete, hide the container but leave the node for
+    // reconciliation — initMission will prune it via the sync pass.
+    if (node.deathMs !== null) {
+      node.deathMs += dtMs;
+      const t = Math.min(1, node.deathMs / DEATH_DURATION_MS);
+      node.container.alpha = 1 - t;
+      node.body.position.y = bobY + t * 14; // slump to the ground
+      node.shadow.alpha = 1 - t * 0.8;
+      node.hpBar.visible = false;
+      node.label.visible = false;
+      if (t >= 1) node.container.visible = false;
+    } else {
+      node.container.alpha = 1;
+      node.container.visible = true;
+      node.shadow.alpha = 1;
+    }
+  }
+  // zIndex changes above won't take effect unless Pixi sorts; trigger it.
+  layer.sortChildren();
+}
+
+function applyTint(node: UnitNode, tint: number) {
+  if (node.sprite) node.sprite.tint = tint;
+  if (node.fallback) node.fallback.tint = tint;
+}
+
+function easeOutQuad(t: number): number {
+  return 1 - (1 - t) * (1 - t);
+}
+
+/**
+ * Blend white → damage-red by `alpha` (0..1). Used for the hit flash.
+ * At alpha=1 returns ~#ff5a6a (matches the enemy HP bar colour).
+ */
+function blendRed(alpha: number): number {
+  const r = 255;
+  const g = Math.round(255 - 165 * alpha);
+  const b = Math.round(255 - 149 * alpha);
+  return (r << 16) | (g << 8) | b;
 }
 
 function renderActiveFloaters(
