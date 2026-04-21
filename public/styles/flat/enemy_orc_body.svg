@@ -1,0 +1,220 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="o-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a7048"/><stop offset="1" stop-color="#2a3018"/>
+    </linearGradient>
+    <linearGradient id="o-skin-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a5028"/><stop offset="1" stop-color="#1a2010"/>
+    </linearGradient>
+    <linearGradient id="o-rust" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a5028"/><stop offset="1" stop-color="#2a1408"/>
+    </linearGradient>
+    <linearGradient id="o-rust-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#c87030"/><stop offset="1" stop-color="#4a2410"/>
+    </linearGradient>
+    <linearGradient id="o-metal" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#5a5a5e"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <linearGradient id="o-rag" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a5838"/><stop offset="1" stop-color="#2a2010"/>
+    </linearGradient>
+    <radialGradient id="o-eye" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff4c0"/>
+      <stop offset=".5" stop-color="#ff6a1a"/>
+      <stop offset="1" stop-color="#4a1808" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- BIG BRUTE LEGS -->
+  <path d="M32 82 Q28 112 38 116 L46 116 L48 82 Z" fill="url(#o-skin)"/>
+  <path d="M64 82 Q68 112 58 116 L50 116 L48 82 Z" fill="url(#o-skin)"/>
+  <!-- muscle shadow -->
+  <path d="M36 90 L36 110" stroke="#1a2010" stroke-width="0.5" opacity=".7"/>
+  <path d="M60 90 L60 110" stroke="#1a2010" stroke-width="0.5" opacity=".7"/>
+  <!-- scrap greaves (asymmetric) -->
+  <path d="M30 92 L46 92 L46 108 L32 108 Z" fill="url(#o-rust)"/>
+  <path d="M64 98 L50 98 L50 108 L62 108 Z" fill="url(#o-metal)"/>
+  <circle cx="34" cy="96" r="0.9" fill="#c87030"/>
+  <circle cx="42" cy="96" r="0.9" fill="#c87030"/>
+  <circle cx="34" cy="104" r="0.9" fill="#c87030"/>
+  <circle cx="42" cy="104" r="0.9" fill="#c87030"/>
+  <path d="M34 100 L42 100" stroke="#2a1408" stroke-width="0.4"/>
+  <circle cx="54" cy="102" r="0.7" fill="#4a4a4e"/>
+  <circle cx="58" cy="102" r="0.7" fill="#4a4a4e"/>
+  <!-- ankle wraps -->
+  <path d="M32 108 L47 108 L47 112 L32 112 Z" fill="url(#o-rag)"/>
+  <path d="M64 108 L49 108 L49 112 L64 112 Z" fill="url(#o-rag)"/>
+  <!-- big clawed feet -->
+  <path d="M30 112 L48 112 L48 118 L34 120 Q30 116 30 112 Z" fill="url(#o-skin-dark)"/>
+  <path d="M66 112 L48 112 L48 118 L62 120 Q66 116 66 112 Z" fill="url(#o-skin-dark)"/>
+  <path d="M32 120 L31 123 L34 122 Z" fill="#e8ddc0"/>
+  <path d="M38 120 L37 123 L40 122 Z" fill="#e8ddc0"/>
+  <path d="M44 120 L43 123 L46 122 Z" fill="#e8ddc0"/>
+  <path d="M52 122 L51 123 L54 120 Z" fill="#e8ddc0"/>
+  <path d="M58 122 L57 123 L60 120 Z" fill="#e8ddc0"/>
+  <path d="M64 122 L63 123 L66 120 Z" fill="#e8ddc0"/>
+
+  <!-- BELT w/ buckle -->
+  <path d="M24 76 L72 76 L72 84 L24 84 Z" fill="#1a1410"/>
+  <rect x="42" y="74" width="12" height="12" fill="url(#o-rust)"/>
+  <rect x="45" y="77" width="6" height="6" fill="#0a0a0c"/>
+  <circle cx="48" cy="80" r="1.6" fill="#c87030"/>
+  <!-- loincloth over belt -->
+  <path d="M38 84 L58 84 L56 98 L40 98 Z" fill="url(#o-rag)"/>
+  <path d="M40 86 L56 86 M40 92 L56 92" stroke="#2a2010" stroke-width="0.3"/>
+
+  <!-- TORSO: broad muscular -->
+  <path d="M16 42 Q14 38 22 36 L74 36 Q82 38 80 42 L80 78 Q80 82 76 82 L20 82 Q16 82 16 78 Z" fill="url(#o-skin)"/>
+  <!-- pectoral / ab muscle definition -->
+  <path d="M48 36 L48 80" stroke="#1a2010" stroke-width="0.5" opacity=".5"/>
+  <path d="M26 54 Q48 58 70 54" fill="none" stroke="#1a2010" stroke-width="0.4" opacity=".6"/>
+  <path d="M28 64 Q48 68 68 64" fill="none" stroke="#1a2010" stroke-width="0.4" opacity=".6"/>
+  <path d="M30 72 Q48 76 66 72" fill="none" stroke="#1a2010" stroke-width="0.4" opacity=".6"/>
+  <!-- scars -->
+  <path d="M34 50 L40 54" stroke="#1a0a08" stroke-width="0.6"/>
+  <path d="M58 60 L64 56" stroke="#1a0a08" stroke-width="0.6"/>
+  <path d="M42 70 L48 68" stroke="#1a0a08" stroke-width="0.4"/>
+
+  <!-- SCRAP CHEST PLATE (patchwork of welded salvage) -->
+  <path d="M22 42 L52 42 L52 72 L22 72 Z" fill="url(#o-rust)"/>
+  <path d="M52 44 L74 44 L74 66 L52 66 Z" fill="url(#o-metal)"/>
+  <!-- panel seams -->
+  <path d="M22 56 L52 56" stroke="#2a1408" stroke-width="0.8"/>
+  <path d="M52 54 L74 54" stroke="#0a0a0c" stroke-width="0.6"/>
+  <!-- rivets on left (rust) plate -->
+  <circle cx="25" cy="45" r="0.9" fill="#c87030"/>
+  <circle cx="49" cy="45" r="0.9" fill="#c87030"/>
+  <circle cx="25" cy="68" r="0.9" fill="#c87030"/>
+  <circle cx="49" cy="68" r="0.9" fill="#c87030"/>
+  <!-- rivets on right (metal) plate -->
+  <circle cx="55" cy="47" r="0.8" fill="#4a4a4e"/>
+  <circle cx="71" cy="47" r="0.8" fill="#4a4a4e"/>
+  <circle cx="55" cy="63" r="0.8" fill="#4a4a4e"/>
+  <circle cx="71" cy="63" r="0.8" fill="#4a4a4e"/>
+  <!-- crude painted choir sigil (big jagged hymn) -->
+  <path d="M28 50 L34 48 L38 52 L44 48" fill="none" stroke="#c87030" stroke-width="0.9"/>
+  <path d="M28 62 L44 62" stroke="#c87030" stroke-width="0.6"/>
+  <path d="M30 66 L34 64 L38 66 L42 64" fill="none" stroke="#c87030" stroke-width="0.7"/>
+  <!-- rust pitting -->
+  <path d="M26 60 L30 64 M34 58 L36 62 M42 60 L44 64" stroke="#2a1408" stroke-width="0.4"/>
+  <!-- rust streak on metal plate -->
+  <path d="M56 48 L58 64" stroke="url(#o-rust-hl)" stroke-width="0.5" opacity=".7"/>
+  <path d="M66 50 L64 62" stroke="url(#o-rust-hl)" stroke-width="0.4" opacity=".7"/>
+
+  <!-- SHOULDER PAULDRONS (scrap, different per side) -->
+  <!-- left: big spiked pot lid -->
+  <path d="M10 38 Q6 50 16 54 L24 50 L26 38 Q18 34 12 34 Q10 34 10 38 Z" fill="url(#o-rust)"/>
+  <path d="M12 36 L10 30 L14 36 Z" fill="#2a1408"/>
+  <path d="M18 34 L16 28 L20 34 Z" fill="#2a1408"/>
+  <path d="M24 34 L22 28 L26 34 Z" fill="#2a1408"/>
+  <circle cx="18" cy="44" r="1" fill="#c87030"/>
+  <!-- right: salvaged metal plate -->
+  <path d="M86 38 Q90 50 80 54 L72 50 L70 38 Q78 34 84 34 Q86 34 86 38 Z" fill="url(#o-metal)"/>
+  <circle cx="78" cy="44" r="1" fill="#4a4a4e"/>
+  <path d="M74 42 L84 42" stroke="#0a0a0c" stroke-width="0.3"/>
+
+  <!-- BULLET BANDOLIER -->
+  <path d="M22 38 L74 60" stroke="#2a2010" stroke-width="3.5"/>
+  <rect x="28" y="40" width="3" height="5" fill="#8a6030"/>
+  <rect x="28" y="40" width="3" height="1.4" fill="#c8a868"/>
+  <rect x="34" y="43" width="3" height="5" fill="#8a6030"/>
+  <rect x="34" y="43" width="3" height="1.4" fill="#c8a868"/>
+  <rect x="40" y="46" width="3" height="5" fill="#8a6030"/>
+  <rect x="40" y="46" width="3" height="1.4" fill="#c8a868"/>
+  <rect x="52" y="51" width="3" height="5" fill="#8a6030"/>
+  <rect x="52" y="51" width="3" height="1.4" fill="#c8a868"/>
+  <rect x="58" y="54" width="3" height="5" fill="#8a6030"/>
+  <rect x="58" y="54" width="3" height="1.4" fill="#c8a868"/>
+  <rect x="64" y="57" width="3" height="5" fill="#8a6030"/>
+  <rect x="64" y="57" width="3" height="1.4" fill="#c8a868"/>
+
+  <!-- dangling bell / megaphone on chest (choir motif) -->
+  <path d="M54 72 L54 80" stroke="#2a2010" stroke-width="0.6"/>
+  <path d="M50 80 L58 80 L56 88 L52 88 Z" fill="url(#o-rust-hl)"/>
+  <path d="M54 88 L54 92" stroke="#2a1408" stroke-width="0.5"/>
+
+  <!-- ARMS (massively thick) -->
+  <!-- left arm with weapon forestock -->
+  <path d="M8 48 Q4 54 8 62 L16 74 Q22 76 24 72 L24 42 Z" fill="url(#o-skin)"/>
+  <!-- right arm at trigger -->
+  <path d="M88 48 Q92 54 88 62 L80 74 Q74 76 72 72 L72 42 Z" fill="url(#o-skin)"/>
+  <!-- bicep muscle -->
+  <path d="M12 56 L22 58" stroke="#1a2010" stroke-width="0.5" opacity=".7"/>
+  <path d="M84 56 L74 58" stroke="#1a2010" stroke-width="0.5" opacity=".7"/>
+  <!-- rope/chain wraps on biceps -->
+  <path d="M10 50 L22 52" stroke="#2a2010" stroke-width="1.5"/>
+  <path d="M86 50 L74 52" stroke="#2a2010" stroke-width="1.5"/>
+  <!-- tattoo / scar on forearm -->
+  <path d="M14 64 L22 66" stroke="#1a0a08" stroke-width="0.4"/>
+  <path d="M82 64 L74 66" stroke="#1a0a08" stroke-width="0.4"/>
+  <!-- scrap vambrace -->
+  <path d="M10 62 L24 62 L24 72 L12 74 Z" fill="url(#o-rust)"/>
+  <circle cx="14" cy="64" r="0.7" fill="#c87030"/>
+  <circle cx="22" cy="64" r="0.7" fill="#c87030"/>
+  <circle cx="14" cy="70" r="0.7" fill="#c87030"/>
+  <circle cx="22" cy="70" r="0.7" fill="#c87030"/>
+  <!-- hands (large, clawed) -->
+  <path d="M6 74 Q4 80 10 82 L20 80 Q22 76 20 74 Z" fill="url(#o-skin-dark)"/>
+  <path d="M90 74 Q92 80 86 82 L76 80 Q74 76 76 74 Z" fill="url(#o-skin-dark)"/>
+  <!-- knuckle studs (welded-on bolts) -->
+  <circle cx="8" cy="78" r="0.8" fill="#c87030"/>
+  <circle cx="12" cy="80" r="0.8" fill="#c87030"/>
+  <circle cx="88" cy="78" r="0.8" fill="#c87030"/>
+  <circle cx="84" cy="80" r="0.8" fill="#c87030"/>
+
+  <!-- HEAD (broad, brutish) -->
+  <ellipse cx="48" cy="22" rx="14" ry="14" fill="url(#o-skin)"/>
+  <!-- jaw -->
+  <path d="M38 26 Q48 36 58 26 L58 32 Q48 38 38 32 Z" fill="url(#o-skin-dark)"/>
+  <!-- brow ridge -->
+  <path d="M34 18 Q48 10 62 18 L60 22 Q48 16 36 22 Z" fill="url(#o-skin-dark)"/>
+  <!-- pointed ears -->
+  <path d="M34 20 L28 16 L32 28 L36 26 Z" fill="url(#o-skin)"/>
+  <path d="M62 20 L68 16 L64 28 L60 26 Z" fill="url(#o-skin)"/>
+  <path d="M30 20 L34 24" stroke="#1a2010" stroke-width="0.3"/>
+  <path d="M66 20 L62 24" stroke="#1a2010" stroke-width="0.3"/>
+  <!-- ear ring -->
+  <circle cx="30" cy="22" r="1.2" fill="none" stroke="#c87030" stroke-width="0.6"/>
+  <circle cx="66" cy="22" r="1.2" fill="none" stroke="#c87030" stroke-width="0.6"/>
+  <!-- deep-set ember eyes -->
+  <ellipse cx="42" cy="21" rx="2.6" ry="1.6" fill="#1a0a08"/>
+  <ellipse cx="54" cy="21" rx="2.6" ry="1.6" fill="#1a0a08"/>
+  <circle cx="42" cy="21" r="1.3" fill="url(#o-eye)"/>
+  <circle cx="54" cy="21" r="1.3" fill="url(#o-eye)"/>
+  <circle cx="42" cy="21" r="0.6" fill="#fff4c0"/>
+  <circle cx="54" cy="21" r="0.6" fill="#fff4c0"/>
+  <!-- hooked broken nose -->
+  <path d="M46 22 L44 28 L48 30 L50 28 Z" fill="url(#o-skin-dark)"/>
+  <path d="M45 24 L48 26" stroke="#1a2010" stroke-width="0.4"/>
+  <!-- scars across face -->
+  <path d="M38 14 L46 22" stroke="#1a0a08" stroke-width="0.7"/>
+  <path d="M58 18 L54 28" stroke="#1a0a08" stroke-width="0.6"/>
+  <!-- LARGE TUSKS jutting up from lower jaw -->
+  <path d="M42 30 L40 24 L44 28 Z" fill="#e8ddc0"/>
+  <path d="M54 30 L56 24 L52 28 Z" fill="#e8ddc0"/>
+  <!-- smaller bottom teeth -->
+  <path d="M45 32 L45 35 M48 32 L48 36 M51 32 L51 35" stroke="#e8ddc0" stroke-width="0.6"/>
+  <!-- mouth line -->
+  <path d="M44 32 L52 32" stroke="#1a0a08" stroke-width="0.5"/>
+
+  <!-- SCRAP HELMET (open-face battle helm with bull horns) -->
+  <path d="M34 12 Q36 4 48 2 Q60 4 62 12 L62 16 L34 16 Z" fill="url(#o-metal)"/>
+  <!-- helm rim -->
+  <path d="M34 16 L62 16" stroke="#0a0a0c" stroke-width="1"/>
+  <!-- rivets -->
+  <circle cx="38" cy="14" r="0.7" fill="#c87030"/>
+  <circle cx="58" cy="14" r="0.7" fill="#c87030"/>
+  <!-- rust patches -->
+  <path d="M40 8 L42 14" stroke="url(#o-rust-hl)" stroke-width="0.5" opacity=".7"/>
+  <path d="M54 8 L56 14" stroke="url(#o-rust-hl)" stroke-width="0.5" opacity=".7"/>
+  <!-- big curving bull horns -->
+  <path d="M36 10 Q30 6 26 -2 L30 4 Q34 8 38 12 Z" fill="url(#o-rust)"/>
+  <path d="M60 10 Q66 6 70 -2 L66 4 Q62 8 58 12 Z" fill="url(#o-rust)"/>
+  <!-- horn rings (rusted bell clamp at base) -->
+  <circle cx="34" cy="10" r="1.2" fill="none" stroke="#c87030" stroke-width="0.5"/>
+  <circle cx="62" cy="10" r="1.2" fill="none" stroke="#c87030" stroke-width="0.5"/>
+  <!-- small dangling bell on horn (choir motif) -->
+  <path d="M28 2 L30 -4 L32 2 Z" fill="url(#o-rust-hl)"/>
+  <path d="M30 2 L30 5" stroke="#2a1408" stroke-width="0.4"/>
+
+</svg>

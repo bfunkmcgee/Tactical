@@ -7,7 +7,7 @@ import { TILE_W, TILE_H, gridToScreen, screenToGrid } from './isoProjection';
 import { chebyshev, keyOf, tileAt } from '../engine/grid';
 import { hasLineOfSight } from '../engine/los';
 
-/** Texture cache keyed by unit templateId — shared across mount cycles. */
+/** Texture cache keyed by `${templateId}:body` or `${templateId}:weapon`. */
 const spriteCache = new Map<string, Texture>();
 
 /**
@@ -29,6 +29,13 @@ type UnitNode = {
   body: Container;
   sprite: Sprite | null;
   fallback: Graphics | null;
+  /**
+   * Weapon wrap: Container holding the weapon sprite + muzzle flash. Rotates
+   * around the character's grip point so the weapon "raises" / "recoils"
+   * independently of the body sway.
+   */
+  weaponWrap: Container | null;
+  weaponSprite: Sprite | null;
   muzzleFlash: Graphics;
   hpBar: Graphics;
   label: Text;
@@ -54,22 +61,34 @@ type UnitNode = {
   bobPhase: number;
 };
 
-/** Preload every templateId the active pack provides a spritePath for. */
+/**
+ * Preload body + weapon textures for every templateId the pack provides
+ * a resolver for. Cache keys are `${templateId}:body` and `:weapon`.
+ * Missing / failing URLs are non-fatal — the renderer falls back to a
+ * body-only sprite (or the placeholder rectangle) when a weapon is absent.
+ */
 async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): Promise<void> {
-  const resolve = pack.theme?.spritePath;
-  if (!resolve) return;
+  const bodyResolve = pack.theme?.spritePath;
+  const weaponResolve = pack.theme?.weaponPath;
+  if (!bodyResolve && !weaponResolve) return;
   const ids = [...Object.keys(pack.soldierTemplates), ...Object.keys(pack.enemyTemplates)];
-  await Promise.all(ids.map(async (id) => {
-    if (spriteCache.has(id)) return;
-    const url = resolve(id);
-    if (!url) return;
-    try {
-      const tex = await Assets.load<Texture>(url);
-      spriteCache.set(id, tex);
-    } catch (err) {
-      console.warn(`[sprites] failed to load ${id} from ${url}`, err);
-    }
-  }));
+  const loads: Array<Promise<void>> = [];
+  const pushLoad = (key: string, url: string | undefined) => {
+    if (!url || spriteCache.has(key)) return;
+    loads.push((async () => {
+      try {
+        const tex = await Assets.load<Texture>(url);
+        spriteCache.set(key, tex);
+      } catch (err) {
+        console.warn(`[sprites] failed to load ${key} from ${url}`, err);
+      }
+    })());
+  };
+  for (const id of ids) {
+    pushLoad(`${id}:body`, bodyResolve?.(id));
+    pushLoad(`${id}:weapon`, weaponResolve?.(id));
+  }
+  await Promise.all(loads);
 }
 
 /** Mounts a single Pixi application and reflects store state each tick. */
@@ -417,8 +436,16 @@ const FIRE_SHOT_AT = 0.46;
 const FIRE_FLASH_SPAN = 0.22;
 const DEATH_DURATION_MS = 560;
 
-/** Muzzle position in container-local coords (right-facing). Mirrored for left. */
-const MUZZLE_OFFSET = { x: 20, y: -30 };
+/**
+ * Grip pivot for the weapon layer, expressed as a fraction of the sprite's
+ * 96×128 viewBox. The weapon sprite's anchor is set here so rotating it
+ * pivots around the character's hand. This is a reasonable generic for all
+ * seven Eagle Corps templates — weapons are authored waist-height, centered.
+ */
+const GRIP_ANCHOR = { x: 0.5, y: 0.56 };
+
+/** Muzzle position in weapon-wrap local coords (right-facing). Mirrored for left. */
+const MUZZLE_OFFSET = { x: 22, y: -2 };
 
 /**
  * Reconcile `unitNodes` against the store's unit list:
@@ -463,20 +490,46 @@ function createUnitNode(u: Unit): UnitNode {
 
   const selectionRing = new Graphics();
 
-  // Body holds the sprite — this is what rotates/scales during walk cycles + fire windup.
+  // Body holds the sprite — this is what rotates/scales during walk cycles.
   const body = new Container();
 
   let sprite: Sprite | null = null;
   let fallback: Graphics | null = null;
+  let weaponWrap: Container | null = null;
+  let weaponSprite: Sprite | null = null;
   let spriteTop: number;
-  const tex = spriteCache.get(u.templateId);
-  if (tex) {
-    sprite = new Sprite(tex);
+
+  const bodyTex = spriteCache.get(`${u.templateId}:body`);
+  const weaponTex = spriteCache.get(`${u.templateId}:weapon`);
+
+  if (bodyTex) {
+    sprite = new Sprite(bodyTex);
     sprite.anchor.set(0.5, 1);
     sprite.scale.set(0.42);
     sprite.position.set(0, 4);
     body.addChild(sprite);
     spriteTop = -50;
+
+    // Weapon rides on top of the body. We use a wrap whose origin sits at the
+    // character's grip — rotating the wrap then pivots the weapon around the
+    // hand. The weapon sprite is anchored at GRIP_ANCHOR so its internal
+    // coordinates stay aligned with the body's 96×128 viewBox.
+    if (weaponTex) {
+      weaponWrap = new Container();
+      // Place the wrap at the grip's screen-space location inside the body.
+      // Grip viewBox coords = (GRIP_ANCHOR.x*96, GRIP_ANCHOR.y*128). Body
+      // sprite renders viewBox → local via anchor (0.5, 1) at position (0, 4),
+      // so grip local = ((0.5-0.5)*96*0.42, (0.56-1)*128*0.42 + 4) = (0, -19.64).
+      weaponWrap.position.set(
+        (GRIP_ANCHOR.x - 0.5) * 96 * 0.42,
+        (GRIP_ANCHOR.y - 1) * 128 * 0.42 + 4,
+      );
+      weaponSprite = new Sprite(weaponTex);
+      weaponSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
+      weaponSprite.scale.set(0.42);
+      weaponWrap.addChild(weaponSprite);
+      body.addChild(weaponWrap);
+    }
   } else {
     fallback = new Graphics();
     const color = parseInt(u.color.slice(1), 16);
@@ -486,9 +539,11 @@ function createUnitNode(u: Unit): UnitNode {
     spriteTop = -44;
   }
 
-  // Muzzle flash is drawn each frame during the fire window. Stays upright
-  // with the container so it doesn't rotate with the body.
+  // Muzzle flash is a child of the weapon wrap (when present) so it rotates
+  // with the weapon and sits at the barrel tip. When there's no weapon wrap
+  // it attaches to the container directly as a fallback.
   const muzzleFlash = new Graphics();
+  if (weaponWrap) weaponWrap.addChild(muzzleFlash);
 
   const hpBar = new Graphics();
   const label = new Text({
@@ -498,13 +553,17 @@ function createUnitNode(u: Unit): UnitNode {
   label.anchor.set(0.5, 1);
   const ornaments = new Container();
 
-  container.addChild(shadow, selectionRing, body, muzzleFlash, ornaments, hpBar, label);
+  if (weaponWrap) {
+    container.addChild(shadow, selectionRing, body, ornaments, hpBar, label);
+  } else {
+    container.addChild(shadow, selectionRing, body, muzzleFlash, ornaments, hpBar, label);
+  }
 
   const p = gridToScreen(u.pos);
   container.position.set(p.x, p.y);
 
   return {
-    container, shadow, body, sprite, fallback, muzzleFlash,
+    container, shadow, body, sprite, fallback, weaponWrap, weaponSprite, muzzleFlash,
     hpBar, label, ornaments, selectionRing, spriteTop,
     currentScreen: { x: p.x, y: p.y },
     targetScreen: { x: p.x, y: p.y },
@@ -643,13 +702,15 @@ function tickUnitAnimations(
     const moving = node.moveDurationMs > 0;
 
     // ----- Walk cycle (while moving): lean + two-step bob + squash on foot-plants.
-    let walkLean = 0, walkBob = 0, walkScaleY = 1;
+    // walkSway is an independent weapon rotation that counter-balances the lean.
+    let walkLean = 0, walkBob = 0, walkScaleY = 1, walkSway = 0;
     if (moving && alive) {
       const raw = node.moveMs / node.moveDurationMs;
       // Two steps per tile → 4 half-cycles.
       walkLean = Math.sin(raw * Math.PI * 2) * 0.08; // ±4.6°
       walkBob = -Math.abs(Math.sin(raw * Math.PI * 4)) * 2.5; // body lifts on stride peak
       walkScaleY = 1 - Math.abs(Math.sin(raw * Math.PI * 4 - Math.PI / 2)) * 0.05; // squash on plant
+      walkSway = -walkLean * 0.6; // weapon lags/opposes the body swing
     }
 
     // ----- Idle bob + selected pulse (only when stationary + alive).
@@ -661,33 +722,39 @@ function tickUnitAnimations(
     }
 
     // ----- Fire sequence: windup → flash → recoil → return.
-    let fireRot = 0, fireX = 0, fireY = 0, fireScale = 1, flashIntensity = 0;
+    // body* channels drive subtle torso motion; weapon* channels drive the
+    // independent arm-and-gun rotation (much larger amplitude).
+    let bodyPitch = 0, fireX = 0, fireY = 0, fireScale = 1;
+    let weaponAim = 0, flashIntensity = 0;
     if (node.fireAnimMs > 0) {
       node.fireAnimMs = Math.max(0, node.fireAnimMs - dtMs);
       const progress = 1 - node.fireAnimMs / FIRE_ANIM_MS; // 0 → 1
       if (progress < FIRE_SHOT_AT) {
-        // Windup: brace forward, lift weapon, scale up 4%.
+        // Windup: weapon rises sharply into aim, body leans slightly forward.
         const p = progress / FIRE_SHOT_AT;
         const ease = easeOutQuad(p);
-        fireRot = -0.10 * node.facing * ease; // tilt upper body toward target
-        fireX = node.fireTargetDir.x * 2.5 * ease;
-        fireY = node.fireTargetDir.y * 2.5 * ease;
-        fireScale = 1 + 0.04 * ease;
+        weaponAim = -0.45 * node.facing * ease;        // raise weapon ~26°
+        bodyPitch = -0.04 * node.facing * ease;        // small torso brace
+        fireX = node.fireTargetDir.x * 2 * ease;
+        fireY = node.fireTargetDir.y * 2 * ease;
+        fireScale = 1 + 0.03 * ease;
       } else if (progress < FIRE_SHOT_AT + FIRE_FLASH_SPAN) {
-        // Flash + recoil snap.
+        // Flash + recoil snap — weapon kicks up further; body steps back.
         const p = (progress - FIRE_SHOT_AT) / FIRE_FLASH_SPAN;
         flashIntensity = 1 - p;
         const kick = 1 - p;
-        fireRot = 0.06 * node.facing * kick; // snap past neutral from recoil
-        fireX = -node.fireTargetDir.x * 4 * kick;
-        fireY = -node.fireTargetDir.y * 4 * kick;
+        weaponAim = (-0.45 + -0.25 * kick) * node.facing; // extra kick ~40° total
+        bodyPitch = 0.03 * node.facing * kick;            // snap body back
+        fireX = -node.fireTargetDir.x * 3 * kick;
+        fireY = -node.fireTargetDir.y * 3 * kick;
         fireScale = 1 + 0.02 * kick;
       } else {
-        // Return to rest.
+        // Return: ease back to rest.
         const p = (progress - FIRE_SHOT_AT - FIRE_FLASH_SPAN) /
           (1 - FIRE_SHOT_AT - FIRE_FLASH_SPAN);
         const ret = 1 - easeOutQuad(p);
-        fireRot = 0.06 * node.facing * ret * 0.4;
+        weaponAim = -0.45 * node.facing * ret * 0.6;
+        bodyPitch = 0.03 * node.facing * ret * 0.3;
         fireX = -node.fireTargetDir.x * 1.5 * ret;
         fireY = -node.fireTargetDir.y * 1.5 * ret;
       }
@@ -706,12 +773,20 @@ function tickUnitAnimations(
 
     // ----- Compose body transform.
     node.body.scale.set(node.facing * pulse * fireScale, pulse * fireScale * walkScaleY);
-    node.body.rotation = walkLean + fireRot;
+    node.body.rotation = walkLean + bodyPitch;
     node.body.position.x = jitterX + fireX;
     node.body.position.y = idleBob + walkBob + fireY;
 
-    // ----- Muzzle flash: draw + position relative to facing, hide when intensity=0.
-    drawMuzzleFlash(node.muzzleFlash, node.facing, flashIntensity);
+    // ----- Independent weapon rotation (walk sway + fire windup/recoil).
+    // The weapon wrap lives inside `body`, anchored at the grip point.
+    // Rotating it pivots the gun around the character's hand.
+    if (node.weaponWrap) {
+      node.weaponWrap.rotation = walkSway + weaponAim;
+    }
+
+    // ----- Muzzle flash: drawn in weapon-wrap space when available so it
+    // follows the rotating barrel. Falls back to container-space otherwise.
+    drawMuzzleFlash(node.muzzleFlash, node.facing, flashIntensity, !!node.weaponWrap);
 
     // ----- Death fade: alpha out + slump + slight fall-sideways rotation.
     if (node.deathMs !== null) {
@@ -720,6 +795,8 @@ function tickUnitAnimations(
       node.container.alpha = 1 - t;
       node.body.position.y = t * 14; // overrides live bob — they're dead
       node.body.rotation = node.facing * 0.6 * t; // tip over toward facing
+      // Weapon drops below the grip as the character collapses.
+      if (node.weaponWrap) node.weaponWrap.rotation = node.facing * 1.2 * t;
       node.shadow.alpha = 1 - t * 0.8;
       node.hpBar.visible = false;
       node.label.visible = false;
@@ -738,13 +815,19 @@ function tickUnitAnimations(
 /**
  * Draw a muzzle flash at the weapon tip. `intensity` 0..1 fades the whole
  * composite (star burst + hot core + glow) so the flash blinks on and off.
- * Flash is mirrored across the x-axis based on facing.
+ *
+ * When `inWeaponSpace` is true the graphic lives inside the weapon-wrap
+ * (pivot at the grip) — the "tip" offset is measured forward of the grip.
+ * Otherwise it's in container-space and sits at a fixed chest-height point.
  */
-function drawMuzzleFlash(g: Graphics, facing: 1 | -1, intensity: number) {
+function drawMuzzleFlash(g: Graphics, facing: 1 | -1, intensity: number, inWeaponSpace: boolean) {
   g.clear();
   if (intensity <= 0) return;
-  const x = MUZZLE_OFFSET.x * facing;
-  const y = MUZZLE_OFFSET.y;
+  // In weapon-wrap space, origin = grip, so the muzzle is a fixed x forward
+  // of origin. In container-space (no split-weapon pack) the flash lives
+  // at chest height relative to the character container.
+  const x = inWeaponSpace ? MUZZLE_OFFSET.x * facing : 20 * facing;
+  const y = inWeaponSpace ? MUZZLE_OFFSET.y : -30;
   // Soft outer glow.
   g.circle(x, y, 11).fill({ color: 0xff9a3c, alpha: 0.4 * intensity });
   // 4-point star burst (longer along the barrel axis).
@@ -764,6 +847,7 @@ function drawMuzzleFlash(g: Graphics, facing: 1 | -1, intensity: number) {
 
 function applyTint(node: UnitNode, tint: number) {
   if (node.sprite) node.sprite.tint = tint;
+  if (node.weaponSprite) node.weaponSprite.tint = tint;
   if (node.fallback) node.fallback.tint = tint;
 }
 

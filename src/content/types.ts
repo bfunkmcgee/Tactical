@@ -56,4 +56,11 @@ export interface PackTheme {
   tileColors?: Partial<Record<TileKind, number>>;
   /** Sprite path resolver: receives a unit's templateId, returns a URL. */
   spritePath?: (templateId: string) => string;
+  /**
+   * Optional weapon-layer resolver. When provided, the renderer layers the
+   * weapon sprite on top of `spritePath` and animates it independently
+   * (aim windup, recoil) — enabling true arm-articulated animation. Packs
+   * without split sprites just omit this and keep monolithic sprites.
+   */
+  weaponPath?: (templateId: string) => string | undefined;
 }

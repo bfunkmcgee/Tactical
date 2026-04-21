@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="g-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#9aa054"/><stop offset="1" stop-color="#4a5028"/>
+    </linearGradient>
+    <linearGradient id="g-skin-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a7038"/><stop offset="1" stop-color="#2a3018"/>
+    </linearGradient>
+    <linearGradient id="g-rust" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a5028"/><stop offset="1" stop-color="#2a1408"/>
+    </linearGradient>
+    <linearGradient id="g-rust-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#c87030"/><stop offset="1" stop-color="#4a2410"/>
+    </linearGradient>
+    <linearGradient id="g-rag" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a5838"/><stop offset="1" stop-color="#2a2010"/>
+    </linearGradient>
+    <linearGradient id="g-metal" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4a4e"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <radialGradient id="g-eye" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff4c0"/>
+      <stop offset=".5" stop-color="#ff9a3c"/>
+      <stop offset="1" stop-color="#8a3010" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- SCRAP PIPE-GUN / BLUNDERBUSS (crude, held across body) -->
+  <!-- stock (rough wood) -->
+  <path d="M4 58 L14 58 L14 66 L4 68 Z" fill="#4a2810"/>
+  <path d="M6 60 L12 60 M6 64 L12 64" stroke="#2a1408" stroke-width="0.3"/>
+  <!-- receiver (welded box) -->
+  <path d="M14 58 L38 58 L38 68 L14 68 Z" fill="url(#g-rust)"/>
+  <!-- patch plates bolted on -->
+  <rect x="18" y="56" width="8" height="4" fill="url(#g-rust-hl)"/>
+  <rect x="28" y="58" width="8" height="6" fill="url(#g-metal)"/>
+  <circle cx="20" cy="58" r="0.7" fill="#c87030"/>
+  <circle cx="24" cy="58" r="0.7" fill="#c87030"/>
+  <circle cx="30" cy="60" r="0.6" fill="#c87030"/>
+  <circle cx="34" cy="60" r="0.6" fill="#c87030"/>
+  <!-- crooked makeshift sight -->
+  <rect x="22" y="54" width="2" height="4" fill="#2a1408"/>
+  <!-- grip -->
+  <path d="M32 68 L38 68 L38 76 L34 78 Z" fill="#4a2810"/>
+  <!-- trigger (exposed) -->
+  <path d="M32 68 L34 72" stroke="#2a1408" stroke-width="0.8"/>
+  <!-- wide flared barrel (blunderbuss) -->
+  <path d="M38 60 L60 60 L60 66 L38 66 Z" fill="url(#g-rust)"/>
+  <path d="M60 56 L68 58 L68 68 L60 70 Z" fill="url(#g-rust)"/>
+  <!-- rust streaks on barrel -->
+  <path d="M42 62 L56 62" stroke="#c87030" stroke-width="0.3" opacity=".7"/>
+  <path d="M42 64 L56 64" stroke="#2a1408" stroke-width="0.3" opacity=".7"/>
+  <!-- duct tape wrapping -->
+  <rect x="44" y="58" width="6" height="10" fill="#2a2010"/>
+  <!-- muzzle - crude flared scrap -->
+  <path d="M68 54 L76 56 L76 72 L68 74 Z" fill="#2a1408"/>
+  <path d="M70 58 L74 58 M70 62 L74 62 M70 66 L74 66 M70 70 L74 70" stroke="#c87030" stroke-width="0.3"/>
+  <!-- muzzle residue (smoke/ember glow from scrap ammo) -->
+  <circle cx="78" cy="64" r="3" fill="url(#g-eye)" opacity=".7"/>
+  <circle cx="78" cy="64" r="1.2" fill="#fff4c0"/>
+</svg>

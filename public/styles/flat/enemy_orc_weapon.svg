@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="o-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a7048"/><stop offset="1" stop-color="#2a3018"/>
+    </linearGradient>
+    <linearGradient id="o-skin-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a5028"/><stop offset="1" stop-color="#1a2010"/>
+    </linearGradient>
+    <linearGradient id="o-rust" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a5028"/><stop offset="1" stop-color="#2a1408"/>
+    </linearGradient>
+    <linearGradient id="o-rust-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#c87030"/><stop offset="1" stop-color="#4a2410"/>
+    </linearGradient>
+    <linearGradient id="o-metal" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#5a5a5e"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <linearGradient id="o-rag" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a5838"/><stop offset="1" stop-color="#2a2010"/>
+    </linearGradient>
+    <radialGradient id="o-eye" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff4c0"/>
+      <stop offset=".5" stop-color="#ff6a1a"/>
+      <stop offset="1" stop-color="#4a1808" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- SCRAP ASSAULT RIFLE (welded together cobble gun) -->
+  <!-- stock (wood + rust bracket) -->
+  <path d="M2 58 L14 58 L14 68 L2 70 Z" fill="#4a2810"/>
+  <rect x="2" y="58" width="2" height="12" fill="url(#o-rust)"/>
+  <!-- receiver (welded together from pipe and plate) -->
+  <path d="M14 58 L40 58 L40 70 L14 70 Z" fill="url(#o-rust)"/>
+  <!-- welded patch plates -->
+  <rect x="18" y="56" width="10" height="4" fill="url(#o-metal)"/>
+  <rect x="28" y="58" width="10" height="6" fill="url(#o-rust-hl)"/>
+  <circle cx="20" cy="58" r="0.8" fill="#c87030"/>
+  <circle cx="26" cy="58" r="0.8" fill="#c87030"/>
+  <circle cx="30" cy="60" r="0.7" fill="#4a4a4e"/>
+  <circle cx="36" cy="60" r="0.7" fill="#4a4a4e"/>
+  <!-- crooked iron sights -->
+  <rect x="22" y="52" width="1.5" height="4" fill="#2a1408"/>
+  <rect x="34" y="52" width="1.5" height="4" fill="#2a1408"/>
+  <!-- mag (drum, oversized) -->
+  <ellipse cx="26" cy="76" rx="6" ry="5" fill="url(#o-rust)"/>
+  <circle cx="26" cy="76" r="3" fill="#2a1408"/>
+  <circle cx="26" cy="76" r="1.5" fill="#c87030"/>
+  <path d="M26 71 L26 81 M21 76 L31 76" stroke="#2a1408" stroke-width="0.4"/>
+  <!-- trigger guard -->
+  <path d="M40 68 Q44 72 48 68" fill="none" stroke="#0a0a0c" stroke-width="1.4"/>
+  <!-- grip -->
+  <path d="M46 68 L52 68 L52 78 L48 80 Z" fill="#4a2810"/>
+  <!-- long barrel with cobbled attachments -->
+  <rect x="52" y="60" width="20" height="6" fill="url(#o-rust)"/>
+  <!-- duct tape wraps -->
+  <rect x="58" y="58" width="4" height="10" fill="#2a2010"/>
+  <!-- scrap heat shroud -->
+  <rect x="62" y="59" width="14" height="8" fill="url(#o-metal)"/>
+  <path d="M64 61 L76 61 M64 63 L76 63 M64 65 L76 65" stroke="#0a0a0c" stroke-width="0.3"/>
+  <!-- ember muzzle (crude flash hider) -->
+  <path d="M76 56 L84 58 L84 70 L76 72 Z" fill="#2a1408"/>
+  <path d="M78 60 L82 60 M78 64 L82 64 M78 68 L82 68" stroke="#c87030" stroke-width="0.3"/>
+  <!-- muzzle flare glow -->
+  <circle cx="86" cy="64" r="3.5" fill="url(#o-eye)" opacity=".7"/>
+  <circle cx="86" cy="64" r="1.4" fill="#fff4c0"/>
+</svg>

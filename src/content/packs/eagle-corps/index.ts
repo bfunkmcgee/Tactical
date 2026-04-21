@@ -48,17 +48,29 @@ export const pack: ContentPack = {
   initialStockpile: INITIAL_STOCKPILE,
 
   theme: {
-    /** Resolve a unit's templateId to its authored SVG in public/styles/flat. */
-    spritePath: (templateId) => SPRITES[templateId],
+    /** Body-layer SVG for a given templateId (under public/styles/flat). */
+    spritePath: (templateId) => BODIES[templateId],
+    /** Weapon-layer SVG, rendered + rotated independently of the body. */
+    weaponPath: (templateId) => WEAPONS_SVG[templateId],
   },
 };
 
-const SPRITES: Record<string, string> = {
-  ranger_kestrel:    '/styles/flat/soldier.svg',
-  warden_brannock:   '/styles/flat/soldier_warden.svg',
-  mystic_seraphine:  '/styles/flat/soldier_mystic.svg',
-  sapper_orin:       '/styles/flat/soldier_sapper.svg',
-  rust_goblin:       '/styles/flat/enemy_goblin.svg',
-  rust_orc:          '/styles/flat/enemy_orc.svg',
-  rust_troll:        '/styles/flat/enemy_troll.svg',
+const BODIES: Record<string, string> = {
+  ranger_kestrel:    '/styles/flat/soldier_body.svg',
+  warden_brannock:   '/styles/flat/soldier_warden_body.svg',
+  mystic_seraphine:  '/styles/flat/soldier_mystic_body.svg',
+  sapper_orin:       '/styles/flat/soldier_sapper_body.svg',
+  rust_goblin:       '/styles/flat/enemy_goblin_body.svg',
+  rust_orc:          '/styles/flat/enemy_orc_body.svg',
+  rust_troll:        '/styles/flat/enemy_troll_body.svg',
+};
+
+const WEAPONS_SVG: Record<string, string> = {
+  ranger_kestrel:    '/styles/flat/soldier_weapon.svg',
+  warden_brannock:   '/styles/flat/soldier_warden_weapon.svg',
+  mystic_seraphine:  '/styles/flat/soldier_mystic_weapon.svg',
+  sapper_orin:       '/styles/flat/soldier_sapper_weapon.svg',
+  rust_goblin:       '/styles/flat/enemy_goblin_weapon.svg',
+  rust_orc:          '/styles/flat/enemy_orc_weapon.svg',
+  rust_troll:        '/styles/flat/enemy_troll_weapon.svg',
 };
