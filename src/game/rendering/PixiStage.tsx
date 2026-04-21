@@ -798,12 +798,15 @@ function tickUnitAnimations(
       walkSway = -walkLean * 0.6; // weapon lags/opposes the body swing
     }
 
-    // ----- Idle bob + selected pulse (only when stationary + alive).
-    let idleBob = 0, pulse = 1;
+    // ----- Idle breathing: tiny vertical scale (chest/shoulder rise) with
+    // feet planted. Feels alive without looking like the soldier floats.
+    // Selected units breathe a touch deeper + pulse subtly so the active
+    // unit still reads clearly.
+    let breatheScaleY = 1, pulse = 1;
     if (alive && !moving) {
-      const amp = node.selected ? 2.2 : 1.4;
-      idleBob = Math.sin(nowMs * 0.003 + node.bobPhase) * amp;
-      pulse = node.selected ? 1 + Math.sin(nowMs * 0.006) * 0.03 : 1;
+      const breathAmp = node.selected ? 0.022 : 0.010;
+      breatheScaleY = 1 + Math.sin(nowMs * 0.0018 + node.bobPhase) * breathAmp;
+      if (node.selected) pulse = 1 + Math.sin(nowMs * 0.005) * 0.018;
     }
 
     // ----- Fire sequence: windup → flash → recoil → return.
@@ -857,10 +860,13 @@ function tickUnitAnimations(
     }
 
     // ----- Compose body transform.
-    node.body.scale.set(node.facing * pulse * fireScale, pulse * fireScale * walkScaleY);
+    node.body.scale.set(
+      node.facing * pulse * fireScale,
+      pulse * fireScale * walkScaleY * breatheScaleY,
+    );
     node.body.rotation = walkLean + bodyPitch;
     node.body.position.x = jitterX + fireX;
-    node.body.position.y = idleBob + walkBob + fireY;
+    node.body.position.y = walkBob + fireY;
 
     // ----- Independent weapon rotation (walk sway + fire windup/recoil).
     // The weapon wrap lives inside `body`, anchored at the grip point.
