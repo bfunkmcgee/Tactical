@@ -961,16 +961,10 @@ function tickUnitAnimations(
       walkSway = -walkLean * 0.6; // weapon lags/opposes the body swing
     }
 
-    // ----- Idle breathing: tiny vertical scale (chest/shoulder rise) with
-    // feet planted. Feels alive without looking like the soldier floats.
-    // Selected units breathe a touch deeper + pulse subtly so the active
-    // unit still reads clearly.
-    let breatheScaleY = 1, pulse = 1;
-    if (alive && !moving) {
-      const breathAmp = node.selected ? 0.022 : 0.010;
-      breatheScaleY = 1 + Math.sin(nowMs * 0.0018 + node.bobPhase) * breathAmp;
-      if (node.selected) pulse = 1 + Math.sin(nowMs * 0.005) * 0.018;
-    }
+    // Idle is deliberately STILL — a hovering idle animation reads as
+    // "floating" in an isometric tactical view. The selection ring alpha
+    // pulses (further below) to indicate the active unit instead of any
+    // character-body motion.
 
     // ----- Fire sequence: windup → one-or-more shots (with per-shot
     // kick + muzzle flash) → return. Driven by node.fireStyle so each
@@ -1045,13 +1039,16 @@ function tickUnitAnimations(
     }
 
     // ----- Compose body transform.
-    node.body.scale.set(
-      node.facing * pulse * fireScale,
-      pulse * fireScale * walkScaleY * breatheScaleY,
-    );
+    node.body.scale.set(node.facing * fireScale, fireScale * walkScaleY);
     node.body.rotation = walkLean + bodyPitch;
     node.body.position.x = jitterX + fireX;
     node.body.position.y = walkBob + fireY;
+
+    // ----- Selection ring alpha pulse — drives the "who's active" cue
+    // since the character body itself is static in idle.
+    if (node.selected && node.deathMs === null) {
+      node.selectionRing.alpha = 0.55 + Math.sin(nowMs * 0.004) * 0.35;
+    }
 
     // ----- Independent weapon rotation (walk sway + fire windup/recoil).
     // The weapon wrap lives inside `body`, anchored at the grip point.

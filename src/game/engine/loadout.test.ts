@@ -21,9 +21,8 @@ describe('resolveWeapon', () => {
     const reflex = MODS.optic_reflex!;
     const drum = MODS.mag_drum!;
     const r = resolveWeapon(carbine, [reflex, drum]);
-    // Base carbine has aim 0; reflex +5; drum -10.
-    expect(r.effective.aim).toBe(0 + 5 - 10);
-    // Aim contributions exclude any with no contribution (carbine's 0).
+    // Reflex +5 / drum -10 apply on top of the carbine's base aim.
+    expect(r.effective.aim).toBe(carbine.aim + 5 - 10);
     const labels = r.aimContribs.map((c) => c.label);
     expect(labels).toContain(reflex.name);
     expect(labels).toContain(drum.name);

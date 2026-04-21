@@ -5,7 +5,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
     id: 'ranger_kestrel',
     name: 'Kestrel',
     class: 'Ranger',
-    hpMax: 10, aim: 10, mobility: 4,
+    hpMax: 13, aim: 15, mobility: 4,
     portraitColor: '#7cc4ff',
     defaultLoadout: {
       primaryMods: {}, sidearmMods: {},
@@ -20,7 +20,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
     id: 'warden_brannock',
     name: 'Brannock',
     class: 'Warden',
-    hpMax: 14, aim: 0, mobility: 3,
+    hpMax: 17, aim: 5, mobility: 3,
     portraitColor: '#ff9a3c',
     defaultLoadout: {
       primaryMods: {}, sidearmMods: {},
@@ -35,7 +35,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
     id: 'mystic_seraphine',
     name: 'Seraphine',
     class: 'Mystic',
-    hpMax: 9, aim: 15, mobility: 4,
+    hpMax: 12, aim: 20, mobility: 4,
     portraitColor: '#c79aff',
     defaultLoadout: {
       primaryMods: {}, sidearmMods: {},
@@ -50,7 +50,7 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
     id: 'sapper_orin',
     name: 'Orin',
     class: 'Sapper',
-    hpMax: 11, aim: 5, mobility: 4,
+    hpMax: 14, aim: 10, mobility: 4,
     portraitColor: '#9cd6a6',
     defaultLoadout: {
       primaryMods: {}, sidearmMods: {},
