@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Application, Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { useCombatStore } from '../../state/combatStore';
 import { useContent } from '../../content/registry';
-import type { GridMap, Unit, UnitId, Vec2 } from '../types';
+import type { GridMap, TileKind, Unit, UnitId, Vec2 } from '../types';
 import { TILE_W, TILE_H, gridToScreen, screenToGrid } from './isoProjection';
 import { chebyshev, keyOf, tileAt } from '../engine/grid';
 import { hasLineOfSight } from '../engine/los';
@@ -333,26 +333,111 @@ function diamond(g: Graphics, cx: number, cy: number, fill: number, alpha: numbe
   if (stroke !== undefined) g.stroke({ color: stroke, width: 1, alpha: 0.5 });
 }
 
+/**
+ * Tile palettes per biome. Each entry is a complete set — fills for every
+ * tile kind plus the stroke colors used on the diamond outline and the
+ * raised cover rectangles. Pick one via `paletteFor(map.tileset)`.
+ */
+type TilePalette = {
+  floor: readonly [number, number, number]; // three variants for floor mottle
+  floorStroke: number;
+  wall: number;
+  halfCover: number;
+  fullCover: number;
+  coverStroke: number;
+  /** Accent color for floor flecks / sandstone brick lines. */
+  accent: number;
+};
+
+const URBAN_PALETTE: TilePalette = {
+  floor: [0x1b2331, 0x202a3c, 0x1a2230],
+  floorStroke: 0x2a3447,
+  wall: 0x0b0f14,
+  halfCover: 0x3c5673,
+  fullCover: 0x5a7498,
+  coverStroke: 0x0b0f14,
+  accent: 0x2a3447,
+};
+
+const DESERT_PALETTE: TilePalette = {
+  floor: [0xd4b37a, 0xc3a066, 0xb18850], // pale dune / sand / ochre patch
+  floorStroke: 0x8a6838,
+  wall: 0x4a3520,                         // weathered adobe
+  halfCover: 0xa97947,                    // broken clay brick
+  fullCover: 0xd09355,                    // taller sandstone column
+  coverStroke: 0x3a2814,
+  accent: 0x6a4a22,
+};
+
+function paletteFor(tileset: GridMap['tileset']): TilePalette {
+  return tileset === 'desert' ? DESERT_PALETTE : URBAN_PALETTE;
+}
+
 function drawMap(layer: Container, map: GridMap) {
   layer.removeChildren();
+  const pal = paletteFor(map.tileset);
   const g = new Graphics();
   for (let y = 0; y < map.height; y++) {
     for (let x = 0; x < map.width; x++) {
       const t = tileAt(map, x, y)!;
       const p = gridToScreen({ x, y });
-      let fill = 0x1b2331;
-      if (t.kind === 'floor') fill = t.variant === 0 ? 0x1b2331 : t.variant === 1 ? 0x202a3c : 0x1a2230;
-      else if (t.kind === 'wall') fill = 0x0b0f14;
-      else if (t.kind === 'cover_half') fill = 0x3c5673;
-      else if (t.kind === 'cover_full') fill = 0x5a7498;
-      diamond(g, p.x, p.y, fill, 1, 0x2a3447);
+      const variant = (t.variant ?? 0) % 3;
+      let fill = pal.floor[0];
+      if (t.kind === 'floor') fill = pal.floor[variant];
+      else if (t.kind === 'wall') fill = pal.wall;
+      else if (t.kind === 'cover_half') fill = pal.halfCover;
+      else if (t.kind === 'cover_full') fill = pal.fullCover;
+      diamond(g, p.x, p.y, fill, 1, pal.floorStroke);
+      // Biome-specific detail pass — sandstone bricks, dune flecks, etc.
+      if (map.tileset === 'desert') {
+        drawDesertDetail(g, t.kind, variant, p.x, p.y, x, y, pal);
+      }
       if (t.kind === 'cover_half' || t.kind === 'cover_full') {
         const h = t.kind === 'cover_full' ? 22 : 12;
-        g.rect(p.x - 14, p.y - h, 28, h).fill({ color: fill, alpha: 0.9 }).stroke({ color: 0x0b0f14, width: 1 });
+        g.rect(p.x - 14, p.y - h, 28, h)
+          .fill({ color: fill, alpha: 0.9 })
+          .stroke({ color: pal.coverStroke, width: 1 });
+        // Add a brick seam on the raised cover so it reads as masonry, not a block.
+        if (map.tileset === 'desert') {
+          g.rect(p.x - 14, p.y - Math.floor(h / 2), 28, 1)
+            .fill({ color: pal.coverStroke, alpha: 0.55 });
+        }
       }
     }
   }
   layer.addChild(g);
+}
+
+/**
+ * Paints biome-specific marks on top of a base-filled diamond:
+ *  - Floor gets tiny pebble flecks + a subtle dune line, varying by tile
+ *    coordinates so the map has texture without an extra asset pipeline.
+ *  - Walls get two horizontal sandstone brick lines.
+ * Keeps the detail deterministic (driven by x,y) so the pattern is stable.
+ */
+function drawDesertDetail(
+  g: Graphics, kind: TileKind, variant: number,
+  px: number, py: number, gx: number, gy: number, pal: TilePalette
+) {
+  if (kind === 'floor') {
+    // Pebble flecks — deterministic offsets driven by tile coords.
+    const n = ((gx * 3 + gy * 5) % 3) + 1;
+    for (let i = 0; i < n; i++) {
+      const dx = ((gx * 7 + i * 11 + gy * 3) % 9) - 4;
+      const dy = ((gy * 7 + i * 13 + gx * 5) % 5) - 2;
+      g.circle(px + dx, py + dy, 0.8).fill({ color: pal.accent, alpha: 0.55 });
+    }
+    // A single dune-line on variant-2 tiles — shallow arc across the diamond.
+    if (variant === 2) {
+      g.moveTo(px - 10, py + 1);
+      g.quadraticCurveTo(px, py - 3, px + 10, py + 1);
+      g.stroke({ color: pal.accent, width: 0.8, alpha: 0.5 });
+    }
+  } else if (kind === 'wall') {
+    // Two thin horizontal sandstone seams for brick hint.
+    g.rect(px - 10, py - 3, 20, 0.8).fill({ color: pal.accent, alpha: 0.55 });
+    g.rect(px - 10, py + 2, 20, 0.8).fill({ color: pal.accent, alpha: 0.55 });
+  }
 }
 
 function redrawOverlays(layer: Container, st: ReturnType<typeof useCombatStore.getState>) {

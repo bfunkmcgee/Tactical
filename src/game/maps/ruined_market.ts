@@ -57,7 +57,8 @@ function build(): GridMap {
       else if (spawn) enemySpawns.push({ pos: { x, y }, spawnKey: spawn });
     }
   }
-  return { id: 'ruined_market', name: 'Ruined Market', width, height, tiles, playerSpawns, enemySpawns };
+  return { id: 'ruined_market', name: 'Ruined Market', tileset: 'desert',
+    width, height, tiles, playerSpawns, enemySpawns };
 }
 
 export const RUINED_MARKET: GridMap = build();
