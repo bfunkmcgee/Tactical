@@ -79,8 +79,7 @@ async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): Promise
   const bodyResolve = pack.theme?.spritePath;
   const armsResolve = pack.theme?.armsPath;
   const weaponResolve = pack.theme?.weaponPath;
-  if (!bodyResolve && !weaponResolve && !armsResolve) return;
-  const ids = [...Object.keys(pack.soldierTemplates), ...Object.keys(pack.enemyTemplates)];
+  const templates = [...Object.keys(pack.soldierTemplates), ...Object.keys(pack.enemyTemplates)];
   const loads: Array<Promise<void>> = [];
   const pushLoad = (key: string, url: string | undefined) => {
     if (!url || spriteCache.has(key)) return;
@@ -93,10 +92,18 @@ async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): Promise
       }
     })());
   };
-  for (const id of ids) {
+  // Per-template body / arms / template-owned weapon (enemies).
+  for (const id of templates) {
     pushLoad(`${id}:body`, bodyResolve?.(id));
     pushLoad(`${id}:arms`, armsResolve?.(id));
     pushLoad(`${id}:weapon`, weaponResolve?.(id));
+  }
+  // Weapon sprites keyed by weapon id — same weapon looks the same on any
+  // wielder. Players resolve their weapon texture via this cache at node
+  // creation, letting Kestrel's Runeweave Carbine and Brannock's Runeweave
+  // Carbine render with the identical visual.
+  for (const w of Object.values(pack.weapons)) {
+    if (w.spritePath) pushLoad(`w:${w.id}`, w.spritePath);
   }
   await Promise.all(loads);
 }
@@ -791,7 +798,13 @@ function createUnitNode(u: Unit): UnitNode {
 
   const bodyTex = spriteCache.get(`${u.templateId}:body`);
   const armsTex = spriteCache.get(`${u.templateId}:arms`);
-  const weaponTex = spriteCache.get(`${u.templateId}:weapon`);
+  // Players resolve their weapon sprite by the EQUIPPED weapon's id so the
+  // same weapon renders identically on any wielder. Enemies (no loadout)
+  // keep the per-template weapon — their weapon is part of their identity.
+  const playerWeaponId = u.loadout?.primaryId;
+  const weaponTex =
+    (playerWeaponId && spriteCache.get(`w:${playerWeaponId}`)) ??
+    spriteCache.get(`${u.templateId}:weapon`);
 
   if (bodyTex) {
     sprite = new Sprite(bodyTex);

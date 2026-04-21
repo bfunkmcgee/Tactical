@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="m-plate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="m-plate-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4a50"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <linearGradient id="m-tan" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a88c5c"/><stop offset="1" stop-color="#5a4828"/>
+    </linearGradient>
+    <linearGradient id="m-tan-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a6038"/><stop offset="1" stop-color="#3a2e18"/>
+    </linearGradient>
+    <linearGradient id="m-boot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b09060"/><stop offset="1" stop-color="#6a5430"/>
+    </linearGradient>
+    <linearGradient id="m-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8c488"/><stop offset="1" stop-color="#8a6838"/>
+    </linearGradient>
+    <linearGradient id="m-fur" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a6e48"/><stop offset="1" stop-color="#2a1e10"/>
+    </linearGradient>
+    <linearGradient id="m-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d8a878"/><stop offset="1" stop-color="#8a6038"/>
+    </linearGradient>
+    <linearGradient id="m-scarf" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b8986a"/><stop offset="1" stop-color="#6a5230"/>
+    </linearGradient>
+    <linearGradient id="m-gun" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#08080a"/>
+    </linearGradient>
+    <radialGradient id="m-rune" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#eaf6ff"/>
+      <stop offset=".5" stop-color="#7cc4ff"/>
+      <stop offset="1" stop-color="#2a6aa0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- ARCLIGHT MARKSMAN sniper (tactical suppressed) -->
+  <path d="M4 58 L16 56 L18 66 L4 68 Z" fill="url(#m-gun)"/>
+  <path d="M8 52 L16 51 L16 56 L8 56 Z" fill="#1a1a1c"/>
+  <path d="M16 56 L56 54 L56 66 L16 66 Z" fill="url(#m-gun)"/>
+  <rect x="20" y="52" width="36" height="2" fill="#0a0a0c"/>
+  <path d="M22 52 L22 54 M26 52 L26 54 M30 52 L30 54 M34 52 L34 54 M38 52 L38 54 M42 52 L42 54 M46 52 L46 54 M50 52 L50 54 M54 52 L54 54" stroke="#1a1a1c" stroke-width="0.4"/>
+  <!-- large scope -->
+  <rect x="28" y="44" width="20" height="8" rx="1.2" fill="#0a0a0c"/>
+  <circle cx="38" cy="48" r="3" fill="#000"/>
+  <circle cx="38" cy="48" r="2" fill="#c79aff"/>
+  <circle cx="38" cy="48" r="0.7" fill="#fff0ff"/>
+  <rect x="34" y="41" width="2" height="4" fill="#0a0a0c"/>
+  <rect x="40" y="41" width="2" height="4" fill="#0a0a0c"/>
+  <!-- magazine -->
+  <path d="M30 66 L40 66 L39 80 L31 80 Z" fill="#0a0a0c"/>
+  <!-- trigger -->
+  <path d="M40 66 Q44 70 48 66" fill="none" stroke="#0a0a0c" stroke-width="1.4"/>
+  <path d="M46 66 L52 66 L52 78 L48 80 Z" fill="#0a0a0c"/>
+  <!-- bipod -->
+  <path d="M52 66 L50 76 L54 74" fill="none" stroke="#0a0a0c" stroke-width="1"/>
+  <!-- barrel + long suppressor -->
+  <rect x="56" y="58" width="16" height="3" fill="url(#m-gun)"/>
+  <rect x="72" y="56" width="16" height="7" rx="1" fill="#1a1a1c"/>
+  <path d="M74 58 L86 58 M74 60 L86 60 M74 62 L86 62" stroke="#0a0a0c" stroke-width="0.3"/>
+  <!-- muzzle rune (runic blue, weapon tag) -->
+  <circle cx="88" cy="59" r="3.5" fill="url(#m-rune)"/>
+  <circle cx="88" cy="59" r="1.3" fill="#eaf6ff"/>
+</svg>

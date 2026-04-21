@@ -121,6 +121,8 @@ export default function LoadoutScreen() {
       <div className="scroll-y" style={{ flex: 1, paddingRight: 4 }}>
         {tab === 'weapons' && (
           <>
+            <EquippedArmory primary={primary} sidearm={sidearm} />
+
             <Section title={`Primary · ${primary?.name ?? '—'}`}>
               <ModSlotRow weapon={primary?.class} slots={PRIMARY_SLOTS}
                 slotMap={current.primaryMods}
@@ -129,7 +131,7 @@ export default function LoadoutScreen() {
                 {primaryWeapons().map((w) => (
                   <Card key={w.id} selected={current.primaryId === w.id}
                     onClick={() => set({ primaryId: w.id, primaryMods: {} })}
-                    title={w.name} tag={w.tag}
+                    title={w.name} tag={w.tag} imgSrc={w.spritePath}
                     lines={[
                       `${w.dmgMin}–${w.dmgMax} dmg · ${w.aim >= 0 ? '+' : ''}${w.aim} aim · ${w.crit}% crit`,
                       `Range ${w.rangeShort}/${w.rangeLong} · Ammo ${w.ammo} · ${w.apCost} AP${w.endsTurn ? ' · ends turn' : ''}`,
@@ -147,7 +149,7 @@ export default function LoadoutScreen() {
                 {sidearms().map((w) => (
                   <Card key={w.id} selected={current.sidearmId === w.id}
                     onClick={() => set({ sidearmId: w.id, sidearmMods: {} })}
-                    title={w.name} tag={w.tag}
+                    title={w.name} tag={w.tag} imgSrc={w.spritePath}
                     lines={[
                       `${w.dmgMin}–${w.dmgMax} dmg · ${w.aim >= 0 ? '+' : ''}${w.aim} aim · ${w.crit}% crit`,
                       w.flavor,
@@ -279,8 +281,9 @@ const TAG_COLORS: Record<string, string> = {
   mundane: 'var(--fg-1)',
 };
 
-function Card({ title, tag, lines, selected, onClick }:
-  { title: string; tag: string; lines: string[]; selected: boolean; onClick: () => void }) {
+function Card({ title, tag, lines, selected, onClick, imgSrc }:
+  { title: string; tag: string; lines: string[]; selected: boolean;
+    onClick: () => void; imgSrc?: string }) {
   return (
     <button onClick={onClick}
       style={{
@@ -289,14 +292,74 @@ function Card({ title, tag, lines, selected, onClick }:
         background: selected ? 'var(--bg-3)' : 'var(--bg-2)',
         minHeight: 88, width: '100%',
       }}>
-      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
-        <strong>{title}</strong>
-        <span style={{ fontSize: 11, color: TAG_COLORS[tag] ?? 'var(--fg-1)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{tag}</span>
+      <div className="row" style={{ gap: 'var(--s-2)', alignItems: 'flex-start' }}>
+        {imgSrc && (
+          <div style={{
+            width: 56, height: 70, flexShrink: 0,
+            background: 'var(--bg-1)', borderRadius: 4,
+            border: '1px solid var(--bg-3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            overflow: 'hidden',
+          }}>
+            <img src={imgSrc} alt="" width={52} height={66}
+              style={{ objectFit: 'contain', pointerEvents: 'none' }} />
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 4 }}>
+            <strong>{title}</strong>
+            <span style={{ fontSize: 11, color: TAG_COLORS[tag] ?? 'var(--fg-1)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{tag}</span>
+          </div>
+          {lines.map((l, i) => (
+            <div key={i} style={{ fontSize: 12, color: i === lines.length - 1 ? 'var(--fg-2)' : 'var(--fg-1)', fontStyle: i === lines.length - 1 ? 'italic' : 'normal', marginTop: 2 }}>{l}</div>
+          ))}
+        </div>
       </div>
-      {lines.map((l, i) => (
-        <div key={i} style={{ fontSize: 12, color: i === lines.length - 1 ? 'var(--fg-2)' : 'var(--fg-1)', fontStyle: i === lines.length - 1 ? 'italic' : 'normal', marginTop: 2 }}>{l}</div>
-      ))}
     </button>
+  );
+}
+
+/**
+ * Big armory banner for the weapons tab — shows the current primary +
+ * sidearm sprites at a glance so the player can see exactly what their
+ * soldier will carry into the mission. Uses the shared weapon.spritePath
+ * so the preview matches what renders in combat.
+ */
+function EquippedArmory({ primary, sidearm }:
+  { primary: import('../game/types').Weapon | null;
+    sidearm: import('../game/types').Weapon | null }) {
+  if (!primary && !sidearm) return null;
+  return (
+    <div className="panel row" style={{
+      gap: 'var(--s-3)', alignItems: 'center', justifyContent: 'center',
+      padding: 'var(--s-3)', marginTop: 'var(--s-2)',
+      background: 'var(--bg-1)',
+    }}>
+      {primary && <ArmorySlot label="Primary" weapon={primary} size={116} />}
+      {sidearm && <ArmorySlot label="Sidearm" weapon={sidearm} size={88} />}
+    </div>
+  );
+}
+
+function ArmorySlot({ label, weapon, size }:
+  { label: string; weapon: import('../game/types').Weapon; size: number }) {
+  const imgH = Math.round(size * 0.72);
+  return (
+    <div className="stack" style={{ alignItems: 'center', gap: 2 }}>
+      <div style={{
+        width: size, height: imgH,
+        background: 'var(--bg-2)', borderRadius: 6,
+        border: '1px solid var(--bg-3)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {weapon.spritePath
+          ? <img src={weapon.spritePath} alt="" width={size - 8} height={imgH - 8}
+              style={{ objectFit: 'contain' }} />
+          : <span style={{ color: 'var(--fg-2)', fontSize: 11 }}>no art</span>}
+      </div>
+      <div style={{ fontSize: 10, color: 'var(--fg-2)', textTransform: 'uppercase', letterSpacing: 0.6 }}>{label}</div>
+      <div style={{ fontSize: 12, color: 'var(--fg-1)' }}>{weapon.name}</div>
+    </div>
   );
 }
 

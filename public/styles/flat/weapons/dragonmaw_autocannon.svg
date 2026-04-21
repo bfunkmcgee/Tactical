@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="wd-plate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="wd-plate-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4a50"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <linearGradient id="wd-tan" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a88c5c"/><stop offset="1" stop-color="#5a4828"/>
+    </linearGradient>
+    <linearGradient id="wd-tan-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a6038"/><stop offset="1" stop-color="#3a2e18"/>
+    </linearGradient>
+    <linearGradient id="wd-boot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b09060"/><stop offset="1" stop-color="#6a5430"/>
+    </linearGradient>
+    <linearGradient id="wd-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8c488"/><stop offset="1" stop-color="#8a6838"/>
+    </linearGradient>
+    <linearGradient id="wd-tabard" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#3a3430"/><stop offset="1" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <radialGradient id="wd-ember" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff4c0"/>
+      <stop offset=".5" stop-color="#ff9a3c"/>
+      <stop offset="1" stop-color="#8a3010" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- DRAGONMAW AUTOCANNON -->
+  <path d="M4 64 L16 64 L16 74 L4 76 Z" fill="#1a1a1c"/>
+  <path d="M16 60 L62 60 L62 72 L16 72 Z" fill="#0a0a0c"/>
+  <path d="M28 56 L44 56 L44 60 L28 60 Z" fill="#0a0a0c"/>
+  <path d="M30 53 L34 53 L34 56 L30 56 Z" fill="#08080a"/>
+  <path d="M38 53 L42 53 L42 56 L38 56 Z" fill="#08080a"/>
+  <!-- ammo box -->
+  <path d="M28 72 L50 72 L50 84 L28 84 Z" fill="#1a1a1c"/>
+  <path d="M30 74 L48 74 L48 82 L30 82 Z" fill="#0a0a0c"/>
+  <path d="M50 76 L54 76 L54 80 L50 80 Z" fill="#08080a"/>
+  <circle cx="34" cy="78" r="1.2" fill="#ff9a3c"/>
+  <circle cx="38" cy="78" r="1.2" fill="#ff9a3c"/>
+  <circle cx="42" cy="78" r="1.2" fill="#ff9a3c"/>
+  <circle cx="46" cy="78" r="1.2" fill="#ff9a3c"/>
+  <path d="M54 72 L58 72 L58 78 L54 78 Z" fill="#08080a"/>
+  <!-- barrel shroud -->
+  <rect x="62" y="62" width="28" height="8" fill="#0a0a0c"/>
+  <path d="M64 64 L64 68 M68 64 L68 68 M72 64 L72 68 M76 64 L76 68 M80 64 L80 68 M84 64 L84 68" stroke="#08080a" stroke-width="0.8"/>
+  <!-- muzzle brake -->
+  <path d="M90 60 L96 60 L96 72 L90 72 Z" fill="#08080a"/>
+  <rect x="91" y="62" width="1" height="8" fill="#1a1a1c"/>
+  <rect x="93" y="62" width="1" height="8" fill="#1a1a1c"/>
+  <!-- ember muzzle core -->
+  <circle cx="93" cy="66" r="7" fill="url(#wd-ember)"/>
+  <circle cx="93" cy="66" r="2.6" fill="#fff4c0"/>
+</svg>

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="r-plate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="r-plate-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4a50"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <linearGradient id="r-tan" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a88c5c"/><stop offset="1" stop-color="#5a4828"/>
+    </linearGradient>
+    <linearGradient id="r-tan-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a6038"/><stop offset="1" stop-color="#3a2e18"/>
+    </linearGradient>
+    <linearGradient id="r-boot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b09060"/><stop offset="1" stop-color="#6a5430"/>
+    </linearGradient>
+    <linearGradient id="r-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8c488"/><stop offset="1" stop-color="#8a6838"/>
+    </linearGradient>
+    <linearGradient id="r-gun" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#08080a"/>
+    </linearGradient>
+    <radialGradient id="r-rune" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#eaf6ff"/>
+      <stop offset=".5" stop-color="#7cc4ff"/>
+      <stop offset="1" stop-color="#2a6aa0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- RUNEWEAVE CARBINE (realistic modern tactical) -->
+  <!-- stock (collapsible) -->
+  <path d="M4 60 L16 60 L16 68 L4 70 Z" fill="url(#r-gun)"/>
+  <path d="M6 62 L14 62 M6 66 L14 66" stroke="#0a0a0c" stroke-width="0.4"/>
+  <!-- receiver -->
+  <path d="M16 60 L58 60 L58 68 L16 68 Z" fill="url(#r-gun)"/>
+  <!-- rail top -->
+  <rect x="20" y="58" width="36" height="2" fill="#0a0a0c"/>
+  <path d="M22 58 L22 60 M26 58 L26 60 M30 58 L30 60 M34 58 L34 60 M38 58 L38 60 M42 58 L42 60 M46 58 L46 60 M50 58 L50 60 M54 58 L54 60" stroke="#1a1a1c" stroke-width="0.4"/>
+  <!-- scope/optic -->
+  <rect x="28" y="52" width="14" height="6" rx="1" fill="#0a0a0c"/>
+  <circle cx="35" cy="55" r="2" fill="#000"/>
+  <circle cx="35" cy="55" r="1.3" fill="#7cc4ff"/>
+  <circle cx="35" cy="55" r="0.4" fill="#eaf6ff"/>
+  <!-- top accessory light -->
+  <rect x="44" y="54" width="6" height="3" rx="0.3" fill="#0a0a0c"/>
+  <circle cx="47" cy="55.5" r="0.6" fill="#fff4c0"/>
+  <!-- magazine (long) -->
+  <path d="M28 68 L38 68 L37 82 L29 82 Z" fill="#0a0a0c"/>
+  <path d="M29 70 L37 70 M29 74 L37 74 M29 78 L37 78" stroke="#2a2a2e" stroke-width="0.4"/>
+  <!-- trigger guard -->
+  <path d="M38 68 Q42 72 46 68" fill="none" stroke="#0a0a0c" stroke-width="1.4"/>
+  <!-- foregrip -->
+  <path d="M46 68 L50 68 L50 76 L46 76 Z" fill="#0a0a0c"/>
+  <path d="M47 70 L49 70 M47 72 L49 72" stroke="#2a2a2e" stroke-width="0.3"/>
+  <!-- handguard (rail system) -->
+  <path d="M38 60 L58 60 L58 64 L38 64 Z" fill="url(#r-gun)"/>
+  <!-- barrel + suppressor -->
+  <rect x="58" y="62" width="10" height="4" fill="url(#r-gun)"/>
+  <rect x="68" y="61" width="18" height="6" rx="0.8" fill="#1a1a1c"/>
+  <!-- suppressor ridges -->
+  <path d="M70 62 L84 62 M70 64 L84 64 M70 66 L84 66" stroke="#0a0a0c" stroke-width="0.3"/>
+  <!-- runic muzzle core (small accent) -->
+  <circle cx="86" cy="64" r="3.5" fill="url(#r-rune)"/>
+  <circle cx="86" cy="64" r="1.3" fill="#eaf6ff"/>
+</svg>

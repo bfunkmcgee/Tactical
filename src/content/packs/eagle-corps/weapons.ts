@@ -12,6 +12,7 @@ export const WEAPONS: Record<string, Weapon> = {
     rangeShort: 7, rangeLong: 14,
     ammo: 5, apCost: 1,
     tag: 'runic',
+    spritePath: '/styles/flat/weapons/runeweave_carbine.svg',
   },
   hexbore_scattergun: {
     id: 'hexbore_scattergun',
@@ -24,6 +25,7 @@ export const WEAPONS: Record<string, Weapon> = {
     rangeShort: 3, rangeLong: 7,
     ammo: 3, apCost: 1,
     tag: 'alchemical',
+    spritePath: '/styles/flat/weapons/hexbore_scattergun.svg',
   },
   arclight_marksman: {
     id: 'arclight_marksman',
@@ -37,6 +39,7 @@ export const WEAPONS: Record<string, Weapon> = {
     ammo: 2, apCost: 2,
     endsTurn: true,
     tag: 'runic',
+    spritePath: '/styles/flat/weapons/arclight_marksman.svg',
   },
   whisperneedle_smg: {
     id: 'whisperneedle_smg',
@@ -49,6 +52,7 @@ export const WEAPONS: Record<string, Weapon> = {
     rangeShort: 5, rangeLong: 10,
     ammo: 6, apCost: 1,
     tag: 'fae',
+    spritePath: '/styles/flat/weapons/whisperneedle_smg.svg',
   },
   dragonmaw_autocannon: {
     id: 'dragonmaw_autocannon',
@@ -61,6 +65,7 @@ export const WEAPONS: Record<string, Weapon> = {
     rangeShort: 8, rangeLong: 16,
     ammo: 4, apCost: 1,
     tag: 'draconic',
+    spritePath: '/styles/flat/weapons/dragonmaw_autocannon.svg',
   },
   sigilshot_pistol: {
     id: 'sigilshot_pistol',
@@ -73,6 +78,7 @@ export const WEAPONS: Record<string, Weapon> = {
     rangeShort: 5, rangeLong: 10,
     ammo: 4, apCost: 1,
     tag: 'runic',
+    spritePath: '/styles/flat/weapons/sigilshot_pistol.svg',
   },
   thornlock_revolver: {
     id: 'thornlock_revolver',
@@ -85,6 +91,7 @@ export const WEAPONS: Record<string, Weapon> = {
     rangeShort: 4, rangeLong: 8,
     ammo: 3, apCost: 1,
     tag: 'mundane',
+    spritePath: '/styles/flat/weapons/thornlock_revolver.svg',
   },
 };
 

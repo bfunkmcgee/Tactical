@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="sp-gun" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#08080a"/>
+    </linearGradient>
+    <linearGradient id="sp-grip" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4048"/><stop offset="1" stop-color="#1a1410"/>
+    </linearGradient>
+    <radialGradient id="sp-rune" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#eaf6ff"/>
+      <stop offset=".5" stop-color="#7cc4ff"/>
+      <stop offset="1" stop-color="#2a6aa0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- SIGILSHOT PISTOL (compact runic sidearm) -->
+  <!-- grip (held in hand, below receiver) -->
+  <path d="M43 70 L55 70 L56 82 L44 82 Z" fill="url(#sp-grip)"/>
+  <!-- grip texture lines -->
+  <path d="M44 73 L55 73 M44 76 L55 76 M44 79 L55 79" stroke="#1a1410" stroke-width="0.4"/>
+  <!-- trigger guard -->
+  <path d="M45 70 Q49 74 53 70" fill="none" stroke="#0a0a0c" stroke-width="1.2"/>
+  <!-- receiver / slide -->
+  <path d="M42 60 L72 60 L72 70 L42 70 Z" fill="url(#sp-gun)"/>
+  <!-- top rib -->
+  <rect x="44" y="58" width="26" height="2" fill="#0a0a0c"/>
+  <!-- small rear sight notch -->
+  <rect x="45" y="57" width="3" height="3" fill="#0a0a0c"/>
+  <!-- front sight post -->
+  <rect x="69" y="57" width="2" height="3" fill="#0a0a0c"/>
+  <!-- barrel protruding forward -->
+  <rect x="72" y="62" width="10" height="6" fill="url(#sp-gun)"/>
+  <!-- runic sigil on slide -->
+  <circle cx="58" cy="65" r="2.5" fill="#7cc4ff" opacity=".7"/>
+  <circle cx="58" cy="65" r="1" fill="#eaf6ff"/>
+  <!-- runic muzzle glow -->
+  <circle cx="82" cy="65" r="3.5" fill="url(#sp-rune)"/>
+  <circle cx="82" cy="65" r="1.2" fill="#eaf6ff"/>
+</svg>

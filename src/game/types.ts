@@ -50,6 +50,13 @@ export type Weapon = {
   apCost: number;     // action points to fire
   endsTurn?: boolean; // e.g., snipers often end the turn if first-action
   tag: ElementTag;
+  /**
+   * Optional URL to the weapon's SVG. When set, the renderer and the
+   * armory preview both show this sprite instead of a character-
+   * specific weapon — so the same weapon looks identical regardless of
+   * which soldier is wielding it.
+   */
+  spritePath?: string;
 };
 
 export type Armor = {
