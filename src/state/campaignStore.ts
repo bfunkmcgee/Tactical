@@ -30,6 +30,13 @@ export interface ExcursionState {
   /** Completed history (id + outcome) for flavour logs. */
   history: Array<{ id: string; kind: 'mission' | 'skirmish'; outcome: 'victory' | 'defeat' }>;
   extractionReady: boolean;
+  /** Aggregated across every mission in this excursion — rendered in
+   *  the Excursion Complete screen after extraction. */
+  totalKills: number;
+  totalDamageTaken: number;
+  /** Soldier ids who went down during this excursion (may overlap with
+   *  squad entries where alive === false). */
+  soldiersLost: string[];
 }
 
 export interface CampaignState {
@@ -46,11 +53,20 @@ export interface CampaignState {
 
   // ---- actions ----
   startExcursion: (zone: Zone) => void;
-  /** Record the end of the active mission and advance (or flag ready for extract). */
-  recordMissionVictory: (squad: SquadCarry[]) => void;
-  recordMissionDefeat: (squad?: SquadCarry[]) => void;
+  /** Record the end of the active mission and advance (or flag ready for extract).
+   *  `kills` + `damageTaken` get added to the excursion-wide totals. */
+  recordMissionVictory: (squad: SquadCarry[], kills: number, damageTaken: number) => void;
+  recordMissionDefeat: (squad?: SquadCarry[], kills?: number, damageTaken?: number) => void;
   /** Finalise the excursion, merge survivors back to campaign, return to base. */
   extract: () => void;
+  /**
+   * Apply a stockpile consumable to the current squad at a Field Camp.
+   *  - `ammo_crate` refills every living soldier's primary + sidearm mag.
+   *  - `med_cache` restores +4 HP to every living soldier (capped by hpMax).
+   * Decrements the stockpile count; no-op if stockpile has none left.
+   * Returns true if the item was actually applied.
+   */
+  consumeItem: (id: string) => boolean;
   /** Reload campaign defaults from the active pack — called on pack swap. */
   reloadFromActivePack: () => void;
   /** Get the current mission, or null if no excursion / all done. */
@@ -98,11 +114,14 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         stockpile,
         history: [],
         extractionReady: false,
+        totalKills: 0,
+        totalDamageTaken: 0,
+        soldiersLost: [],
       },
     });
   },
 
-  recordMissionVictory: (squad) => {
+  recordMissionVictory: (squad, kills, damageTaken) => {
     const e = get().excursion;
     if (!e) return;
     const zone = useContent().zones?.find((z) => z.id === e.zoneId);
@@ -115,6 +134,9 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       kind: 'mission' as const,
       outcome: 'victory' as const,
     };
+    const newlyLost = squad
+      .filter((s) => !s.alive && !e.soldiersLost.includes(s.soldierId))
+      .map((s) => s.soldierId);
     set({
       excursion: {
         ...e,
@@ -123,25 +145,67 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         currentMissionIdx: nextIdx,
         extractionReady,
         history: [...e.history, historyEntry],
+        totalKills: e.totalKills + kills,
+        totalDamageTaken: e.totalDamageTaken + damageTaken,
+        soldiersLost: [...e.soldiersLost, ...newlyLost],
       },
     });
   },
 
-  recordMissionDefeat: (squad?: SquadCarry[]) => {
+  recordMissionDefeat: (squad, kills = 0, damageTaken = 0) => {
     const e = get().excursion;
     if (!e) return;
     const zone = useContent().zones?.find((z) => z.id === e.zoneId);
     const mission = zone?.missions[e.currentMissionIdx];
+    const finalSquad = squad ?? e.squad;
+    const newlyLost = finalSquad
+      .filter((s) => !s.alive && !e.soldiersLost.includes(s.soldierId))
+      .map((s) => s.soldierId);
     set({
       excursion: {
         ...e,
-        // Merge final squad state so extract() sees the correct alive/HP.
-        squad: squad ?? e.squad,
+        squad: finalSquad,
         history: mission
           ? [...e.history, { id: mission.id, kind: 'mission' as const, outcome: 'defeat' as const }]
           : e.history,
+        totalKills: e.totalKills + kills,
+        totalDamageTaken: e.totalDamageTaken + damageTaken,
+        soldiersLost: [...e.soldiersLost, ...newlyLost],
       },
     });
+  },
+
+  consumeItem: (id) => {
+    const e = get().excursion;
+    if (!e) return false;
+    const count = e.stockpile[id] ?? 0;
+    if (count <= 0) return false;
+    const pack = useContent();
+    let squad = e.squad;
+    if (id === 'ammo_crate') {
+      squad = e.squad.map((s) => {
+        if (!s.alive) return s;
+        const loadout = useContent().soldierTemplates[s.soldierId]?.defaultLoadout;
+        // The "cap" the next mission will refill to is already derived from
+        // weapon + kit; here we just top up to a very-high value so when
+        // initMission runs it clamps to the proper cap. Using 999 is safe.
+        void loadout;
+        return { ...s, ammoPrimary: 999, ammoSidearm: 999 };
+      });
+    } else if (id === 'med_cache') {
+      squad = e.squad.map((s) => {
+        if (!s.alive) return s;
+        const t = pack.soldierTemplates[s.soldierId];
+        const hpMax = t?.hpMax ?? s.hp;
+        return { ...s, hp: Math.min(hpMax, s.hp + 4) };
+      });
+    } else {
+      // armor_patch / field_wash / reinforcement — unhandled in phase 1.
+      return false;
+    }
+    const nextStock = { ...e.stockpile, [id]: count - 1 };
+    set({ excursion: { ...e, squad, stockpile: nextStock } });
+    return true;
   },
 
   extract: () => {

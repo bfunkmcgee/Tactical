@@ -56,8 +56,11 @@ export default function CombatScreen() {
               // damage accumulates from hits in phase 5; left at 0 for now.
             };
           });
-          recordVictory(updatedSquad);
-          setScreen('excursion');
+          recordVictory(updatedSquad, kills, damageTaken);
+          // Every mission now routes through the Field Camp so the squad
+          // can spend rations and supplies before pushing on or
+          // extracting.
+          setScreen('fieldCamp');
         } else {
           setScreen('debrief');
         }
@@ -85,8 +88,9 @@ export default function CombatScreen() {
               dirt: Math.min(100, s.dirt + 15),
             };
           });
-          recordDefeat(updatedSquad);
-          setScreen('debrief');
+          recordDefeat(updatedSquad, kills, damageTaken);
+          // Defeat ends the excursion: show the summary screen.
+          setScreen('excursionComplete');
         } else {
           setScreen('debrief');
         }

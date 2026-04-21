@@ -65,3 +65,10 @@ p  { margin: 0; color: var(--fg-1); }
 
 .scroll-y { overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .scroll-x { overflow-x: auto; overscroll-behavior: contain; touch-action: pan-x; }
+
+/* Shared "active thing" pulse — used by the excursion map's current
+ * plot point so the player can find their next objective at a glance. */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.10); }
+}

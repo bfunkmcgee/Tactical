@@ -2,7 +2,13 @@ import { create } from 'zustand';
 import type { Loadout } from '../game/types';
 import { useContent, allSoldierTemplates, onPackChange } from '../content/registry';
 
-type Screen = 'menu' | 'loadout' | 'mapRoom' | 'excursion' | 'combat' | 'debrief';
+type Screen =
+  | 'menu' | 'loadout' | 'mapRoom'
+  | 'excursion'          // plot-point map of the excursion
+  | 'combat'             // tactical layer
+  | 'fieldCamp'          // between-mission resupply + heal
+  | 'excursionComplete'  // narrative + aggregated stats on extract
+  | 'debrief';
 
 type SquadLoadouts = Record<string, Loadout>;
 
