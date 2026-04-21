@@ -344,31 +344,48 @@ type TilePalette = {
   floor: readonly [number, number, number]; // three variants for floor mottle
   floorStroke: number;
   wall: number;
+  wallHighlight: number;      // top rim of walls (sun-hit edge).
+  wallStain: number;          // weathering drip color.
   halfCover: number;
   fullCover: number;
+  coverHighlight: number;     // top rim of raised cover.
+  coverShade: number;         // shaded right side of raised cover.
   coverStroke: number;
-  /** Accent color for floor flecks / sandstone brick lines. */
-  accent: number;
+  accent: number;             // pebble flecks / brick seams.
+  accentLight: number;        // highlight flecks / chips of pale sand.
+  rimHighlight: number;       // NE edge of floor diamonds (sun hint).
 };
 
 const URBAN_PALETTE: TilePalette = {
   floor: [0x1b2331, 0x202a3c, 0x1a2230],
   floorStroke: 0x2a3447,
   wall: 0x0b0f14,
+  wallHighlight: 0x1a2230,
+  wallStain: 0x050709,
   halfCover: 0x3c5673,
   fullCover: 0x5a7498,
+  coverHighlight: 0x7aa0c8,
+  coverShade: 0x2e445c,
   coverStroke: 0x0b0f14,
   accent: 0x2a3447,
+  accentLight: 0x465a7b,
+  rimHighlight: 0x2f3d55,
 };
 
 const DESERT_PALETTE: TilePalette = {
   floor: [0xd4b37a, 0xc3a066, 0xb18850], // pale dune / sand / ochre patch
-  floorStroke: 0x8a6838,
+  floorStroke: 0x7a5c30,
   wall: 0x4a3520,                         // weathered adobe
+  wallHighlight: 0x8a6838,                // sun-hit top ridge of adobe
+  wallStain: 0x2a1a0a,                    // dark weathering drips
   halfCover: 0xa97947,                    // broken clay brick
   fullCover: 0xd09355,                    // taller sandstone column
+  coverHighlight: 0xe8c488,               // gold-lit top surface
+  coverShade: 0x704a20,                   // shaded right side
   coverStroke: 0x3a2814,
-  accent: 0x6a4a22,
+  accent: 0x6a4a22,                       // dark pebble / crack
+  accentLight: 0xe8c488,                  // pale chip / bleached highlight
+  rimHighlight: 0xe0c089,                 // golden sunlit NE edge
 };
 
 function paletteFor(tileset: GridMap['tileset']): TilePalette {
@@ -378,6 +395,7 @@ function paletteFor(tileset: GridMap['tileset']): TilePalette {
 function drawMap(layer: Container, map: GridMap) {
   layer.removeChildren();
   const pal = paletteFor(map.tileset);
+  const desert = map.tileset === 'desert';
   const g = new Graphics();
   for (let y = 0; y < map.height; y++) {
     for (let x = 0; x < map.width; x++) {
@@ -391,19 +409,15 @@ function drawMap(layer: Container, map: GridMap) {
       else if (t.kind === 'cover_full') fill = pal.fullCover;
       diamond(g, p.x, p.y, fill, 1, pal.floorStroke);
       // Biome-specific detail pass — sandstone bricks, dune flecks, etc.
-      if (map.tileset === 'desert') {
+      if (desert) {
         drawDesertDetail(g, t.kind, variant, p.x, p.y, x, y, pal);
       }
       if (t.kind === 'cover_half' || t.kind === 'cover_full') {
         const h = t.kind === 'cover_full' ? 22 : 12;
         g.rect(p.x - 14, p.y - h, 28, h)
-          .fill({ color: fill, alpha: 0.9 })
+          .fill({ color: fill, alpha: 0.95 })
           .stroke({ color: pal.coverStroke, width: 1 });
-        // Add a brick seam on the raised cover so it reads as masonry, not a block.
-        if (map.tileset === 'desert') {
-          g.rect(p.x - 14, p.y - Math.floor(h / 2), 28, 1)
-            .fill({ color: pal.coverStroke, alpha: 0.55 });
-        }
+        if (desert) drawDesertCoverDetail(g, t.kind, p.x, p.y, h, x, y, pal);
       }
     }
   }
@@ -411,34 +425,141 @@ function drawMap(layer: Container, map: GridMap) {
 }
 
 /**
- * Paints biome-specific marks on top of a base-filled diamond:
- *  - Floor gets tiny pebble flecks + a subtle dune line, varying by tile
- *    coordinates so the map has texture without an extra asset pipeline.
- *  - Walls get two horizontal sandstone brick lines.
- * Keeps the detail deterministic (driven by x,y) so the pattern is stable.
+ * Per-tile desert floor / wall detail. Deterministic by (x, y) so the map
+ * holds still — every time the scene redraws, the same pebbles / cracks /
+ * dunes sit in the same spots.
+ *
+ * Three floor variants carry three distinct characters:
+ *   - variant 0: plain sand — scattered pebble flecks.
+ *   - variant 1: wind-drift sand — pebbles + a curving sand trail.
+ *   - variant 2: cracked earth — a branching crack pattern.
+ * All floor tiles also get a golden rim-highlight on the north-east edge
+ * to hint at a shared sun direction.
+ *
+ * Walls get three brick courses, a top sun highlight, and occasional
+ * vertical weather-drip stains so they read as weathered adobe.
  */
 function drawDesertDetail(
   g: Graphics, kind: TileKind, variant: number,
-  px: number, py: number, gx: number, gy: number, pal: TilePalette
+  px: number, py: number, gx: number, gy: number, pal: TilePalette,
 ) {
+  // Deterministic hash for per-tile variety. Cheap, stable across renders.
+  const h = (gx * 73856093 ^ gy * 19349663) >>> 0;
+  const rand = (salt: number) => ((h + salt * 2654435761) >>> 0) / 0xffffffff;
+
   if (kind === 'floor') {
-    // Pebble flecks — deterministic offsets driven by tile coords.
-    const n = ((gx * 3 + gy * 5) % 3) + 1;
+    // Golden rim on the NE edge — fakes a consistent sunlight direction.
+    g.moveTo(px, py - TILE_H / 2);
+    g.lineTo(px + TILE_W / 2, py);
+    g.stroke({ color: pal.rimHighlight, width: 0.8, alpha: 0.45 });
+
+    // Scatter 2–3 pebble flecks (mix of dark and bleached chips).
+    const n = ((h >>> 4) % 2) + 2;
     for (let i = 0; i < n; i++) {
-      const dx = ((gx * 7 + i * 11 + gy * 3) % 9) - 4;
-      const dy = ((gy * 7 + i * 13 + gx * 5) % 5) - 2;
-      g.circle(px + dx, py + dy, 0.8).fill({ color: pal.accent, alpha: 0.55 });
+      const dx = (rand(i * 3 + 1) * 18 - 9) | 0;
+      const dy = (rand(i * 3 + 2) * 8 - 4) | 0;
+      const r = 0.7 + rand(i * 3 + 3) * 0.6;
+      const light = rand(i * 3 + 4) < 0.35;
+      g.circle(px + dx, py + dy, r).fill({
+        color: light ? pal.accentLight : pal.accent,
+        alpha: light ? 0.55 : 0.65,
+      });
     }
-    // A single dune-line on variant-2 tiles — shallow arc across the diamond.
-    if (variant === 2) {
+
+    if (variant === 1) {
+      // Wind-drift sand — two soft drift streaks sweeping across the tile.
+      g.moveTo(px - 12, py + 2);
+      g.quadraticCurveTo(px, py - 2, px + 12, py + 2);
+      g.stroke({ color: pal.accentLight, width: 0.7, alpha: 0.45 });
+      g.moveTo(px - 9, py + 4);
+      g.quadraticCurveTo(px, py + 1, px + 9, py + 4);
+      g.stroke({ color: pal.accent, width: 0.5, alpha: 0.4 });
+    } else if (variant === 2) {
+      // Cracked earth — main crack with two small branches.
       g.moveTo(px - 10, py + 1);
-      g.quadraticCurveTo(px, py - 3, px + 10, py + 1);
-      g.stroke({ color: pal.accent, width: 0.8, alpha: 0.5 });
+      g.lineTo(px - 3, py - 1);
+      g.lineTo(px + 4, py + 2);
+      g.lineTo(px + 11, py - 1);
+      g.stroke({ color: pal.accent, width: 0.7, alpha: 0.6 });
+      // branch off the midpoint
+      g.moveTo(px - 3, py - 1);
+      g.lineTo(px - 1, py + 3);
+      g.stroke({ color: pal.accent, width: 0.5, alpha: 0.5 });
+      g.moveTo(px + 4, py + 2);
+      g.lineTo(px + 6, py - 2);
+      g.stroke({ color: pal.accent, width: 0.5, alpha: 0.5 });
+    }
+
+    // Occasional pottery shard — small triangular sliver, once in ~8 tiles.
+    if (rand(9) < 0.12) {
+      const sx = px + (rand(10) * 10 - 5);
+      const sy = py + (rand(11) * 4 - 2);
+      g.poly([sx - 2, sy, sx + 1, sy - 2, sx + 2, sy + 1])
+        .fill({ color: pal.coverStroke, alpha: 0.55 })
+        .stroke({ color: pal.accent, width: 0.4, alpha: 0.7 });
     }
   } else if (kind === 'wall') {
-    // Two thin horizontal sandstone seams for brick hint.
-    g.rect(px - 10, py - 3, 20, 0.8).fill({ color: pal.accent, alpha: 0.55 });
-    g.rect(px - 10, py + 2, 20, 0.8).fill({ color: pal.accent, alpha: 0.55 });
+    // Three brick courses at regular spacing, top course thinner to imply
+    // coping stones at the parapet.
+    g.rect(px - 10, py - 4, 20, 0.7).fill({ color: pal.accent, alpha: 0.6 });
+    g.rect(px - 10, py - 1, 20, 0.7).fill({ color: pal.accent, alpha: 0.6 });
+    g.rect(px - 10, py + 3, 20, 0.7).fill({ color: pal.accent, alpha: 0.6 });
+    // Staggered vertical seams between courses for brick realism.
+    g.rect(px - 4, py - 4, 0.6, 3).fill({ color: pal.accent, alpha: 0.55 });
+    g.rect(px + 2, py - 1, 0.6, 4).fill({ color: pal.accent, alpha: 0.55 });
+    g.rect(px - 6, py + 3, 0.6, 3).fill({ color: pal.accent, alpha: 0.55 });
+    // Top sun highlight — reuse the diamond top edge.
+    g.moveTo(px - TILE_W / 2, py);
+    g.lineTo(px, py - TILE_H / 2);
+    g.stroke({ color: pal.wallHighlight, width: 1.1, alpha: 0.7 });
+    g.moveTo(px, py - TILE_H / 2);
+    g.lineTo(px + TILE_W / 2, py);
+    g.stroke({ color: pal.wallHighlight, width: 1.1, alpha: 0.6 });
+    // Occasional vertical weathering drip.
+    if (rand(20) < 0.3) {
+      const dx = (rand(21) * 16 - 8) | 0;
+      g.rect(px + dx, py - 4, 0.5, 7).fill({ color: pal.wallStain, alpha: 0.55 });
+    }
+  }
+}
+
+/**
+ * Adobe masonry on raised cover: horizontal brick courses + a centered
+ * decorative seam, top sun highlight, and a right-side shadow band so the
+ * pillar reads as 3D rather than a flat colored block. Full cover also
+ * gets vertical seams and a mid-band cornice.
+ */
+function drawDesertCoverDetail(
+  g: Graphics, kind: TileKind,
+  px: number, py: number, h: number, gx: number, gy: number, pal: TilePalette,
+) {
+  const left = px - 14, right = px + 14, top = py - h, bot = py;
+  // Top sun-lit strip.
+  g.rect(left, top, 28, 1.2).fill({ color: pal.coverHighlight, alpha: 0.85 });
+  // Right-side shadow column.
+  g.rect(right - 2.5, top + 1.2, 2.5, h - 1.2)
+    .fill({ color: pal.coverShade, alpha: 0.55 });
+
+  // Brick courses — spaced every 4px. The seam at each course uses the
+  // stroke colour for a subtle recessed line.
+  for (let y = top + 4; y < bot; y += 4) {
+    g.rect(left, y, 28, 0.6).fill({ color: pal.coverStroke, alpha: 0.55 });
+  }
+  // Staggered vertical seams per course to suggest offset brick laying.
+  const hash = ((gx * 31 + gy * 17) >>> 0);
+  for (let i = 0, y = top + 4; y < bot; y += 4, i++) {
+    const seamX = left + 6 + ((hash + i * 7) % 14);
+    g.rect(seamX, y - 4, 0.6, 4).fill({ color: pal.coverStroke, alpha: 0.5 });
+  }
+
+  if (kind === 'cover_full') {
+    // Mid-band cornice — a slight ledge across the column.
+    const mid = Math.round(top + h * 0.45);
+    g.rect(left - 1, mid, 30, 1.4).fill({ color: pal.coverHighlight, alpha: 0.7 });
+    g.rect(left - 1, mid + 1.4, 30, 0.6).fill({ color: pal.coverStroke, alpha: 0.7 });
+    // Two dominant vertical seams for the column structure.
+    g.rect(left + 9, top, 0.6, h).fill({ color: pal.coverStroke, alpha: 0.55 });
+    g.rect(left + 19, top, 0.6, h).fill({ color: pal.coverStroke, alpha: 0.55 });
   }
 }
 

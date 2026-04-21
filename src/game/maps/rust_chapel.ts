@@ -55,7 +55,8 @@ function build(): GridMap {
       else if (spawn) enemySpawns.push({ pos: { x, y }, spawnKey: spawn });
     }
   }
-  return { id: 'rust_chapel', name: 'Rust Chapel', width, height, tiles, playerSpawns, enemySpawns };
+  return { id: 'rust_chapel', name: 'Rust Chapel', tileset: 'desert',
+    width, height, tiles, playerSpawns, enemySpawns };
 }
 
 export const RUST_CHAPEL: GridMap = build();
