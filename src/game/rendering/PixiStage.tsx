@@ -36,6 +36,9 @@ type UnitNode = {
    */
   weaponWrap: Container | null;
   weaponSprite: Sprite | null;
+  /** Y position of the weapon wrap at rest (low-ready). Fire animations
+   * lift from this value toward eye level and return to it. */
+  weaponRestY: number;
   muzzleFlash: Graphics;
   hpBar: Graphics;
   label: Text;
@@ -662,28 +665,35 @@ type FireStyle = {
   windupRad: number;      // weapon rotation at end of windup (radians, positive = muzzle-up).
   kickRad: number;        // additional rotation at each shot (recoil).
   recoilPx: number;       // body kick-back distance on each shot.
-  bodyLiftPx: number;     // how high the body rises during windup ("to face").
+  /**
+   * How far the weapon grip lifts toward eye level during aim (pixels,
+   * positive = up). The body stays planted; the arms/weapon move
+   * independently so the unit "brings the gun up" rather than the whole
+   * silhouette lurching. Snipers and rifles lift the most (cheek-weld);
+   * the heavy keeps the gun shouldered and barely moves.
+   */
+  weaponLiftPx: number;
   flashScale: number;     // size multiplier for drawMuzzleFlash.
 };
 
 /**
- * Rifle: Ranger bringing the carbine up to shoulder / cheekweld before
- *        firing a single crisp shot.
- * Heavy: Warden keeps the autocannon shouldered and rips a 4-round burst
- *        — minimal windup, rapid flashes, low per-shot rotation.
- * Shotgun: Sapper's short windup, then one thundering wide blast with a
- *          big kick.
- * Sniper: Mystic takes the longest windup (lining up the shot), single
- *          deliberate flash, steady body.
+ * Rifle: Ranger brings the carbine up to cheekweld (big lift + rotation)
+ *        before a single crisp shot.
+ * Heavy: Warden keeps the autocannon shouldered; minimal lift, rapid
+ *        flashes, low per-shot rotation.
+ * Shotgun: Sapper's short windup with a strong chest-level raise, then
+ *          one thundering wide blast with a big kick.
+ * Sniper: Mystic's deliberate windup — weapon fully raised to the eye,
+ *         single decisive shot.
  */
 const FIRE_STYLES: Record<WeaponClass | 'default', FireStyle> = {
-  rifle:   { totalMs: 560, windupMs: 300, shotSpacingMs: 0,  shotWindowMs: 90,  shots: 1, windupRad: 0.42, kickRad: 0.30, recoilPx: 4, bodyLiftPx: 4, flashScale: 1.0 },
-  sniper:  { totalMs: 720, windupMs: 430, shotSpacingMs: 0,  shotWindowMs: 100, shots: 1, windupRad: 0.55, kickRad: 0.38, recoilPx: 5, bodyLiftPx: 6, flashScale: 1.1 },
-  shotgun: { totalMs: 520, windupMs: 200, shotSpacingMs: 0,  shotWindowMs: 140, shots: 1, windupRad: 0.34, kickRad: 0.55, recoilPx: 9, bodyLiftPx: 3, flashScale: 2.0 },
-  heavy:   { totalMs: 680, windupMs: 110, shotSpacingMs: 80, shotWindowMs: 55,  shots: 4, windupRad: 0.18, kickRad: 0.12, recoilPx: 2, bodyLiftPx: 0, flashScale: 0.9 },
-  smg:     { totalMs: 500, windupMs: 120, shotSpacingMs: 60, shotWindowMs: 45,  shots: 3, windupRad: 0.30, kickRad: 0.18, recoilPx: 2, bodyLiftPx: 2, flashScale: 0.8 },
-  pistol:  { totalMs: 400, windupMs: 170, shotSpacingMs: 0,  shotWindowMs: 80,  shots: 1, windupRad: 0.36, kickRad: 0.26, recoilPx: 3, bodyLiftPx: 2, flashScale: 0.8 },
-  default: { totalMs: 440, windupMs: 200, shotSpacingMs: 0,  shotWindowMs: 90,  shots: 1, windupRad: 0.40, kickRad: 0.28, recoilPx: 3, bodyLiftPx: 2, flashScale: 1.0 },
+  rifle:   { totalMs: 560, windupMs: 300, shotSpacingMs: 0,  shotWindowMs: 90,  shots: 1, windupRad: 0.55, kickRad: 0.32, recoilPx: 4, weaponLiftPx: 13, flashScale: 1.0 },
+  sniper:  { totalMs: 720, windupMs: 430, shotSpacingMs: 0,  shotWindowMs: 100, shots: 1, windupRad: 0.72, kickRad: 0.40, recoilPx: 5, weaponLiftPx: 16, flashScale: 1.1 },
+  shotgun: { totalMs: 520, windupMs: 200, shotSpacingMs: 0,  shotWindowMs: 140, shots: 1, windupRad: 0.42, kickRad: 0.55, recoilPx: 9, weaponLiftPx: 10, flashScale: 2.0 },
+  heavy:   { totalMs: 680, windupMs: 110, shotSpacingMs: 80, shotWindowMs: 55,  shots: 4, windupRad: 0.24, kickRad: 0.12, recoilPx: 2, weaponLiftPx:  5, flashScale: 0.9 },
+  smg:     { totalMs: 500, windupMs: 120, shotSpacingMs: 60, shotWindowMs: 45,  shots: 3, windupRad: 0.38, kickRad: 0.18, recoilPx: 2, weaponLiftPx:  9, flashScale: 0.8 },
+  pistol:  { totalMs: 400, windupMs: 170, shotSpacingMs: 0,  shotWindowMs: 80,  shots: 1, windupRad: 0.45, kickRad: 0.28, recoilPx: 3, weaponLiftPx:  9, flashScale: 0.8 },
+  default: { totalMs: 440, windupMs: 200, shotSpacingMs: 0,  shotWindowMs: 90,  shots: 1, windupRad: 0.48, kickRad: 0.30, recoilPx: 3, weaponLiftPx: 10, flashScale: 1.0 },
 };
 
 /**
@@ -768,6 +778,7 @@ function createUnitNode(u: Unit): UnitNode {
   let fallback: Graphics | null = null;
   let weaponWrap: Container | null = null;
   let weaponSprite: Sprite | null = null;
+  let weaponRestY = 0;
   let spriteTop: number;
 
   const bodyTex = spriteCache.get(`${u.templateId}:body`);
@@ -791,10 +802,9 @@ function createUnitNode(u: Unit): UnitNode {
       // Grip viewBox coords = (GRIP_ANCHOR.x*96, GRIP_ANCHOR.y*128). Body
       // sprite renders viewBox → local via anchor (0.5, 1) at position (0, 4),
       // so grip local = ((0.5-0.5)*96*0.42, (0.56-1)*128*0.42 + 4) = (0, -19.64).
-      weaponWrap.position.set(
-        (GRIP_ANCHOR.x - 0.5) * 96 * 0.42,
-        (GRIP_ANCHOR.y - 1) * 128 * 0.42 + 4,
-      );
+      weaponRestY = (GRIP_ANCHOR.y - 1) * 128 * 0.42 + 4;
+      // GRIP_ANCHOR.x = 0.5 → rest X is always 0 (centered on the body).
+      weaponWrap.position.set(0, weaponRestY);
       weaponSprite = new Sprite(weaponTex);
       weaponSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
       weaponSprite.scale.set(0.42);
@@ -834,7 +844,8 @@ function createUnitNode(u: Unit): UnitNode {
   container.position.set(p.x, p.y);
 
   return {
-    container, shadow, body, sprite, fallback, weaponWrap, weaponSprite, muzzleFlash,
+    container, shadow, body, sprite, fallback, weaponWrap, weaponSprite,
+    weaponRestY, muzzleFlash,
     hpBar, label, ornaments, selectionRing, spriteTop,
     currentScreen: { x: p.x, y: p.y },
     targetScreen: { x: p.x, y: p.y },
@@ -966,11 +977,12 @@ function tickUnitAnimations(
     // pulses (further below) to indicate the active unit instead of any
     // character-body motion.
 
-    // ----- Fire sequence: windup → one-or-more shots (with per-shot
-    // kick + muzzle flash) → return. Driven by node.fireStyle so each
-    // weapon class gets its own timing.
-    let bodyPitch = 0, fireX = 0, fireY = 0, fireScale = 1;
-    let weaponAim = 0, flashIntensity = 0;
+    // ----- Fire sequence: windup → one-or-more shots → return.
+    // Only the weapon (arm+gun) lifts toward eye level and rotates into
+    // aim; the body holds still except for a small recoil push-back on
+    // each shot. This reads as "arms move independently of the torso."
+    let bodyPitch = 0, bodyPushX = 0, bodyPushY = 0;
+    let weaponAim = 0, weaponLift = 0, flashIntensity = 0;
     if (node.fireAnimMs > 0) {
       node.fireAnimMs = Math.max(0, node.fireAnimMs - dtMs);
       const style = node.fireStyle;
@@ -982,18 +994,14 @@ function tickUnitAnimations(
       const returnMs = Math.max(1, style.totalMs - returnStart);
 
       if (elapsed < style.windupMs) {
-        // Windup: weapon rotates up to windupRad and body lifts toward face.
+        // Windup: arms raise the weapon up (lift) and angle it toward the
+        // target (rotation). Body is still.
         const p = elapsed / style.windupMs;
         const ease = easeOutQuad(p);
         weaponAim = -style.windupRad * node.facing * ease;
-        bodyPitch = -0.04 * node.facing * ease;
-        fireX = node.fireTargetDir.x * 2 * ease;
-        fireY = -style.bodyLiftPx * ease + node.fireTargetDir.y * 2 * ease;
-        fireScale = 1 + 0.03 * ease;
+        weaponLift = -style.weaponLiftPx * ease;
       } else if (elapsed < returnStart) {
-        // Shot phase — determine which shot window we're in (if any) and
-        // whether to flash / kick. Between shots in a burst the weapon
-        // sits at the aimed pose with no flash.
+        // Shot phase: hold weapon at aim + flash/kick for each active shot.
         const shotPhase = elapsed - style.windupMs;
         let flashP = -1;
         for (let i = 0; i < style.shots; i++) {
@@ -1003,27 +1011,24 @@ function tickUnitAnimations(
             break;
           }
         }
-        weaponAim = -style.windupRad * node.facing; // hold aim
-        bodyPitch = 0;
-        fireX = node.fireTargetDir.x * 1;
-        fireY = -style.bodyLiftPx;
+        weaponAim = -style.windupRad * node.facing;
+        weaponLift = -style.weaponLiftPx;
         if (flashP >= 0) {
-          // Active shot: flash + kick + extra weapon rotation.
+          // Active shot: muzzle flash + recoil on both arm and body.
           flashIntensity = 1 - flashP;
           const kick = 1 - flashP;
           weaponAim += -style.kickRad * node.facing * kick;
-          bodyPitch = 0.03 * node.facing * kick;
-          fireX = -node.fireTargetDir.x * style.recoilPx * kick;
-          fireY = -style.bodyLiftPx - node.fireTargetDir.y * style.recoilPx * kick;
-          fireScale = 1 + 0.02 * kick;
+          weaponLift -= 2 * kick; // weapon jerks up on recoil
+          bodyPitch = 0.025 * node.facing * kick; // subtle torso reaction
+          bodyPushX = -node.fireTargetDir.x * style.recoilPx * kick;
+          bodyPushY = -node.fireTargetDir.y * style.recoilPx * kick;
         }
       } else {
-        // Return: ease back to rest.
+        // Return: weapon eases back to low-ready, body settles.
         const p = (elapsed - returnStart) / returnMs;
         const ret = 1 - easeOutQuad(Math.min(1, p));
         weaponAim = -style.windupRad * node.facing * ret * 0.5;
-        fireY = -style.bodyLiftPx * ret;
-        fireX = -node.fireTargetDir.x * 1.5 * ret;
+        weaponLift = -style.weaponLiftPx * ret;
       }
     }
 
@@ -1038,11 +1043,12 @@ function tickUnitAnimations(
       applyTint(node, 0xffffff);
     }
 
-    // ----- Compose body transform.
-    node.body.scale.set(node.facing * fireScale, fireScale * walkScaleY);
+    // ----- Compose body transform. Body is unaffected by fire windup —
+    // only by walk cycle + hit-jitter + recoil push-back (bodyPush*).
+    node.body.scale.set(node.facing, walkScaleY);
     node.body.rotation = walkLean + bodyPitch;
-    node.body.position.x = jitterX + fireX;
-    node.body.position.y = walkBob + fireY;
+    node.body.position.x = jitterX + bodyPushX;
+    node.body.position.y = walkBob + bodyPushY;
 
     // ----- Selection ring alpha pulse — drives the "who's active" cue
     // since the character body itself is static in idle.
@@ -1050,11 +1056,12 @@ function tickUnitAnimations(
       node.selectionRing.alpha = 0.55 + Math.sin(nowMs * 0.004) * 0.35;
     }
 
-    // ----- Independent weapon rotation (walk sway + fire windup/recoil).
-    // The weapon wrap lives inside `body`, anchored at the grip point.
-    // Rotating it pivots the gun around the character's hand.
+    // ----- Weapon transform. The arms/gun move independently of the
+    // body: `weaponAim` rotates around the grip, `weaponLift` raises
+    // the whole wrap toward eye level during aim.
     if (node.weaponWrap) {
       node.weaponWrap.rotation = walkSway + weaponAim;
+      node.weaponWrap.position.y = node.weaponRestY + weaponLift;
     }
 
     // ----- Muzzle flash: drawn in weapon-wrap space when available so it
@@ -1072,7 +1079,10 @@ function tickUnitAnimations(
       node.body.position.y = t * 14; // overrides live bob — they're dead
       node.body.rotation = node.facing * 0.6 * t; // tip over toward facing
       // Weapon drops below the grip as the character collapses.
-      if (node.weaponWrap) node.weaponWrap.rotation = node.facing * 1.2 * t;
+      if (node.weaponWrap) {
+        node.weaponWrap.rotation = node.facing * 1.2 * t;
+        node.weaponWrap.position.y = node.weaponRestY + t * 4;
+      }
       node.shadow.alpha = 1 - t * 0.8;
       node.hpBar.visible = false;
       node.label.visible = false;
