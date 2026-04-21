@@ -54,13 +54,24 @@ export interface ContentPack {
 export interface PackTheme {
   /** Override tile palette per kind. Falls back to engine defaults. */
   tileColors?: Partial<Record<TileKind, number>>;
-  /** Sprite path resolver: receives a unit's templateId, returns a URL. */
+  /**
+   * Body sprite path resolver. When `armsPath` is ALSO set, this should
+   * point at a torso-only sprite (head + chest + legs, no arms) — arms
+   * get their own independent layer. With only `spritePath` set the
+   * sprite is assumed to be the full body.
+   */
   spritePath?: (templateId: string) => string;
   /**
-   * Optional weapon-layer resolver. When provided, the renderer layers the
-   * weapon sprite on top of `spritePath` and animates it independently
-   * (aim windup, recoil) — enabling true arm-articulated animation. Packs
-   * without split sprites just omit this and keep monolithic sprites.
+   * Optional weapon-layer resolver. When provided, the renderer layers
+   * the weapon sprite on top of `spritePath` and animates it
+   * independently (aim windup, recoil).
    */
   weaponPath?: (templateId: string) => string | undefined;
+  /**
+   * Optional arms-layer resolver. When provided alongside `weaponPath`,
+   * the arms sprite is mounted inside the weapon wrap so the arms move
+   * with the gun — lifting to eye level during aim, dropping on death.
+   * `spritePath` should then point at the torso-only sprite.
+   */
+  armsPath?: (templateId: string) => string | undefined;
 }

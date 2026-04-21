@@ -48,21 +48,33 @@ export const pack: ContentPack = {
   initialStockpile: INITIAL_STOCKPILE,
 
   theme: {
-    /** Body-layer SVG for a given templateId (under public/styles/flat). */
-    spritePath: (templateId) => BODIES[templateId],
-    /** Weapon-layer SVG, rendered + rotated independently of the body. */
+    /** Torso-only SVG (head + chest + legs; no arms). */
+    spritePath: (templateId) => TORSOS[templateId],
+    /** Arms SVG — rendered inside the weapon wrap so it tracks with the gun. */
+    armsPath: (templateId) => ARMS_SVG[templateId],
+    /** Weapon-layer SVG, rendered + rotated independently of the torso. */
     weaponPath: (templateId) => WEAPONS_SVG[templateId],
   },
 };
 
-const BODIES: Record<string, string> = {
-  ranger_kestrel:    '/styles/flat/soldier_body.svg',
-  warden_brannock:   '/styles/flat/soldier_warden_body.svg',
-  mystic_seraphine:  '/styles/flat/soldier_mystic_body.svg',
-  sapper_orin:       '/styles/flat/soldier_sapper_body.svg',
-  rust_goblin:       '/styles/flat/enemy_goblin_body.svg',
-  rust_orc:          '/styles/flat/enemy_orc_body.svg',
-  rust_troll:        '/styles/flat/enemy_troll_body.svg',
+const TORSOS: Record<string, string> = {
+  ranger_kestrel:    '/styles/flat/soldier_torso.svg',
+  warden_brannock:   '/styles/flat/soldier_warden_torso.svg',
+  mystic_seraphine:  '/styles/flat/soldier_mystic_torso.svg',
+  sapper_orin:       '/styles/flat/soldier_sapper_torso.svg',
+  rust_goblin:       '/styles/flat/enemy_goblin_torso.svg',
+  rust_orc:          '/styles/flat/enemy_orc_torso.svg',
+  rust_troll:        '/styles/flat/enemy_troll_torso.svg',
+};
+
+const ARMS_SVG: Record<string, string> = {
+  ranger_kestrel:    '/styles/flat/soldier_arms.svg',
+  warden_brannock:   '/styles/flat/soldier_warden_arms.svg',
+  mystic_seraphine:  '/styles/flat/soldier_mystic_arms.svg',
+  sapper_orin:       '/styles/flat/soldier_sapper_arms.svg',
+  rust_goblin:       '/styles/flat/enemy_goblin_arms.svg',
+  rust_orc:          '/styles/flat/enemy_orc_arms.svg',
+  rust_troll:        '/styles/flat/enemy_troll_arms.svg',
 };
 
 const WEAPONS_SVG: Record<string, string> = {

@@ -36,6 +36,11 @@ type UnitNode = {
    */
   weaponWrap: Container | null;
   weaponSprite: Sprite | null;
+  /**
+   * Arms sprite. When present it lives inside the weapon wrap so the
+   * arms rotate + translate with the gun, independent of the torso.
+   */
+  armsSprite: Sprite | null;
   /** Y position of the weapon wrap at rest (low-ready). Fire animations
    * lift from this value toward eye level and return to it. */
   weaponRestY: number;
@@ -72,8 +77,9 @@ type UnitNode = {
  */
 async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): Promise<void> {
   const bodyResolve = pack.theme?.spritePath;
+  const armsResolve = pack.theme?.armsPath;
   const weaponResolve = pack.theme?.weaponPath;
-  if (!bodyResolve && !weaponResolve) return;
+  if (!bodyResolve && !weaponResolve && !armsResolve) return;
   const ids = [...Object.keys(pack.soldierTemplates), ...Object.keys(pack.enemyTemplates)];
   const loads: Array<Promise<void>> = [];
   const pushLoad = (key: string, url: string | undefined) => {
@@ -89,6 +95,7 @@ async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): Promise
   };
   for (const id of ids) {
     pushLoad(`${id}:body`, bodyResolve?.(id));
+    pushLoad(`${id}:arms`, armsResolve?.(id));
     pushLoad(`${id}:weapon`, weaponResolve?.(id));
   }
   await Promise.all(loads);
@@ -778,10 +785,12 @@ function createUnitNode(u: Unit): UnitNode {
   let fallback: Graphics | null = null;
   let weaponWrap: Container | null = null;
   let weaponSprite: Sprite | null = null;
+  let armsSprite: Sprite | null = null;
   let weaponRestY = 0;
   let spriteTop: number;
 
   const bodyTex = spriteCache.get(`${u.templateId}:body`);
+  const armsTex = spriteCache.get(`${u.templateId}:arms`);
   const weaponTex = spriteCache.get(`${u.templateId}:weapon`);
 
   if (bodyTex) {
@@ -805,6 +814,17 @@ function createUnitNode(u: Unit): UnitNode {
       weaponRestY = (GRIP_ANCHOR.y - 1) * 128 * 0.42 + 4;
       // GRIP_ANCHOR.x = 0.5 → rest X is always 0 (centered on the body).
       weaponWrap.position.set(0, weaponRestY);
+
+      // Arms ride inside the weapon wrap so they lift + rotate together
+      // with the gun. Same anchor / scale as the weapon so the authored
+      // 96×128 coordinates stay aligned with the torso's viewBox.
+      if (armsTex) {
+        armsSprite = new Sprite(armsTex);
+        armsSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
+        armsSprite.scale.set(0.42);
+        weaponWrap.addChild(armsSprite);
+      }
+
       weaponSprite = new Sprite(weaponTex);
       weaponSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
       weaponSprite.scale.set(0.42);
@@ -844,7 +864,7 @@ function createUnitNode(u: Unit): UnitNode {
   container.position.set(p.x, p.y);
 
   return {
-    container, shadow, body, sprite, fallback, weaponWrap, weaponSprite,
+    container, shadow, body, sprite, fallback, weaponWrap, weaponSprite, armsSprite,
     weaponRestY, muzzleFlash,
     hpBar, label, ornaments, selectionRing, spriteTop,
     currentScreen: { x: p.x, y: p.y },
@@ -1137,6 +1157,7 @@ function drawMuzzleFlash(
 
 function applyTint(node: UnitNode, tint: number) {
   if (node.sprite) node.sprite.tint = tint;
+  if (node.armsSprite) node.armsSprite.tint = tint;
   if (node.weaponSprite) node.weaponSprite.tint = tint;
   if (node.fallback) node.fallback.tint = tint;
 }

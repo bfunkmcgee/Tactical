@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="m-plate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="m-plate-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4a50"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <linearGradient id="m-tan" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a88c5c"/><stop offset="1" stop-color="#5a4828"/>
+    </linearGradient>
+    <linearGradient id="m-tan-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a6038"/><stop offset="1" stop-color="#3a2e18"/>
+    </linearGradient>
+    <linearGradient id="m-boot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b09060"/><stop offset="1" stop-color="#6a5430"/>
+    </linearGradient>
+    <linearGradient id="m-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8c488"/><stop offset="1" stop-color="#8a6838"/>
+    </linearGradient>
+    <linearGradient id="m-fur" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a6e48"/><stop offset="1" stop-color="#2a1e10"/>
+    </linearGradient>
+    <linearGradient id="m-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d8a878"/><stop offset="1" stop-color="#8a6038"/>
+    </linearGradient>
+    <linearGradient id="m-scarf" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b8986a"/><stop offset="1" stop-color="#6a5230"/>
+    </linearGradient>
+    <linearGradient id="m-gun" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#08080a"/>
+    </linearGradient>
+    <radialGradient id="m-rune" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#eaf6ff"/>
+      <stop offset=".5" stop-color="#7cc4ff"/>
+      <stop offset="1" stop-color="#2a6aa0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- ARMS: black plate + tan accents -->
+  <path d="M18 42 L26 40 L26 54 L18 56 Z" fill="url(#m-plate)"/>
+  <path d="M78 42 L70 40 L70 54 L78 56 Z" fill="url(#m-plate)"/>
+  <path d="M18 56 L26 54 L26 58 L18 60 Z" fill="url(#m-tan)"/>
+  <path d="M78 56 L70 54 L70 58 L78 60 Z" fill="url(#m-tan)"/>
+  <path d="M16 58 L26 58 L26 72 L18 72 Z" fill="url(#m-plate)"/>
+  <path d="M80 58 L70 58 L70 72 L78 72 Z" fill="url(#m-plate)"/>
+  <path d="M18 62 L24 62 M18 68 L24 68" stroke="#4a4a50" stroke-width="0.3" opacity=".5"/>
+  <path d="M72 62 L78 62 M72 68 L78 68" stroke="#4a4a50" stroke-width="0.3" opacity=".5"/>
+  <!-- tactical gloves -->
+  <path d="M14 72 Q12 76 16 78 L22 78 Q24 74 22 72 Z" fill="#0a0a0c"/>
+  <path d="M82 72 Q84 76 80 78 L74 78 Q72 74 74 72 Z" fill="#0a0a0c"/>
+
+</svg>

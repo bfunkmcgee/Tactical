@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="wd-plate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/><stop offset="1" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <linearGradient id="wd-plate-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4a50"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <linearGradient id="wd-tan" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a88c5c"/><stop offset="1" stop-color="#5a4828"/>
+    </linearGradient>
+    <linearGradient id="wd-tan-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a6038"/><stop offset="1" stop-color="#3a2e18"/>
+    </linearGradient>
+    <linearGradient id="wd-boot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b09060"/><stop offset="1" stop-color="#6a5430"/>
+    </linearGradient>
+    <linearGradient id="wd-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8c488"/><stop offset="1" stop-color="#8a6838"/>
+    </linearGradient>
+    <linearGradient id="wd-tabard" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#3a3430"/><stop offset="1" stop-color="#0a0a0c"/>
+    </linearGradient>
+    <radialGradient id="wd-ember" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff4c0"/>
+      <stop offset=".5" stop-color="#ff9a3c"/>
+      <stop offset="1" stop-color="#8a3010" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- ARMS: plated -->
+  <path d="M6 42 L22 40 L22 56 L6 58 Z" fill="url(#wd-plate)"/>
+  <path d="M90 42 L74 40 L74 56 L90 58 Z" fill="url(#wd-plate)"/>
+  <!-- elbow gap -->
+  <path d="M6 58 L22 56 L22 60 L6 62 Z" fill="url(#wd-tan)"/>
+  <path d="M90 58 L74 56 L74 60 L90 62 Z" fill="url(#wd-tan)"/>
+  <!-- forearm -->
+  <path d="M4 60 L22 60 L22 74 L6 74 Z" fill="url(#wd-plate)"/>
+  <path d="M92 60 L74 60 L74 74 L90 74 Z" fill="url(#wd-plate)"/>
+  <!-- plate seams -->
+  <path d="M8 64 L20 64 M8 70 L20 70" stroke="#4a4a50" stroke-width="0.3" opacity=".5"/>
+  <path d="M76 64 L88 64 M76 70 L88 70" stroke="#4a4a50" stroke-width="0.3" opacity=".5"/>
+  <!-- heavy gauntlets -->
+  <path d="M4 74 Q2 80 8 82 L20 80 Q22 76 20 74 Z" fill="#0a0a0c"/>
+  <path d="M92 74 Q94 80 88 82 L76 80 Q74 76 76 74 Z" fill="#0a0a0c"/>
+  <!-- ember knuckle studs -->
+  <circle cx="6" cy="78" r="0.8" fill="#ff9a3c"/>
+  <circle cx="10" cy="80" r="0.8" fill="#ff9a3c"/>
+  <circle cx="90" cy="78" r="0.8" fill="#ff9a3c"/>
+  <circle cx="86" cy="80" r="0.8" fill="#ff9a3c"/>
+
+</svg>

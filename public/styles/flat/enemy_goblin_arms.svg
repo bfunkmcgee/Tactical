@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="g-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#9aa054"/><stop offset="1" stop-color="#4a5028"/>
+    </linearGradient>
+    <linearGradient id="g-skin-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a7038"/><stop offset="1" stop-color="#2a3018"/>
+    </linearGradient>
+    <linearGradient id="g-rust" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a5028"/><stop offset="1" stop-color="#2a1408"/>
+    </linearGradient>
+    <linearGradient id="g-rust-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#c87030"/><stop offset="1" stop-color="#4a2410"/>
+    </linearGradient>
+    <linearGradient id="g-rag" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a5838"/><stop offset="1" stop-color="#2a2010"/>
+    </linearGradient>
+    <linearGradient id="g-metal" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a4a4e"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <radialGradient id="g-eye" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff4c0"/>
+      <stop offset=".5" stop-color="#ff9a3c"/>
+      <stop offset="1" stop-color="#8a3010" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- ARMS: long, skinny -->
+  <!-- left arm raised (holding gun forestock) -->
+  <path d="M26 42 Q20 44 18 50 L24 62 L30 60 L30 44 Z" fill="url(#g-skin)"/>
+  <!-- right arm at side (trigger) -->
+  <path d="M70 42 Q76 44 78 50 L72 62 L66 60 L66 44 Z" fill="url(#g-skin)"/>
+  <!-- muscle shadow -->
+  <path d="M22 52 L26 56" stroke="#2a3018" stroke-width="0.4" opacity=".7"/>
+  <path d="M74 52 L70 56" stroke="#2a3018" stroke-width="0.4" opacity=".7"/>
+  <!-- bicep rope wraps -->
+  <path d="M22 48 L28 50" stroke="#2a2010" stroke-width="1"/>
+  <path d="M74 48 L68 50" stroke="#2a2010" stroke-width="1"/>
+  <!-- clawed hands -->
+  <path d="M20 60 Q18 66 22 68 L28 66 Q30 62 28 60 Z" fill="url(#g-skin-dark)"/>
+  <path d="M76 60 Q78 66 74 68 L68 66 Q66 62 68 60 Z" fill="url(#g-skin-dark)"/>
+  <!-- finger claws -->
+  <path d="M22 68 L21 71 L23 71 Z" fill="#e8ddc0"/>
+  <path d="M26 68 L25 71 L27 71 Z" fill="#e8ddc0"/>
+  <path d="M74 68 L75 71 L73 71 Z" fill="#e8ddc0"/>
+  <path d="M70 68 L71 71 L69 71 Z" fill="#e8ddc0"/>
+
+  <!-- HEAD (big relative to body) -->
+  <ellipse cx="48" cy="26" rx="14" ry="12" fill="url(#g-skin)"/>
+  <!-- jaw/chin -->
+  <path d="M40 30 Q48 38 56 30 L56 34 Q48 40 40 34 Z" fill="url(#g-skin-dark)"/>
+  <!-- BIG POINTED EARS -->
+  <path d="M34 22 L26 18 L30 28 L36 26 Z" fill="url(#g-skin)"/>
+  <path d="M62 22 L70 18 L66 28 L60 26 Z" fill="url(#g-skin)"/>
+  <path d="M28 20 L32 24" stroke="#2a3018" stroke-width="0.3"/>
+  <path d="M68 20 L64 24" stroke="#2a3018" stroke-width="0.3"/>
+  <!-- hooked nose -->
+  <path d="M48 26 L46 32 L50 32 Z" fill="url(#g-skin-dark)"/>
+  <!-- eye sockets (deep) -->
+  <ellipse cx="42" cy="25" rx="3" ry="2" fill="#1a1a0c"/>
+  <ellipse cx="54" cy="25" rx="3" ry="2" fill="#1a1a0c"/>
+  <!-- glowing ember eyes -->
+  <circle cx="42" cy="25" r="1.6" fill="url(#g-eye)"/>
+  <circle cx="54" cy="25" r="1.6" fill="url(#g-eye)"/>
+  <circle cx="42" cy="25" r="0.8" fill="#fff4c0"/>
+  <circle cx="54" cy="25" r="0.8" fill="#fff4c0"/>
+  <!-- sneer / teeth -->
+  <path d="M42 33 L54 33" stroke="#1a1a0c" stroke-width="0.8"/>
+  <path d="M43 33 L43 36 M46 33 L46 36 M49 33 L49 36 M52 33 L52 36" stroke="#e8ddc0" stroke-width="0.6"/>
+  <!-- crooked tusks -->
+  <path d="M44 34 L43 38 L46 36 Z" fill="#e8ddc0"/>
+  <path d="M52 34 L53 38 L50 36 Z" fill="#e8ddc0"/>
+  <!-- brow furrow -->
+  <path d="M38 20 L46 22" stroke="#2a3018" stroke-width="1.3"/>
+  <path d="M50 22 L58 20" stroke="#2a3018" stroke-width="1.3"/>
+  <!-- scars on face -->
+  <path d="M40 28 L44 30" stroke="#2a1408" stroke-width="0.5"/>
+
+  <!-- SCRAP KETTLE HELMET (dented pot) -->
+  <path d="M34 8 Q36 4 48 3 Q60 4 62 8 L64 18 L32 18 Z" fill="url(#g-metal)"/>
+  <!-- helmet rim -->
+  <path d="M32 18 L64 18" stroke="#0a0a0c" stroke-width="1"/>
+  <!-- rivets -->
+  <circle cx="36" cy="16" r="0.8" fill="#c87030"/>
+  <circle cx="60" cy="16" r="0.8" fill="#c87030"/>
+  <circle cx="42" cy="10" r="0.6" fill="#c87030"/>
+  <circle cx="54" cy="10" r="0.6" fill="#c87030"/>
+  <!-- DENTS -->
+  <path d="M38 8 Q40 10 42 8" fill="none" stroke="#0a0a0c" stroke-width="0.8"/>
+  <path d="M52 12 Q54 14 56 12" fill="none" stroke="#0a0a0c" stroke-width="0.8"/>
+  <!-- rust streaks -->
+  <path d="M36 6 L38 14" stroke="url(#g-rust-hl)" stroke-width="0.5"/>
+  <path d="M56 6 L58 14" stroke="url(#g-rust-hl)" stroke-width="0.5"/>
+  <!-- helmet ear-hole cut-outs -->
+  <path d="M32 14 L34 18 L36 14 Z" fill="#1b2331"/>
+  <path d="M64 14 L62 18 L60 14 Z" fill="#1b2331"/>
+  <!-- crude scrap horn poking off top -->
+  <path d="M44 3 L46 -4 L48 2 Z" fill="url(#g-rust)"/>
+  <path d="M54 3 L56 -5 L58 2 Z" fill="url(#g-rust)"/>
+  <!-- dangling chain with small bell (choir motif) -->
+  <path d="M64 16 Q68 20 70 26" stroke="#2a2010" stroke-width="0.6" fill="none"/>
+  <path d="M68 26 L72 26 L71 30 L69 30 Z" fill="url(#g-rust-hl)"/>
+  <path d="M70 30 L70 32" stroke="#2a1408" stroke-width="0.4"/>
+
+</svg>
