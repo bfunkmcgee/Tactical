@@ -17,5 +17,6 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     rangeShort: 6, rangeLong: 12,
     kind: 'ranged',
     color: '#7a8fb0',
+    fireClass: 'rifle',
   },
 };

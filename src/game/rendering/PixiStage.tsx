@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Application, Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
-import { useCombatStore } from '../../state/combatStore';
+import { useCombatStore, type FireEvent } from '../../state/combatStore';
 import { useContent } from '../../content/registry';
 import type { GridMap, TileKind, Unit, UnitId, Vec2, WeaponClass } from '../types';
 import { TILE_W, TILE_H, gridToScreen, screenToGrid } from './isoProjection';
@@ -52,8 +52,6 @@ type UnitNode = {
   // Visual state.
   facing: 1 | -1;
   prevHp: number;
-  prevPrimary: number;                  // primary-ammo snapshot from last sync.
-  prevSidearm: number;                  // sidearm-ammo snapshot from last sync.
   hitFlashMs: number;
   fireAnimMs: number;                   // countdown for fire sequence.
   fireStyle: FireStyle;                 // per-weapon-class choreography.
@@ -275,6 +273,13 @@ export default function PixiStage() {
         }
         redrawOverlays(overlayLayer, s);
         if (spritesReady) syncUnits(unitLayer, unitNodes, s);
+        // Drain shot events to trigger fire animations with authoritative
+        // target + weapon class. Must run AFTER syncUnits so nodes exist
+        // for any shooter just spawned by initMission.
+        if (s.fireEvents.length > 0) {
+          if (spritesReady) applyFireEvents(unitNodes, s.fireEvents);
+          useCombatStore.setState({ fireEvents: [] });
+        }
       });
       redrawOverlays(overlayLayer, initialState);
       if (spritesReady) syncUnits(unitLayer, unitNodes, initialState);
@@ -681,20 +686,25 @@ const FIRE_STYLES: Record<WeaponClass | 'default', FireStyle> = {
   default: { totalMs: 440, windupMs: 200, shotSpacingMs: 0,  shotWindowMs: 90,  shots: 1, windupRad: 0.40, kickRad: 0.28, recoilPx: 3, bodyLiftPx: 2, flashScale: 1.0 },
 };
 
-/** Pick the fire style for a unit's current shot. */
-function fireStyleFor(u: Unit, primaryFired: boolean): FireStyle {
-  if (u.loadout) {
-    // Player: derive from the equipped weapon's class.
-    const weaponId = primaryFired ? u.loadout.primaryId : u.loadout.sidearmId;
-    const weapon = useContent().weapons[weaponId];
-    if (weapon) return FIRE_STYLES[weapon.class] ?? FIRE_STYLES.default;
-  } else if (u.faction === 'enemy') {
-    // Enemy: derive from the template's fireClass (scrap blunderbuss,
-    // scrap assault rifle, scrap MG — each gets its own choreography).
-    const tmpl = useContent().enemyTemplates[u.templateId];
-    if (tmpl?.fireClass) return FIRE_STYLES[tmpl.fireClass] ?? FIRE_STYLES.default;
+/**
+ * Drain pending FireEvents and trigger the correct animation on each
+ * shooter's node. Events are authoritative (they carry the actual
+ * target and weapon class from the combat resolvers), so the renderer
+ * doesn't have to guess from ammo deltas or "nearest enemy" heuristics.
+ */
+function applyFireEvents(nodes: Map<UnitId, UnitNode>, events: FireEvent[]) {
+  for (const evt of events) {
+    const node = nodes.get(evt.shooterId);
+    if (!node) continue;
+    const from = gridToScreen(evt.shooterPos);
+    const to = gridToScreen(evt.targetPos);
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const len = Math.hypot(dx, dy) || 1;
+    node.fireTargetDir = { x: dx / len, y: dy / len };
+    node.fireStyle = FIRE_STYLES[evt.fireClass] ?? FIRE_STYLES.default;
+    node.fireAnimMs = node.fireStyle.totalMs;
+    if (Math.abs(dx) > 0.5) node.facing = dx > 0 ? 1 : -1;
   }
-  return FIRE_STYLES.default;
 }
 
 /**
@@ -731,7 +741,7 @@ function syncUnits(
       layer.addChild(node.container);
       nodes.set(u.id, node);
     }
-    updateUnitNode(node, u, u.id === st.selectedId, st.units);
+    updateUnitNode(node, u, u.id === st.selectedId);
   }
   // Units dropped by initMission — destroy their nodes outright.
   for (const [id, node] of nodes) {
@@ -831,8 +841,6 @@ function createUnitNode(u: Unit): UnitNode {
     moveMs: 0, moveDurationMs: 0,
     facing: 1,
     prevHp: u.hp,
-    prevPrimary: u.ammo,
-    prevSidearm: u.sidearmAmmo,
     hitFlashMs: 0,
     fireAnimMs: 0,
     fireStyle: FIRE_STYLES.default,
@@ -843,7 +851,7 @@ function createUnitNode(u: Unit): UnitNode {
   };
 }
 
-function updateUnitNode(node: UnitNode, u: Unit, selected: boolean, all: Unit[]) {
+function updateUnitNode(node: UnitNode, u: Unit, selected: boolean) {
   // ---- Movement: grid position changed → tween from wherever we're rendered now.
   const target = gridToScreen(u.pos);
   if (target.x !== node.targetScreen.x || target.y !== node.targetScreen.y) {
@@ -859,23 +867,8 @@ function updateUnitNode(node: UnitNode, u: Unit, selected: boolean, all: Unit[])
   if (u.hp < node.prevHp && u.alive) node.hitFlashMs = HIT_FLASH_MS;
   node.prevHp = u.hp;
 
-  // ---- Fire: either magazine dropped → play weapon-class choreography.
-  const primaryFired = u.ammo < node.prevPrimary;
-  const sidearmFired = u.sidearmAmmo < node.prevSidearm;
-  if ((primaryFired || sidearmFired) && u.alive) {
-    const opp = nearestOpposingLiveUnit(u, all);
-    if (opp) {
-      const tp = gridToScreen(opp.pos);
-      const dx = tp.x - target.x, dy = tp.y - target.y;
-      const len = Math.hypot(dx, dy) || 1;
-      node.fireTargetDir = { x: dx / len, y: dy / len };
-      node.fireStyle = fireStyleFor(u, primaryFired);
-      node.fireAnimMs = node.fireStyle.totalMs;
-      if (Math.abs(dx) > 0.5) node.facing = dx > 0 ? 1 : -1;
-    }
-  }
-  node.prevPrimary = u.ammo;
-  node.prevSidearm = u.sidearmAmmo;
+  // (Fire-animation triggers are driven by FireEvent stream, not ammo deltas —
+  // see applyFireEvents() below. Ammo tracking is no longer needed here.)
 
   // ---- Death: transition to dying once, then let the ticker animate the fade.
   if (!u.alive && node.deathMs === null) node.deathMs = 0;
@@ -919,17 +912,6 @@ function updateUnitNode(node: UnitNode, u: Unit, selected: boolean, all: Unit[])
   node.container.zIndex = u.pos.x + u.pos.y;
 }
 
-function nearestOpposingLiveUnit(self: Unit, all: Unit[]): Unit | null {
-  let best: Unit | null = null;
-  let bestD = Infinity;
-  for (const u of all) {
-    if (u.faction === self.faction) continue;
-    if (!u.alive) continue;
-    const d = chebyshev(self.pos, u.pos);
-    if (d < bestD) { bestD = d; best = u; }
-  }
-  return best;
-}
 
 /**
  * Per-frame animation update. Reads each node's pending timers and builds

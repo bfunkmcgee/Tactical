@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GridMap, LogEntry, TurnPhase, Unit, UnitId, Utility, Vec2, ShotPreview, Weapon } from '../game/types';
+import type { GridMap, LogEntry, TurnPhase, Unit, UnitId, Utility, Vec2, ShotPreview, Weapon, WeaponClass } from '../game/types';
 import { RUINED_MARKET, pickRandomMap } from '../game/maps';
 import {
   useContent, getSoldierTemplate, getEnemyTemplate, getWeapon, getArmor,
@@ -31,6 +31,25 @@ export type Floater = {
   ttl: number;   // frames remaining
 };
 
+/**
+ * Ephemeral shot record. Pushed by every resolver that fires a shot
+ * (primary, sidearm, enemy attack, overwatch reaction); drained by the
+ * renderer each sync to drive the correct fire choreography aimed at
+ * the correct target. The renderer clears the array after consuming it.
+ *
+ * This is authoritative — the renderer no longer guesses the target
+ * from ammo deltas or "nearest enemy" heuristics.
+ */
+export type FireEvent = {
+  id: number;
+  shooterId: UnitId;
+  /** Grid coord the shooter occupied when the shot resolved. */
+  shooterPos: Vec2;
+  /** Grid coord of the shot's target. */
+  targetPos: Vec2;
+  fireClass: WeaponClass;
+};
+
 type CombatState = {
   map: GridMap;
   units: Unit[];
@@ -55,6 +74,7 @@ type CombatState = {
   // ui ephemera
   shakeFrames: number;
   floaters: Floater[];
+  fireEvents: FireEvent[];
 
   init: () => void;
   selectUnit: (id: UnitId | null) => void;
@@ -100,6 +120,16 @@ type CombatState = {
 let nextUnitId = 1;
 let nextLogId = 1;
 let nextFloaterId = 1;
+let nextFireEventId = 1;
+
+function fireClassFor(u: Unit, weapon: Weapon | null): WeaponClass {
+  if (weapon) return weapon.class;
+  if (u.faction === 'enemy') {
+    const tmpl = useContent().enemyTemplates[u.templateId];
+    return tmpl?.fireClass ?? 'rifle';
+  }
+  return 'rifle';
+}
 
 /**
  * Per-soldier carry-over applied when spawning into a mission that's part of
@@ -255,6 +285,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   pendingUtility: null,
   shakeFrames: 0,
   floaters: [],
+  fireEvents: [],
 
   init: () => {
     get().initMission();
@@ -299,7 +330,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       pendingUtility: null,
       log: [{ id: nextLogId++, text: opts?.briefing ?? `Mission: ${map.name}. Neutralize all hostiles.`, kind: 'info' }],
       rng: makeRng(Date.now() & 0xffffffff),
-      kills: 0, damageTaken: 0, floaters: [],
+      kills: 0, damageTaken: 0, floaters: [], fireEvents: [],
     });
     set((st) => ({ reach: recalcReach(st) }));
   },
@@ -510,13 +541,17 @@ export const useCombatStore = create<CombatState>((set, get) => ({
           if (!target || !target.alive) break;
           const armorDr = target.faction === 'player' ? unitArmor(target) : 0;
           const result = resolveEnemyAttack(get().map, actor, target, armorDr, get().rng, smokeSet());
-          // Decrement ammo even though enemies never reload — the renderer
-          // watches ammo deltas to trigger the fire animation. Enemies start
-          // at 99 rounds so this never gates them in practice.
-          let units = get().units.map((o) => o.id === actor!.id ? { ...o, ap: o.ap - 1, ammo: o.ammo - 1 } : o);
+          let units = get().units.map((o) => o.id === actor!.id ? { ...o, ap: o.ap - 1 } : o);
           let damageTaken = get().damageTaken;
           let entry: LogEntry;
           const floaters = [...get().floaters];
+          const fireEvents = [...get().fireEvents, {
+            id: nextFireEventId++,
+            shooterId: actor.id,
+            shooterPos: actor.pos,
+            targetPos: target.pos,
+            fireClass: fireClassFor(actor, null),
+          }];
           if (result.kind === 'miss') {
             entry = { id: nextLogId++, text: `${actor.name} misses ${target.name} (${result.preview.hitChance}%).`, kind: 'miss' };
             floaters.push(floaterFor(target.pos, 'MISS', 0x6b7689));
@@ -532,7 +567,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
             };
             floaters.push(floaterFor(target.pos, `-${result.damage}`, result.critical ? 0xff9a3c : 0xff5a6a));
           }
-          set({ units, damageTaken, log: [...get().log, entry].slice(-60), shakeFrames: result.kind === 'hit' ? 8 : 0, floaters });
+          set({ units, damageTaken, log: [...get().log, entry].slice(-60), shakeFrames: result.kind === 'hit' ? 8 : 0, floaters, fireEvents });
           if (delay) await sleep(delay);
           const end = checkEnd(get());
           if (end) { set(end); return; }
@@ -622,6 +657,13 @@ function applyShotResult(
   );
   let kills = st.kills;
   const floaters = [...st.floaters];
+  const fireEvents = [...st.fireEvents, {
+    id: nextFireEventId++,
+    shooterId: u.id,
+    shooterPos: u.pos,
+    targetPos: t.pos,
+    fireClass: fireClassFor(u, weapon),
+  }];
   let entry: LogEntry;
   const verb = useSidearm ? `draws ${weapon.name} and ` : '';
   if (result.kind === 'miss') {
@@ -642,7 +684,7 @@ function applyShotResult(
   }
   set({ units, kills, log: [...st.log, entry].slice(-60),
     mode: 'idle', pendingShotTargetId: null, pendingShotUsesSidearm: false,
-    shakeFrames: result.kind === 'hit' ? 8 : 0, floaters });
+    shakeFrames: result.kind === 'hit' ? 8 : 0, floaters, fireEvents });
   set((s) => ({ reach: recalcReach(s) }));
   const end = checkEnd(get());
   if (end) set(end);
@@ -800,6 +842,13 @@ function triggerOverwatch(set: Setter, get: Getter, enemyId: UnitId): boolean {
     };
     floaters.push(floaterFor(enemy.pos, `-${result.damage}`, 0xf5c55a));
   }
-  set({ units, kills, floaters, log: [...st.log, entry].slice(-60), shakeFrames: result.kind === 'hit' ? 8 : 0 });
+  const fireEvents = [...st.fireEvents, {
+    id: nextFireEventId++,
+    shooterId: watcher.id,
+    shooterPos: watcher.pos,
+    targetPos: enemy.pos,
+    fireClass: fireClassFor(watcher, weapon),
+  }];
+  set({ units, kills, floaters, fireEvents, log: [...st.log, entry].slice(-60), shakeFrames: result.kind === 'hit' ? 8 : 0 });
   return true;
 }
