@@ -12,19 +12,24 @@ const spriteCache = new Map<string, Texture>();
 
 /**
  * Per-unit render node. Persists across store updates so animations
- * (idle bob, selection pulse, movement tween, hit flash, fire lunge,
- * death fade) can tween continuously without being torn down each frame.
+ * (walk cycle, selection pulse, fire sequence, hit flash, death fade)
+ * can tween continuously without being torn down each frame.
  *
- * `container` is the outer positioned transform (world-space). `body`
- * holds the sprite + shadow and handles facing-flip / bob / pulse so
- * the HP bar and labels above it stay upright.
+ * Layer order inside `container`:
+ *   shadow (flat) → selectionRing (flat) → body (rotates/scales) → muzzleFlash
+ *   → ornaments → hpBar → label
+ *
+ * `body` holds the sprite and gets all rotation / scale / facing-flip. The
+ * shadow and UI chrome stay on the container so they don't lean when the
+ * character does.
  */
 type UnitNode = {
   container: Container;
-  body: Container;
   shadow: Graphics;
+  body: Container;
   sprite: Sprite | null;
   fallback: Graphics | null;
+  muzzleFlash: Graphics;
   hpBar: Graphics;
   label: Text;
   ornaments: Container;
@@ -38,15 +43,15 @@ type UnitNode = {
   moveDurationMs: number;
 
   // Visual state.
-  facing: 1 | -1;       // body.scale.x sign; -1 flips the sprite horizontally.
+  facing: 1 | -1;
   prevHp: number;
   prevAmmo: number;
-  hitFlashMs: number;   // red-tint + jitter countdown (target of an attack).
-  fireLungeMs: number;  // forward-lunge countdown (shooter).
-  lungeDir: { x: number; y: number }; // unit vector toward the shot target.
-  deathMs: number | null; // counts up to DEATH_DURATION_MS once alive=false.
+  hitFlashMs: number;
+  fireAnimMs: number;                   // countdown for fire sequence.
+  fireTargetDir: { x: number; y: number }; // unit vector toward the shot target.
+  deathMs: number | null;
   selected: boolean;
-  bobPhase: number;     // randomized so squad doesn't bob in lockstep.
+  bobPhase: number;
 };
 
 /** Preload every templateId the active pack provides a spritePath for. */
@@ -403,10 +408,17 @@ function redrawOverlays(layer: Container, st: ReturnType<typeof useCombatStore.g
 }
 
 /** Durations (ms) for movement / hit / fire / death animations. */
-const MOVE_TWEEN_MS = 220;
+const MOVE_TWEEN_MS = 260;
 const HIT_FLASH_MS = 240;
-const FIRE_LUNGE_MS = 180;
-const DEATH_DURATION_MS = 520;
+const FIRE_ANIM_MS = 440;
+/** Fraction of FIRE_ANIM_MS at which the muzzle flash appears (windup ends). */
+const FIRE_SHOT_AT = 0.46;
+/** Fraction of FIRE_ANIM_MS the muzzle flash remains visible. */
+const FIRE_FLASH_SPAN = 0.22;
+const DEATH_DURATION_MS = 560;
+
+/** Muzzle position in container-local coords (right-facing). Mirrored for left. */
+const MUZZLE_OFFSET = { x: 20, y: -30 };
 
 /**
  * Reconcile `unitNodes` against the store's unit list:
@@ -444,10 +456,15 @@ function syncUnits(
 
 function createUnitNode(u: Unit): UnitNode {
   const container = new Container();
-  const body = new Container();
+
+  // Shadow is a child of container (not body) so it doesn't lean during walk/fire.
   const shadow = new Graphics();
   shadow.ellipse(0, 6, 14, 6).fill({ color: 0x000000, alpha: 0.45 });
-  body.addChild(shadow);
+
+  const selectionRing = new Graphics();
+
+  // Body holds the sprite — this is what rotates/scales during walk cycles + fire windup.
+  const body = new Container();
 
   let sprite: Sprite | null = null;
   let fallback: Graphics | null = null;
@@ -469,7 +486,10 @@ function createUnitNode(u: Unit): UnitNode {
     spriteTop = -44;
   }
 
-  const selectionRing = new Graphics();
+  // Muzzle flash is drawn each frame during the fire window. Stays upright
+  // with the container so it doesn't rotate with the body.
+  const muzzleFlash = new Graphics();
+
   const hpBar = new Graphics();
   const label = new Text({
     text: '',
@@ -478,15 +498,14 @@ function createUnitNode(u: Unit): UnitNode {
   label.anchor.set(0.5, 1);
   const ornaments = new Container();
 
-  // Order: ring on the ground, then body, then top-of-head ornaments/bar/label.
-  container.addChild(selectionRing, body, ornaments, hpBar, label);
+  container.addChild(shadow, selectionRing, body, muzzleFlash, ornaments, hpBar, label);
 
   const p = gridToScreen(u.pos);
   container.position.set(p.x, p.y);
 
   return {
-    container, body, shadow, sprite, fallback, hpBar, label, ornaments, selectionRing,
-    spriteTop,
+    container, shadow, body, sprite, fallback, muzzleFlash,
+    hpBar, label, ornaments, selectionRing, spriteTop,
     currentScreen: { x: p.x, y: p.y },
     targetScreen: { x: p.x, y: p.y },
     moveMs: 0, moveDurationMs: 0,
@@ -494,8 +513,8 @@ function createUnitNode(u: Unit): UnitNode {
     prevHp: u.hp,
     prevAmmo: u.ammo + u.sidearmAmmo,
     hitFlashMs: 0,
-    fireLungeMs: 0,
-    lungeDir: { x: 0, y: 0 },
+    fireAnimMs: 0,
+    fireTargetDir: { x: 1, y: 0 },
     deathMs: u.alive ? null : 0,
     selected: false,
     bobPhase: Math.random() * Math.PI * 2,
@@ -518,7 +537,7 @@ function updateUnitNode(node: UnitNode, u: Unit, selected: boolean, all: Unit[])
   if (u.hp < node.prevHp && u.alive) node.hitFlashMs = HIT_FLASH_MS;
   node.prevHp = u.hp;
 
-  // ---- Fire: total rounds dropped → lunge toward nearest opposing live unit.
+  // ---- Fire: total rounds dropped → play full aim-windup + shot + recoil sequence.
   const ammoNow = u.ammo + u.sidearmAmmo;
   if (ammoNow < node.prevAmmo && u.alive) {
     const opp = nearestOpposingLiveUnit(u, all);
@@ -526,8 +545,8 @@ function updateUnitNode(node: UnitNode, u: Unit, selected: boolean, all: Unit[])
       const tp = gridToScreen(opp.pos);
       const dx = tp.x - target.x, dy = tp.y - target.y;
       const len = Math.hypot(dx, dy) || 1;
-      node.lungeDir = { x: dx / len, y: dy / len };
-      node.fireLungeMs = FIRE_LUNGE_MS;
+      node.fireTargetDir = { x: dx / len, y: dy / len };
+      node.fireAnimMs = FIRE_ANIM_MS;
       if (Math.abs(dx) > 0.5) node.facing = dx > 0 ? 1 : -1;
     }
   }
@@ -588,13 +607,15 @@ function nearestOpposingLiveUnit(self: Unit, all: Unit[]): Unit | null {
 }
 
 /**
- * Per-frame animation update. Reads each node's pending timers and interpolates:
- *  - idle bob (live, not mid-move)
- *  - selected pulse (live, selected)
- *  - movement lerp (easeOutQuad)
- *  - hit flash (red tint + jitter)
- *  - fire lunge (offset toward target, returns to rest)
- *  - death fade (alpha + drop + final hide)
+ * Per-frame animation update. Reads each node's pending timers and builds
+ * a composite body transform + muzzle-flash draw for this frame.
+ *
+ * Animation channels (additive):
+ *  - movement lerp + walk cycle (lean, step-bob, squash — two steps per tile)
+ *  - idle bob + selected pulse (when stationary)
+ *  - fire sequence (windup → muzzle flash at shot moment → recoil → return)
+ *  - hit flash (red tint + horizontal jitter)
+ *  - death fade (alpha + slump + fall-sideways rotation)
  */
 function tickUnitAnimations(
   layer: Container,
@@ -603,13 +624,13 @@ function tickUnitAnimations(
   nowMs: number
 ) {
   for (const node of nodes.values()) {
-    // Movement interpolation.
+    // ----- Movement interpolation.
     if (node.moveDurationMs > 0) {
       node.moveMs += dtMs;
       const raw = Math.min(1, node.moveMs / node.moveDurationMs);
-      const t = easeOutQuad(raw);
-      const sx = node.currentScreen.x + (node.targetScreen.x - node.currentScreen.x) * t;
-      const sy = node.currentScreen.y + (node.targetScreen.y - node.currentScreen.y) * t;
+      const tE = easeOutQuad(raw);
+      const sx = node.currentScreen.x + (node.targetScreen.x - node.currentScreen.x) * tE;
+      const sy = node.currentScreen.y + (node.targetScreen.y - node.currentScreen.y) * tE;
       node.container.position.set(sx, sy);
       if (raw >= 1) {
         node.currentScreen = { x: node.targetScreen.x, y: node.targetScreen.y };
@@ -621,17 +642,58 @@ function tickUnitAnimations(
     const alive = node.deathMs === null;
     const moving = node.moveDurationMs > 0;
 
-    // Idle bob — only when alive and not walking. Amplitude bumps when selected.
-    const bobAmp = !alive ? 0 : moving ? 0 : node.selected ? 2.2 : 1.4;
-    const bobY = bobAmp === 0 ? 0 : Math.sin(nowMs * 0.003 + node.bobPhase) * bobAmp;
+    // ----- Walk cycle (while moving): lean + two-step bob + squash on foot-plants.
+    let walkLean = 0, walkBob = 0, walkScaleY = 1;
+    if (moving && alive) {
+      const raw = node.moveMs / node.moveDurationMs;
+      // Two steps per tile → 4 half-cycles.
+      walkLean = Math.sin(raw * Math.PI * 2) * 0.08; // ±4.6°
+      walkBob = -Math.abs(Math.sin(raw * Math.PI * 4)) * 2.5; // body lifts on stride peak
+      walkScaleY = 1 - Math.abs(Math.sin(raw * Math.PI * 4 - Math.PI / 2)) * 0.05; // squash on plant
+    }
 
-    // Selected pulse on the body transform (small breathing scale).
-    const pulse = alive && node.selected ? 1 + Math.sin(nowMs * 0.006) * 0.03 : 1;
+    // ----- Idle bob + selected pulse (only when stationary + alive).
+    let idleBob = 0, pulse = 1;
+    if (alive && !moving) {
+      const amp = node.selected ? 2.2 : 1.4;
+      idleBob = Math.sin(nowMs * 0.003 + node.bobPhase) * amp;
+      pulse = node.selected ? 1 + Math.sin(nowMs * 0.006) * 0.03 : 1;
+    }
 
-    // Base body scale honours facing-flip (sprite is authored facing right).
-    node.body.scale.set(node.facing * pulse, pulse);
+    // ----- Fire sequence: windup → flash → recoil → return.
+    let fireRot = 0, fireX = 0, fireY = 0, fireScale = 1, flashIntensity = 0;
+    if (node.fireAnimMs > 0) {
+      node.fireAnimMs = Math.max(0, node.fireAnimMs - dtMs);
+      const progress = 1 - node.fireAnimMs / FIRE_ANIM_MS; // 0 → 1
+      if (progress < FIRE_SHOT_AT) {
+        // Windup: brace forward, lift weapon, scale up 4%.
+        const p = progress / FIRE_SHOT_AT;
+        const ease = easeOutQuad(p);
+        fireRot = -0.10 * node.facing * ease; // tilt upper body toward target
+        fireX = node.fireTargetDir.x * 2.5 * ease;
+        fireY = node.fireTargetDir.y * 2.5 * ease;
+        fireScale = 1 + 0.04 * ease;
+      } else if (progress < FIRE_SHOT_AT + FIRE_FLASH_SPAN) {
+        // Flash + recoil snap.
+        const p = (progress - FIRE_SHOT_AT) / FIRE_FLASH_SPAN;
+        flashIntensity = 1 - p;
+        const kick = 1 - p;
+        fireRot = 0.06 * node.facing * kick; // snap past neutral from recoil
+        fireX = -node.fireTargetDir.x * 4 * kick;
+        fireY = -node.fireTargetDir.y * 4 * kick;
+        fireScale = 1 + 0.02 * kick;
+      } else {
+        // Return to rest.
+        const p = (progress - FIRE_SHOT_AT - FIRE_FLASH_SPAN) /
+          (1 - FIRE_SHOT_AT - FIRE_FLASH_SPAN);
+        const ret = 1 - easeOutQuad(p);
+        fireRot = 0.06 * node.facing * ret * 0.4;
+        fireX = -node.fireTargetDir.x * 1.5 * ret;
+        fireY = -node.fireTargetDir.y * 1.5 * ret;
+      }
+    }
 
-    // Hit flash: horizontal jitter + red tint that fades with remaining time.
+    // ----- Hit flash: tint + jitter.
     let jitterX = 0;
     if (node.hitFlashMs > 0) {
       node.hitFlashMs = Math.max(0, node.hitFlashMs - dtMs);
@@ -642,30 +704,26 @@ function tickUnitAnimations(
       applyTint(node, 0xffffff);
     }
 
-    // Fire lunge: brief forward shove (2px) then return.
-    let lungeX = 0, lungeY = 0;
-    if (node.fireLungeMs > 0) {
-      node.fireLungeMs = Math.max(0, node.fireLungeMs - dtMs);
-      const raw = 1 - node.fireLungeMs / FIRE_LUNGE_MS;
-      // Arc 0→1→0 so the sprite lunges then returns.
-      const arc = Math.sin(raw * Math.PI);
-      lungeX = node.lungeDir.x * 4 * arc;
-      lungeY = node.lungeDir.y * 4 * arc;
-    }
+    // ----- Compose body transform.
+    node.body.scale.set(node.facing * pulse * fireScale, pulse * fireScale * walkScaleY);
+    node.body.rotation = walkLean + fireRot;
+    node.body.position.x = jitterX + fireX;
+    node.body.position.y = idleBob + walkBob + fireY;
 
-    node.body.position.x = jitterX + lungeX;
-    node.body.position.y = bobY + lungeY;
+    // ----- Muzzle flash: draw + position relative to facing, hide when intensity=0.
+    drawMuzzleFlash(node.muzzleFlash, node.facing, flashIntensity);
 
-    // Death fade. Once complete, hide the container but leave the node for
-    // reconciliation — initMission will prune it via the sync pass.
+    // ----- Death fade: alpha out + slump + slight fall-sideways rotation.
     if (node.deathMs !== null) {
       node.deathMs += dtMs;
       const t = Math.min(1, node.deathMs / DEATH_DURATION_MS);
       node.container.alpha = 1 - t;
-      node.body.position.y = bobY + t * 14; // slump to the ground
+      node.body.position.y = t * 14; // overrides live bob — they're dead
+      node.body.rotation = node.facing * 0.6 * t; // tip over toward facing
       node.shadow.alpha = 1 - t * 0.8;
       node.hpBar.visible = false;
       node.label.visible = false;
+      node.muzzleFlash.clear();
       if (t >= 1) node.container.visible = false;
     } else {
       node.container.alpha = 1;
@@ -675,6 +733,33 @@ function tickUnitAnimations(
   }
   // zIndex changes above won't take effect unless Pixi sorts; trigger it.
   layer.sortChildren();
+}
+
+/**
+ * Draw a muzzle flash at the weapon tip. `intensity` 0..1 fades the whole
+ * composite (star burst + hot core + glow) so the flash blinks on and off.
+ * Flash is mirrored across the x-axis based on facing.
+ */
+function drawMuzzleFlash(g: Graphics, facing: 1 | -1, intensity: number) {
+  g.clear();
+  if (intensity <= 0) return;
+  const x = MUZZLE_OFFSET.x * facing;
+  const y = MUZZLE_OFFSET.y;
+  // Soft outer glow.
+  g.circle(x, y, 11).fill({ color: 0xff9a3c, alpha: 0.4 * intensity });
+  // 4-point star burst (longer along the barrel axis).
+  g.poly([
+    x - 14 * facing, y,
+    x - 2 * facing,  y - 3,
+    x,               y - 9,
+    x + 2 * facing,  y - 3,
+    x + 18 * facing, y,
+    x + 2 * facing,  y + 3,
+    x,               y + 9,
+    x - 2 * facing,  y + 3,
+  ]).fill({ color: 0xffe0a0, alpha: 0.85 * intensity });
+  // Hot white core.
+  g.circle(x, y, 3.5).fill({ color: 0xffffff, alpha: 0.95 * intensity });
 }
 
 function applyTint(node: UnitNode, tint: number) {
