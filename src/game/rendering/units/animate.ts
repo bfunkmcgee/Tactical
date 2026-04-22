@@ -1,0 +1,247 @@
+import type { Container, Graphics } from 'pixi.js';
+import type { UnitId } from '../../types';
+import { HIT_FLASH_MS, DEATH_DURATION_MS, MUZZLE_OFFSET } from './constants';
+import type { UnitNode } from './UnitNode';
+
+/**
+ * Per-frame animation update. Reads each node's pending timers and builds
+ * a composite body transform + muzzle-flash draw for this frame.
+ *
+ * Animation channels (additive):
+ *  - movement lerp + walk cycle (lean, step-bob, squash — two steps per tile)
+ *  - idle bob + selected pulse (when stationary)
+ *  - fire sequence (windup → muzzle flash at shot moment → recoil → return)
+ *  - hit flash (red tint + horizontal jitter)
+ *  - death fade (alpha + slump + fall-sideways rotation)
+ */
+export function tickUnitAnimations(
+  layer: Container,
+  nodes: Map<UnitId, UnitNode>,
+  dtMs: number,
+  nowMs: number,
+) {
+  for (const node of nodes.values()) {
+    // ----- Movement interpolation.
+    if (node.moveDurationMs > 0) {
+      node.moveMs += dtMs;
+      const raw = Math.min(1, node.moveMs / node.moveDurationMs);
+      const tE = easeOutQuad(raw);
+      const sx = node.currentScreen.x + (node.targetScreen.x - node.currentScreen.x) * tE;
+      const sy = node.currentScreen.y + (node.targetScreen.y - node.currentScreen.y) * tE;
+      node.container.position.set(sx, sy);
+      if (raw >= 1) {
+        node.currentScreen = { x: node.targetScreen.x, y: node.targetScreen.y };
+        node.moveDurationMs = 0;
+        node.moveMs = 0;
+      }
+    }
+
+    const alive = node.deathMs === null;
+    const moving = node.moveDurationMs > 0;
+
+    // ----- Walk cycle (while moving): lean + two-step bob + squash on foot-plants.
+    // walkSway is an independent weapon rotation that counter-balances the lean.
+    let walkLean = 0, walkBob = 0, walkScaleY = 1, walkSway = 0;
+    if (moving && alive) {
+      const raw = node.moveMs / node.moveDurationMs;
+      // Two steps per tile → 4 half-cycles.
+      walkLean = Math.sin(raw * Math.PI * 2) * 0.08; // ±4.6°
+      walkBob = -Math.abs(Math.sin(raw * Math.PI * 4)) * 2.5; // body lifts on stride peak
+      walkScaleY = 1 - Math.abs(Math.sin(raw * Math.PI * 4 - Math.PI / 2)) * 0.05; // squash on plant
+      walkSway = -walkLean * 0.6; // weapon lags/opposes the body swing
+    }
+
+    // Idle is deliberately STILL — a hovering idle animation reads as
+    // "floating" in an isometric tactical view. The selection ring alpha
+    // pulses (further below) to indicate the active unit instead of any
+    // character-body motion.
+
+    // ----- Fire sequence: windup → one-or-more shots → return.
+    // Only the weapon (arm+gun) lifts toward eye level and rotates into
+    // aim; the body holds still except for a small recoil push-back on
+    // each shot. This reads as "arms move independently of the torso."
+    let bodyPitch = 0, bodyPushX = 0, bodyPushY = 0;
+    let weaponAim = 0, weaponLift = 0, flashIntensity = 0;
+    if (node.fireAnimMs > 0) {
+      node.fireAnimMs = Math.max(0, node.fireAnimMs - dtMs);
+      const style = node.fireStyle;
+      const elapsed = style.totalMs - node.fireAnimMs;
+      const burstSpanMs = style.shots > 1
+        ? (style.shots - 1) * style.shotSpacingMs + style.shotWindowMs
+        : style.shotWindowMs;
+      const returnStart = style.windupMs + burstSpanMs;
+      const returnMs = Math.max(1, style.totalMs - returnStart);
+
+      if (elapsed < style.windupMs) {
+        // Windup: arms raise the weapon up (lift) and angle it toward the
+        // target (rotation). Body is still.
+        const p = elapsed / style.windupMs;
+        const ease = easeOutQuad(p);
+        weaponAim = -style.windupRad * node.facing * ease;
+        weaponLift = -style.weaponLiftPx * ease;
+      } else if (elapsed < returnStart) {
+        // Shot phase: hold weapon at aim + flash/kick for each active shot.
+        const shotPhase = elapsed - style.windupMs;
+        let flashP = -1;
+        for (let i = 0; i < style.shots; i++) {
+          const start = i * style.shotSpacingMs;
+          if (shotPhase >= start && shotPhase < start + style.shotWindowMs) {
+            flashP = (shotPhase - start) / style.shotWindowMs;
+            break;
+          }
+        }
+        weaponAim = -style.windupRad * node.facing;
+        weaponLift = -style.weaponLiftPx;
+        if (flashP >= 0) {
+          // Active shot: muzzle flash + recoil on both arm and body.
+          flashIntensity = 1 - flashP;
+          const kick = 1 - flashP;
+          weaponAim += -style.kickRad * node.facing * kick;
+          weaponLift -= 2 * kick; // weapon jerks up on recoil
+          bodyPitch = 0.025 * node.facing * kick; // subtle torso reaction
+          bodyPushX = -node.fireTargetDir.x * style.recoilPx * kick;
+          bodyPushY = -node.fireTargetDir.y * style.recoilPx * kick;
+        }
+      } else {
+        // Return: weapon eases back to low-ready, body settles.
+        const p = (elapsed - returnStart) / returnMs;
+        const ret = 1 - easeOutQuad(Math.min(1, p));
+        weaponAim = -style.windupRad * node.facing * ret * 0.5;
+        weaponLift = -style.weaponLiftPx * ret;
+      }
+    }
+
+    // ----- Hit flash: tint + jitter.
+    let jitterX = 0;
+    if (node.hitFlashMs > 0) {
+      node.hitFlashMs = Math.max(0, node.hitFlashMs - dtMs);
+      const a = node.hitFlashMs / HIT_FLASH_MS;
+      jitterX = (Math.random() - 0.5) * 3 * a;
+      applyTint(node, blendRed(a));
+    } else {
+      // No hit flash: reflect the unit's accumulated grime as a dusty
+      // brown tint. Dirt level is set by updateUnitNode from u.dirt, so
+      // changes between missions show instantly when the sprite spawns.
+      applyTint(node, node.dirtTint);
+    }
+
+    // ----- Compose body transform. Body is unaffected by fire windup —
+    // only by walk cycle + hit-jitter + recoil push-back (bodyPush*).
+    node.body.scale.set(node.facing, walkScaleY);
+    node.body.rotation = walkLean + bodyPitch;
+    node.body.position.x = jitterX + bodyPushX;
+    node.body.position.y = walkBob + bodyPushY;
+
+    // ----- Selection ring alpha pulse — drives the "who's active" cue
+    // since the character body itself is static in idle.
+    if (node.selected && node.deathMs === null) {
+      node.selectionRing.alpha = 0.55 + Math.sin(nowMs * 0.004) * 0.35;
+    }
+
+    // ----- Weapon transform. The arms/gun move independently of the
+    // body: `weaponAim` rotates around the grip, `weaponLift` raises
+    // the whole wrap toward eye level during aim.
+    if (node.weaponWrap) {
+      node.weaponWrap.rotation = walkSway + weaponAim;
+      node.weaponWrap.position.y = node.weaponRestY + weaponLift;
+    }
+
+    // ----- Muzzle flash: drawn in weapon-wrap space when available so it
+    // follows the rotating barrel. Falls back to container-space otherwise.
+    drawMuzzleFlash(
+      node.muzzleFlash, node.facing, flashIntensity,
+      !!node.weaponWrap, node.fireStyle.flashScale,
+    );
+
+    // ----- Death: fade to a dim corpse + slump + fall-sideways rotation.
+    // The container stays visible after the fade so the body remains on
+    // the ground for the rest of the mission. A final alpha of 0.5 plus
+    // a dusty tint reads as "down, not gone" without drawing attention
+    // away from live units.
+    if (node.deathMs !== null) {
+      // Once the slump completes, stop ticking — no point incrementing
+      // forever for every corpse on the map.
+      if (node.deathMs < DEATH_DURATION_MS) node.deathMs += dtMs;
+      const t = Math.min(1, node.deathMs / DEATH_DURATION_MS);
+      // Fade to 0.5 (corpse), not 0.
+      node.container.alpha = 1 - t * 0.5;
+      node.body.position.y = t * 14;              // slump to the ground
+      node.body.rotation = node.facing * 0.9 * t; // tip over 50°, feels flatter
+      // Weapon drops below the grip as the character collapses.
+      if (node.weaponWrap) {
+        node.weaponWrap.rotation = node.facing * 1.4 * t;
+        node.weaponWrap.position.y = node.weaponRestY + t * 4;
+      }
+      node.shadow.alpha = 1 - t * 0.35;           // shadow dims but stays
+      node.hpBar.visible = false;
+      node.label.visible = false;
+      node.muzzleFlash.clear();
+      // Once the slump completes, dim the sprite toward a cold grey-brown so
+      // it reads as a corpse rather than a dim-but-alive character.
+      if (t >= 1) applyTint(node, 0x6a5a4a);
+    } else {
+      node.container.alpha = 1;
+      node.container.visible = true;
+      node.shadow.alpha = 1;
+    }
+  }
+  // zIndex changes above won't take effect unless Pixi sorts; trigger it.
+  layer.sortChildren();
+}
+
+/**
+ * Draw a muzzle flash at the weapon tip. `intensity` 0..1 fades the whole
+ * composite (star burst + hot core + glow) so the flash blinks on and off.
+ *
+ * When `inWeaponSpace` is true the graphic lives inside the weapon-wrap
+ * (pivot at the grip) — the "tip" offset is measured forward of the grip.
+ * Otherwise it's in container-space and sits at a fixed chest-height point.
+ */
+export function drawMuzzleFlash(
+  g: Graphics, facing: 1 | -1, intensity: number,
+  inWeaponSpace: boolean, scale: number,
+) {
+  g.clear();
+  if (intensity <= 0) return;
+  const x = inWeaponSpace ? MUZZLE_OFFSET.x * facing : 20 * facing;
+  const y = inWeaponSpace ? MUZZLE_OFFSET.y : -30;
+  const s = scale;
+  // Soft outer glow.
+  g.circle(x, y, 11 * s).fill({ color: 0xff9a3c, alpha: 0.4 * intensity });
+  // 4-point star burst (longer along the barrel axis).
+  g.poly([
+    x - 14 * s * facing, y,
+    x - 2 * s * facing,  y - 3 * s,
+    x,                    y - 9 * s,
+    x + 2 * s * facing,  y - 3 * s,
+    x + 18 * s * facing, y,
+    x + 2 * s * facing,  y + 3 * s,
+    x,                    y + 9 * s,
+    x - 2 * s * facing,  y + 3 * s,
+  ]).fill({ color: 0xffe0a0, alpha: 0.85 * intensity });
+  // Hot white core.
+  g.circle(x, y, 3.5 * s).fill({ color: 0xffffff, alpha: 0.95 * intensity });
+}
+
+/** Apply a uniform tint to every sprite inside a unit's body/weapon hierarchy. */
+export function applyTint(node: UnitNode, tint: number) {
+  if (node.sprite) node.sprite.tint = tint;
+  if (node.armsSprite) node.armsSprite.tint = tint;
+  if (node.weaponSprite) node.weaponSprite.tint = tint;
+  if (node.fallback) node.fallback.tint = tint;
+}
+
+function easeOutQuad(t: number): number {
+  return 1 - (1 - t) * (1 - t);
+}
+
+/**
+ * Blend white → damage-red by `alpha` (0..1). Used for the hit flash.
+ * At alpha=1 returns ~#ff5a6a (matches the enemy HP bar colour).
+ */
+function blendRed(alpha: number): number {
+  const r = 255;
+  const g = Math.round(255 - 165 * alpha);
+  const b = Math.round(255 - 149 * alpha);
+  return (r << 16) | (g << 8) | b;
+}
