@@ -523,6 +523,16 @@ function drawMap(layer: Container, map: GridMap) {
   const desert = map.tileset === 'desert';
   const refinery = map.tileset === 'desert-refinery';
   const g = new Graphics();
+
+  // Pre-compute cover connectivity so each block knows which grid-
+  // neighbours are also cover. Used by drawConnectedCover to extend
+  // the silhouette into adjacent tiles instead of rendering as an
+  // island.
+  const isCover = (tx: number, ty: number): boolean => {
+    const tt = tileAt(map, tx, ty);
+    return !!tt && (tt.kind === 'cover_half' || tt.kind === 'cover_full');
+  };
+
   for (let y = 0; y < map.height; y++) {
     for (let x = 0; x < map.width; x++) {
       const t = tileAt(map, x, y)!;
@@ -544,26 +554,41 @@ function drawMap(layer: Container, map: GridMap) {
 
       if (t.kind === 'cover_half' || t.kind === 'cover_full') {
         const h = t.kind === 'cover_full' ? 22 : 12;
-        // Cast shadow at the base of the block, pooling to the SW
-        // (sun is NE — same direction as the rim-highlight on every
-        // tile). Drawn BEFORE the block so the block sits on top of
-        // it and the shadow peeks out.
+        const nE = isCover(x + 1, y);
+        const nS = isCover(x, y + 1);
+        const nW = isCover(x - 1, y);
+        const nN = isCover(x, y - 1);
+        const connected = nE || nS || nW || nN;
+
+        // Cast shadow: full strength for standalone blocks, dimmed for
+        // the interior of a connected wall so you don't see a zebra of
+        // shadow pools under one continuous structure.
+        const shadowAlpha = (nE && nS) ? 0.12 : (nE || nS) ? 0.22 : 0.35;
         g.ellipse(p.x - 5, p.y + 5, 17, 5)
-          .fill({ color: 0x000000, alpha: 0.35 });
+          .fill({ color: 0x000000, alpha: shadowAlpha });
 
         if (refinery) {
           // Refinery cover: cylindrical pipes (half) or storage tanks (full).
           drawRefineryCover(g, t.kind, p.x, p.y, h, pal);
         } else {
           // Per-tile fill variance so adjacent blocks don't look
-          // stamped from the same die. Pseudo-random ±20% brightness
-          // shift — doubled from the first pass so the rhythm reads
-          // at tile zoom.
+          // stamped from the same die.
           const variance = ((tileHash >>> 4) % 41) - 20;
           const tintedFill = shiftBrightness(fill, variance);
-          // ~40% of half-cover blocks break (up from 30%) — the
-          // silhouette rhythm was still too subtle at lower rates.
-          const broken = t.kind === 'cover_half' && ((tileHash >>> 12) % 10) < 4;
+
+          // When a grid-E / grid-S neighbour is also cover, bridge the
+          // 4px + 16-stagger gap with an extender parallelogram so the
+          // two blocks read as one continuous wall instead of floating
+          // islands. N / W neighbours' extenders get drawn by THOSE
+          // tiles (looping toward us) so we cover every connection.
+          if (nE) drawEastExtender(g, p.x, p.y, h, tintedFill, pal.coverStroke);
+          if (nS) drawSouthExtender(g, p.x, p.y, h, tintedFill, pal.coverStroke);
+
+          // Broken-top silhouette is ONLY used for fully isolated
+          // blocks — a middle-of-a-wall block with a V-notch would
+          // look wrong next to its connected neighbours.
+          const broken = !connected && t.kind === 'cover_half'
+            && ((tileHash >>> 12) % 10) < 4;
           if (broken) {
             drawBrokenCoverShape(g, p.x, p.y, h, tileHash, tintedFill, pal.coverStroke);
           } else {
@@ -589,6 +614,60 @@ function drawMap(layer: Container, map: GridMap) {
   drawEnvProps(g, map);
   layer.addChild(g);
 }
+
+/**
+ * East-extender: fills the 4-px wide, 16-px tall sliver of gap
+ * between this tile's raised cover and the rect of the cover tile
+ * at grid (x+1, y). The neighbour sits down-right in screen space,
+ * so the extender slants NW→SE.
+ */
+function drawEastExtender(
+  g: Graphics, px: number, py: number, h: number,
+  fill: number, stroke: number,
+) {
+  const H = TILE_H / 2;      // 16 — vertical stagger per grid step
+  g.poly([
+    px + 14, py - h,            // top-left (this block's NE top corner)
+    px + 18, py + H - h,        // top-right (neighbour's NW top corner)
+    px + 18, py + H,            // bottom-right (neighbour's NW base)
+    px + 14, py,                // bottom-left (this block's E base)
+  ]).fill({ color: fill, alpha: 0.95 });
+  // Top-edge sun highlight carries across the ribbon.
+  g.moveTo(px + 14, py - h);
+  g.lineTo(px + 18, py + H - h);
+  g.stroke({ color: 0xffffff, width: 0.6, alpha: 0.25 });
+  // Subtle dark seam at the join so you can still read the tile
+  // boundary if you're looking for it — but the silhouette stays
+  // continuous.
+  g.moveTo(px + 14, py);
+  g.lineTo(px + 18, py + H);
+  g.stroke({ color: stroke, width: 0.6, alpha: 0.5 });
+}
+
+/**
+ * South-extender: bridges the gap toward the cover tile at grid
+ * (x, y+1). That neighbour sits down-LEFT in screen space, so the
+ * extender slants NE→SW.
+ */
+function drawSouthExtender(
+  g: Graphics, px: number, py: number, h: number,
+  fill: number, stroke: number,
+) {
+  const H = TILE_H / 2;
+  g.poly([
+    px - 14, py - h,
+    px - 18, py + H - h,
+    px - 18, py + H,
+    px - 14, py,
+  ]).fill({ color: fill, alpha: 0.95 });
+  g.moveTo(px - 14, py - h);
+  g.lineTo(px - 18, py + H - h);
+  g.stroke({ color: 0xffffff, width: 0.6, alpha: 0.2 });
+  g.moveTo(px - 14, py);
+  g.lineTo(px - 18, py + H);
+  g.stroke({ color: stroke, width: 0.6, alpha: 0.5 });
+}
+
 
 /**
  * Shift a 24-bit RGB color by ±pct (0..100) toward white or black.
