@@ -8,6 +8,7 @@ import type { Loadout, ModSlot, SoldierTemplate, WeaponClass } from '../game/typ
 import { SIDEARM_MOD_SLOTS } from '../game/types';
 import ModPicker from './components/ModPicker';
 import CharacterCreationScreen from './CharacterCreationScreen';
+import SoldierPortrait from './SoldierPortrait';
 
 const MAX_UTILITIES = 2;
 const PRIMARY_SLOTS: ModSlot[] = ['optic', 'magazine', 'muzzle', 'stock'];
@@ -102,10 +103,15 @@ export default function LoadoutScreen() {
                 borderColor: i === idx ? 'var(--accent)' : 'var(--bg-3)',
                 background: i === idx ? 'var(--bg-3)' : 'var(--bg-2)',
                 minWidth: 110,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
               }}>
-              <div style={{ width: 18, height: 18, background: s.portraitColor, borderRadius: 4, display: 'inline-block', marginRight: 6, verticalAlign: 'middle' }} />
-              <span style={{ verticalAlign: 'middle' }}>{s.name}</span>
-              <div style={{ fontSize: 11, color: 'var(--fg-2)', marginTop: 2 }}>{s.class}</div>
+              <SoldierPortrait template={s} size={28} />
+              <div style={{ textAlign: 'left' }}>
+                <div>{s.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--fg-2)', marginTop: 2 }}>{s.class}</div>
+              </div>
             </button>
           );
         })}
@@ -113,7 +119,7 @@ export default function LoadoutScreen() {
 
       <div className="panel stack" style={{ flexShrink: 0 }}>
         <div className="row" style={{ gap: 'var(--s-4)', alignItems: 'flex-start' }}>
-          <div style={{ width: 48, height: 48, background: soldier.portraitColor, borderRadius: 'var(--r-md)', flexShrink: 0 }} />
+          <SoldierPortrait template={soldier} size={48} />
           <div className="stack" style={{ gap: 4, flex: 1 }}>
             <h2>{soldier.name}</h2>
             <p>{soldier.class}</p>
