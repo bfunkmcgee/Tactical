@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MOCKUP for review — Seraphine, Mystic.
+  Fair skin, white hair in a long ponytail, grey eyes, small violet
+  rune on the forehead. Slender, ethereal, thoughtful. Displayed at
+  128×128 for legibility. Review art only.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="bg-seraphine" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#3a2a4a"/>
+      <stop offset="100%" stop-color="#1a0e24"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" fill="url(#bg-seraphine)"/>
+
+  <!-- Shoulders + robe silhouette, narrow. -->
+  <path d="M 22 128 L 28 106 Q 64 100 100 106 L 106 128 Z" fill="#4a3854"/>
+  <!-- Gold sash running across the collarbone. -->
+  <rect x="28" y="108" width="72" height="3" fill="#c4a468"/>
+  <rect x="28" y="111" width="72" height="0.8" fill="#2a1a30" opacity="0.7"/>
+  <!-- V-neck showing undershirt — pale cream. -->
+  <path d="M 56 104 L 64 118 L 72 104 Z" fill="#2a1a30"/>
+  <path d="M 60 110 L 64 118 L 68 110 Z" fill="#e8c4a4"/>
+  <!-- Gold neckline trim. -->
+  <line x1="56" y1="104" x2="64" y2="118" stroke="#c4a468" stroke-width="0.5"/>
+  <line x1="72" y1="104" x2="64" y2="118" stroke="#c4a468" stroke-width="0.5"/>
+
+  <!-- Ponytail tail draped over the right shoulder, visible behind. -->
+  <path d="M 82 88 Q 96 94 100 108 L 94 110 Q 90 96 80 90 Z" fill="#e8e4d8"/>
+  <!-- Tail detail lines. -->
+  <path d="M 86 94 Q 94 102 96 108" stroke="#b8b0a0" stroke-width="0.5" fill="none" opacity="0.7"/>
+
+  <!-- Neck — slender. -->
+  <rect x="58" y="88" width="12" height="18" fill="#e8c4a4"/>
+
+  <!-- Head: fair skin 0xe8c4a4. Oval, delicate. -->
+  <path d="M 46 58 Q 46 30 64 26 Q 82 30 82 58 Q 82 84 64 92 Q 46 84 46 58 Z"
+        fill="#e8c4a4" stroke="#8a6844" stroke-width="0.5"/>
+
+  <!-- Hair: white 0xe8e4d8. Center-parted, pulled back smoothly into ponytail. -->
+  <!-- Crown + center part. -->
+  <path d="M 46 46 Q 46 22 64 20 Q 82 22 82 46 L 82 52 Q 76 42 64 40 Q 52 42 46 52 Z" fill="#e8e4d8"/>
+  <!-- Center part line. -->
+  <line x1="64" y1="22" x2="64" y2="44" stroke="#b8b0a0" stroke-width="0.8"/>
+  <!-- Side strands framing the face (sleek). -->
+  <path d="M 46 52 L 46 68 L 50 70 Q 48 60 50 52 Z" fill="#e8e4d8"/>
+  <path d="M 82 52 L 82 68 L 78 70 Q 80 60 78 52 Z" fill="#e8e4d8"/>
+  <!-- Base of the ponytail at the back. -->
+  <ellipse cx="78" cy="80" rx="6" ry="8" fill="#e8e4d8"/>
+  <path d="M 78 86 L 82 88" stroke="#c4a468" stroke-width="0.8"/>
+
+  <!-- Eyebrows — thin, arched. -->
+  <path d="M 50 58 Q 54 56 58 58" stroke="#b8b0a0" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+  <path d="M 70 58 Q 74 56 78 58" stroke="#b8b0a0" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+
+  <!-- Eyes: grey 0x6a7078. Wider, thoughtful. -->
+  <ellipse cx="54" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
+  <ellipse cx="74" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
+  <circle cx="54" cy="66" r="2.2" fill="#6a7078"/>
+  <circle cx="74" cy="66" r="2.2" fill="#6a7078"/>
+  <circle cx="54" cy="66" r="0.9" fill="#0a0a0c"/>
+  <circle cx="74" cy="66" r="0.9" fill="#0a0a0c"/>
+  <circle cx="55" cy="65" r="0.6" fill="#ffffff"/>
+  <circle cx="75" cy="65" r="0.6" fill="#ffffff"/>
+  <!-- Subtle upper eyelash accent. -->
+  <path d="M 50 65 Q 54 64 58 65" stroke="#0a0a0c" stroke-width="0.4" fill="none" opacity="0.6"/>
+  <path d="M 70 65 Q 74 64 78 65" stroke="#0a0a0c" stroke-width="0.4" fill="none" opacity="0.6"/>
+
+  <!-- Nose: small, straight, elegant. -->
+  <path d="M 64 68 L 63 80 L 64 82 L 65 80 Z" fill="#d4a888" opacity="0.5"/>
+  <path d="M 62 80 Q 64 81 66 80" stroke="#8a6844" stroke-width="0.4" fill="none"/>
+
+  <!-- Mouth: soft, slightly curved. -->
+  <path d="M 59 88 Q 64 90 69 88" stroke="#8a4848" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <path d="M 59 88 Q 64 86 69 88" stroke="#c8888a" stroke-width="0.6" fill="none" opacity="0.7"/>
+
+  <!-- Cheek highlight. -->
+  <ellipse cx="51" cy="74" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.5"/>
+  <ellipse cx="77" cy="74" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.5"/>
+
+  <!-- Violet mystic rune on the forehead — signature detail. -->
+  <circle cx="64" cy="44" r="1.8" fill="#c79aff" opacity="0.9"/>
+  <circle cx="64" cy="44" r="2.8" fill="none" stroke="#c79aff" stroke-width="0.5" opacity="0.6"/>
+  <!-- Rune-glow halo. -->
+  <circle cx="64" cy="44" r="4.2" fill="none" stroke="#c79aff" stroke-width="0.3" opacity="0.3"/>
+
+  <!-- Name label. -->
+  <text x="64" y="122" text-anchor="middle" font-family="system-ui" font-size="8" fill="#e8c488" font-weight="bold">SERAPHINE · Mystic</text>
+</svg>

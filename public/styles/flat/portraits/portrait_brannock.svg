@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MOCKUP for review — Brannock, Warden.
+  Tan skin, bald w/ brown stubble, hazel eyes. Heavy build, weathered,
+  set jaw. Displayed at 128×128 for legibility. Review art only — not
+  wired into the game.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="bg-brannock" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#4a3020"/>
+      <stop offset="100%" stop-color="#1a0a04"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" fill="url(#bg-brannock)"/>
+
+  <!-- Shoulders — broader than Kestrel, dark undershirt. -->
+  <path d="M 14 128 L 18 104 Q 64 96 110 104 L 114 128 Z" fill="#4a4230"/>
+  <!-- Stretched tee neckline. -->
+  <path d="M 52 104 Q 64 112 76 104 Z" fill="#3a3428"/>
+  <!-- Trapezius / neck-muscle shading to sell the bulk. -->
+  <path d="M 32 108 Q 44 100 52 108 Z" fill="#2a2418"/>
+  <path d="M 76 108 Q 84 100 96 108 Z" fill="#2a2418"/>
+
+  <!-- Thick neck — wider than Kestrel. -->
+  <rect x="52" y="84" width="24" height="20" fill="#9a6a4a"/>
+  <!-- Adam's apple shading. -->
+  <ellipse cx="64" cy="96" rx="2" ry="3" fill="#6a4028" opacity="0.5"/>
+  <!-- Jaw shadow. -->
+  <path d="M 52 100 Q 64 106 76 100" fill="#5a3020" opacity="0.5"/>
+
+  <!-- Head: tan skin 0x9a6a4a. Squarer jaw than Kestrel. -->
+  <path d="M 42 56 Q 42 28 64 24 Q 86 28 86 56 Q 86 82 76 88 Q 64 92 52 88 Q 42 82 42 56 Z"
+        fill="#9a6a4a" stroke="#5a3020" stroke-width="0.6"/>
+
+  <!-- Bald crown — same skin tone, with a subtle highlight showing the bald shine. -->
+  <path d="M 48 36 Q 64 26 80 36" fill="none" stroke="#c48a6a" stroke-width="1" opacity="0.5"/>
+  <!-- Brown stubble cap 0x4a3020 — ring around the lower half of the skull + chin. -->
+  <path d="M 42 56 Q 44 48 48 44 Q 50 52 48 56 Z" fill="#4a3020" opacity="0.75"/>
+  <path d="M 86 56 Q 84 48 80 44 Q 78 52 80 56 Z" fill="#4a3020" opacity="0.75"/>
+  <!-- Chin + jaw stubble shading. -->
+  <ellipse cx="64" cy="86" rx="18" ry="4" fill="#4a3020" opacity="0.55"/>
+  <!-- Stubble ring around head (suggesting the shaved ring). -->
+  <path d="M 44 60 Q 50 58 56 58 Q 64 60 72 58 Q 78 58 84 60" stroke="#4a3020" stroke-width="0.4" fill="none" opacity="0.6"/>
+
+  <!-- Heavy brow — pronounced, furrowed. -->
+  <path d="M 48 60 Q 52 56 58 58" stroke="#2a1408" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M 70 58 Q 76 56 80 60" stroke="#2a1408" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <!-- Furrowed brow lines. -->
+  <line x1="60" y1="55" x2="60" y2="59" stroke="#5a3020" stroke-width="0.5" opacity="0.7"/>
+  <line x1="68" y1="55" x2="68" y2="59" stroke="#5a3020" stroke-width="0.5" opacity="0.7"/>
+
+  <!-- Eyes: hazel 0x6a4a28. Deep-set, narrowed. -->
+  <ellipse cx="54" cy="66" rx="3.6" ry="2" fill="#ffffff"/>
+  <ellipse cx="74" cy="66" rx="3.6" ry="2" fill="#ffffff"/>
+  <circle cx="54" cy="66" r="1.8" fill="#6a4a28"/>
+  <circle cx="74" cy="66" r="1.8" fill="#6a4a28"/>
+  <circle cx="54" cy="66" r="0.7" fill="#0a0a0c"/>
+  <circle cx="74" cy="66" r="0.7" fill="#0a0a0c"/>
+  <circle cx="55" cy="65" r="0.5" fill="#ffffff"/>
+  <circle cx="75" cy="65" r="0.5" fill="#ffffff"/>
+
+  <!-- Nose: broad, slightly broken (veteran detail). -->
+  <path d="M 64 68 Q 60 72 60 80 Q 62 82 64 82 Q 66 82 68 80 Q 68 72 64 68 Z" fill="#8a5a3a" opacity="0.7"/>
+  <path d="M 60 80 Q 64 81 68 80" stroke="#5a3020" stroke-width="0.6" fill="none"/>
+  <!-- Subtle nose-break bend. -->
+  <line x1="63" y1="72" x2="61" y2="74" stroke="#5a3020" stroke-width="0.5" opacity="0.6"/>
+
+  <!-- Mouth: set line, grim. -->
+  <path d="M 54 90 L 74 90" stroke="#2a1408" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <!-- Heavier lower lip shading. -->
+  <path d="M 54 90 Q 64 93 74 90" stroke="#8a4828" stroke-width="0.6" fill="none" opacity="0.6"/>
+
+  <!-- Scar across left cheek — warden war-veteran detail. -->
+  <line x1="46" y1="70" x2="52" y2="80" stroke="#c48a6a" stroke-width="0.8" opacity="0.7"/>
+
+  <!-- Name label. -->
+  <text x="64" y="122" text-anchor="middle" font-family="system-ui" font-size="8" fill="#e8c488" font-weight="bold">BRANNOCK · Warden</text>
+</svg>

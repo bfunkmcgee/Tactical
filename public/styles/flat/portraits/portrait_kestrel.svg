@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MOCKUP for review — Kestrel, Ranger.
+  Fair skin, short-crop black hair, blue eyes. Athletic, sharp-eyed
+  scout. Displayed at 128×128 for legibility. Not wired into the game —
+  this is review art only. Once approved, the details here can be
+  pushed into /public/styles/flat/soldiers/kestrel/*.svg for the
+  in-game rig composition.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Background vignette for portrait framing. -->
+  <defs>
+    <radialGradient id="bg-kestrel" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#2a3a4a"/>
+      <stop offset="100%" stop-color="#0e1a20"/>
+    </radialGradient>
+  </defs>
+  <rect width="128" height="128" fill="url(#bg-kestrel)"/>
+
+  <!-- Shoulders + collar of harness — grounds the portrait. -->
+  <path d="M 20 128 L 24 108 Q 64 100 104 108 L 108 128 Z" fill="#6a7a54"/>
+  <rect x="44" y="108" width="40" height="4" fill="#3a2a1c"/>
+  <!-- Shoulder harness straps. -->
+  <rect x="38" y="108" width="4" height="20" fill="#3a2a1c"/>
+  <rect x="86" y="108" width="4" height="20" fill="#3a2a1c"/>
+
+  <!-- Neck. -->
+  <rect x="56" y="88" width="16" height="20" fill="#e8c4a4"/>
+  <!-- Jaw shadow. -->
+  <path d="M 56 104 Q 64 108 72 104" fill="#8a6844" opacity="0.4"/>
+
+  <!-- Head: fair skin 0xe8c4a4. Egg-shaped, slightly tapered jaw. -->
+  <path d="M 44 58 Q 44 32 64 28 Q 84 32 84 58 Q 84 84 64 92 Q 44 84 44 58 Z"
+        fill="#e8c4a4" stroke="#8a6844" stroke-width="0.6"/>
+
+  <!-- Hair: short crop, black 0x1a1410. Low, swept forward slightly. -->
+  <path d="M 44 50 Q 44 28 64 24 Q 84 28 84 50 L 84 56 Q 76 48 64 46 Q 52 48 44 56 Z" fill="#1a1410"/>
+  <!-- Sideburns. -->
+  <path d="M 44 54 Q 46 64 48 68 L 46 72 Q 44 66 44 60 Z" fill="#1a1410"/>
+  <path d="M 84 54 Q 82 64 80 68 L 82 72 Q 84 66 84 60 Z" fill="#1a1410"/>
+  <!-- Hair strand over forehead (suggests a fringe). -->
+  <path d="M 52 48 Q 58 46 64 48 L 62 52 Q 56 50 52 52 Z" fill="#0a0a08"/>
+
+  <!-- Eyebrows — thin, focused. -->
+  <path d="M 51 60 L 59 58" stroke="#0a0a08" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M 69 58 L 77 60" stroke="#0a0a08" stroke-width="1.6" stroke-linecap="round"/>
+
+  <!-- Eyes: blue 0x4a6a9a. Almond shape for a focused/scout read. -->
+  <ellipse cx="54" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
+  <ellipse cx="74" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
+  <circle cx="55" cy="66" r="2.2" fill="#4a6a9a"/>
+  <circle cx="73" cy="66" r="2.2" fill="#4a6a9a"/>
+  <!-- Pupils. -->
+  <circle cx="55" cy="66" r="0.9" fill="#0a0a0c"/>
+  <circle cx="73" cy="66" r="0.9" fill="#0a0a0c"/>
+  <!-- Catchlight. -->
+  <circle cx="56" cy="65" r="0.6" fill="#ffffff"/>
+  <circle cx="74" cy="65" r="0.6" fill="#ffffff"/>
+
+  <!-- Nose: small, straight. -->
+  <path d="M 64 68 L 62 80 L 64 82 L 66 80 Z" fill="#d4a888" opacity="0.6"/>
+  <path d="M 62 80 Q 64 81 66 80" stroke="#8a6844" stroke-width="0.5" fill="none"/>
+
+  <!-- Mouth: slightly pressed, focused. -->
+  <path d="M 58 88 Q 64 89 70 88" stroke="#4a2818" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <!-- Lip shading. -->
+  <path d="M 58 88 Q 64 86 70 88" stroke="#c48a6a" stroke-width="0.6" fill="none" opacity="0.7"/>
+
+  <!-- Cheekbone highlight — subtle for warmth. -->
+  <ellipse cx="50" cy="76" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.4"/>
+  <ellipse cx="78" cy="76" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.4"/>
+
+  <!-- Small scar over right eyebrow — ranger-scout character detail. -->
+  <line x1="70" y1="54" x2="76" y2="57" stroke="#c48a6a" stroke-width="0.6" opacity="0.7"/>
+
+  <!-- Name label. -->
+  <text x="64" y="122" text-anchor="middle" font-family="system-ui" font-size="8" fill="#e8c488" font-weight="bold">KESTREL · Ranger</text>
+</svg>
