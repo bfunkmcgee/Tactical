@@ -22,6 +22,7 @@ export default function CombatHUD() {
   const tryReload = useCombatStore((s) => s.tryReload);
   const toggleOverwatch = useCombatStore((s) => s.toggleOverwatch);
   const tryRefit = useCombatStore((s) => s.tryRefit);
+  const tryMysticArcaneSight = useCombatStore((s) => s.tryMysticArcaneSight);
   const endPlayerTurn = useCombatStore((s) => s.endPlayerTurn);
   const selectUnit = useCombatStore((s) => s.selectUnit);
   const confirmPending = useCombatStore((s) => s.confirmPending);
@@ -199,6 +200,48 @@ export default function CombatHUD() {
           disabled={disabled || selected!.ap < 1 || selected!.status.overwatch}>
           Refit
         </button>
+        {selected?.loadout && (() => {
+          // Class abilities surface per-class:
+          //   Ranger  → Mark (target enemy in ability mode)
+          //   Warden  → Bracing Fire (target enemy, heavy only, costs ammo)
+          //   Mystic  → Arcane Sight (instant self-cast)
+          //   Sapper  → Demolish (target cover tile in ability mode)
+          const tmpl = useContent().soldierTemplates[selected.templateId];
+          if (!tmpl) return null;
+          const primary = getWeapon(selected.loadout.primaryId);
+          const apOK = selected.ap >= 1;
+          let label: string, canUse: boolean, onClick: () => void;
+          switch (tmpl.class) {
+            case 'Ranger':
+              label = 'Mark';
+              canUse = apOK && !disabled;
+              onClick = () => setMode(mode === 'ability' ? 'idle' : 'ability');
+              break;
+            case 'Warden':
+              label = 'Bracing Fire';
+              canUse = apOK && !disabled && primary.class === 'heavy' && selected.ammo > 0;
+              onClick = () => setMode(mode === 'ability' ? 'idle' : 'ability');
+              break;
+            case 'Mystic':
+              label = selected.status.seeThroughSmoke ? 'Sight Active' : 'Arcane Sight';
+              canUse = apOK && !disabled && !selected.status.seeThroughSmoke;
+              onClick = () => tryMysticArcaneSight();
+              break;
+            case 'Sapper':
+              label = 'Demolish';
+              canUse = apOK && !disabled;
+              onClick = () => setMode(mode === 'ability' ? 'idle' : 'ability');
+              break;
+            default:
+              return null;
+          }
+          return (
+            <button onClick={onClick} disabled={!canUse}
+              style={{ borderColor: mode === 'ability' ? 'var(--accent)' : undefined }}>
+              {label}
+            </button>
+          );
+        })()}
         <div style={{ flex: 1 }} />
         <button className="primary" onClick={() => endPlayerTurn()} disabled={phase !== 'player'}>End Turn</button>
       </div>

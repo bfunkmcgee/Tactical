@@ -356,6 +356,93 @@ describe('combatStore: snapshotSquadCarry', () => {
   });
 });
 
+describe('combatStore: class abilities', () => {
+  it('Ranger Mark applies marked status and spends 1 AP', () => {
+    setupSoloDuel();
+    const u = useCombatStore.getState().units.find((x) => x.faction === 'player')!;
+    const t = useCombatStore.getState().units.find((x) => x.faction === 'enemy')!;
+    expect(useCombatStore.getState().tryRangerMark(t.id)).toBe(true);
+    const after = useCombatStore.getState().units.find((x) => x.id === t.id)!;
+    const shooter = useCombatStore.getState().units.find((x) => x.id === u.id)!;
+    expect(after.status.marked).toBe(true);
+    expect(shooter.ap).toBe(u.ap - 1);
+  });
+
+  it('marked target takes +3 bonus damage on the next hit and mark clears', () => {
+    setupSoloDuel();
+    const t = useCombatStore.getState().units.find((x) => x.faction === 'enemy')!;
+    // Manually flag the target as marked.
+    useCombatStore.setState({
+      units: useCombatStore.getState().units.map((u) =>
+        u.id === t.id ? { ...u, hp: 99, status: { ...u.status, marked: true } } : u),
+    });
+    forceRng('hit');
+    useCombatStore.getState().queueShot(t.id);
+    useCombatStore.getState().confirmPending();
+    const after = useCombatStore.getState().units.find((x) => x.id === t.id)!;
+    // Damage dealt ≥ 6 (rifle min 5 + 3 mark bonus = 8 floor, 11 max).
+    expect(99 - after.hp).toBeGreaterThanOrEqual(8);
+    expect(after.status.marked).toBe(false);
+  });
+
+  it('Warden Bracing Fire suppresses target + chebyshev-1 neighbours', () => {
+    // Deploy Warden only, manually place two more enemies adjacent.
+    useCombatStore.getState().initMission({
+      map: mkMap([
+        'P.....GG..', // primary target at 6, adjacent at 7
+      ]),
+      rosterIds: ['warden_brannock'],
+    });
+    // Ensure the tiny map's two 'G' spawns land in the actor list.
+    const enemies = useCombatStore.getState().units.filter((u) => u.faction === 'enemy');
+    expect(enemies.length).toBe(2);
+    const ok = useCombatStore.getState().tryWardenBracingFire(enemies[0].id);
+    expect(ok).toBe(true);
+    const [e0, e1] = useCombatStore.getState().units.filter((u) => u.faction === 'enemy');
+    expect(e0.status.suppressed).toBe(true);
+    // The second enemy at (7,0) is cheby-1 from the target — also suppressed.
+    expect(e1.status.suppressed).toBe(true);
+  });
+
+  it('Mystic Arcane Sight flags seeThroughSmoke on self + spends 1 AP', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P........G']),
+      rosterIds: ['mystic_seraphine'],
+    });
+    const before = useCombatStore.getState().units.find((u) => u.faction === 'player')!;
+    expect(useCombatStore.getState().tryMysticArcaneSight()).toBe(true);
+    const after = useCombatStore.getState().units.find((u) => u.id === before.id)!;
+    expect(after.status.seeThroughSmoke).toBe(true);
+    expect(after.ap).toBe(before.ap - 1);
+  });
+
+  it('Sapper Demolish downgrades a targeted cover tile within range 3', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.H......G']),
+      rosterIds: ['sapper_orin'],
+    });
+    expect(useCombatStore.getState().trySapperDemolish({ x: 2, y: 0 })).toBe(true);
+    expect(useCombatStore.getState().map.tiles[2].kind).toBe('cover_half');
+  });
+
+  it('Sapper Demolish refuses a target beyond range 3', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P......H.G']),
+      rosterIds: ['sapper_orin'],
+    });
+    expect(useCombatStore.getState().trySapperDemolish({ x: 7, y: 0 })).toBe(false);
+  });
+
+  it('class gate: Ranger Mark refuses for a non-Ranger soldier', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P........G']),
+      rosterIds: ['warden_brannock'],
+    });
+    const t = useCombatStore.getState().units.find((u) => u.faction === 'enemy')!;
+    expect(useCombatStore.getState().tryRangerMark(t.id)).toBe(false);
+  });
+});
+
 describe('combatStore: destructible cover', () => {
   beforeEach(setupSoloDuel);
 

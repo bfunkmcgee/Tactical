@@ -21,7 +21,7 @@ function mkEnemy(partial: Partial<Unit> & { pos: Unit['pos'] }): Unit {
     hp: 10, hpMax: 10, aim: 50, mobility: 4, ap: 2, apMax: 2, ammo: 99,
     sidearmAmmo: 0, utilityCharges: [],
     dmgMin: 2, dmgMax: 4, rangeShort: 5, rangeLong: 10,
-    status: { overwatch: false, blinded: false, suppressed: false },
+    status: { overwatch: false, blinded: false, suppressed: false, marked: false, seeThroughSmoke: false },
     alive: true, color: '#9a0',
     ...partial,
   };
@@ -33,7 +33,7 @@ function mkPlayer(partial: Partial<Unit> & { pos: Unit['pos'] }): Unit {
     hp: 10, hpMax: 10, aim: 10, mobility: 4, ap: 2, apMax: 2, ammo: 4,
     sidearmAmmo: 4, utilityCharges: [],
     dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
-    status: { overwatch: false, blinded: false, suppressed: false },
+    status: { overwatch: false, blinded: false, suppressed: false, marked: false, seeThroughSmoke: false },
     alive: true, color: '#7cc4ff',
     ...partial,
   };

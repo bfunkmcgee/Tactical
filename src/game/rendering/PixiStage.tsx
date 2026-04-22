@@ -276,6 +276,30 @@ export default function PixiStage() {
           st.queueUtility(g, st.selectedUtilityIdx);
           return;
         }
+        if (st.mode === 'ability') {
+          // Route the tap to the selected soldier's class-specific ability.
+          // (The HUD button set ability-mode only for targeting classes —
+          // Mystic's Arcane Sight fires instantly from the HUD and never
+          // leaves us in this mode.)
+          const sel = st.units.find((u) => u.id === st.selectedId);
+          if (!sel) { st.setMode('idle'); return; }
+          const tmpl = useContent().soldierTemplates[sel.templateId];
+          if (tmpl?.class === 'Ranger') {
+            if (unitAt && unitAt.faction === 'enemy') st.tryRangerMark(unitAt.id);
+            else st.setMode('idle');
+            return;
+          }
+          if (tmpl?.class === 'Warden') {
+            if (unitAt && unitAt.faction === 'enemy') st.tryWardenBracingFire(unitAt.id);
+            else st.setMode('idle');
+            return;
+          }
+          if (tmpl?.class === 'Sapper') {
+            st.trySapperDemolish(g);
+            return;
+          }
+          st.setMode('idle');
+        }
       }
 
       // Re-render reactive layers whenever the store changes.
@@ -1171,6 +1195,23 @@ function updateUnitNode(
         .fill(0xff9a3c);
     }
     node.ornaments.addChild(sp);
+  }
+  if (u.alive && u.status.marked) {
+    // Red diamond reticle with a crosshair — Ranger's marked-for-death cue.
+    const mk = new Graphics();
+    const cy = node.spriteTop - 14;
+    mk.poly([-5, cy, 0, cy - 5, 5, cy, 0, cy + 5])
+      .stroke({ color: 0xff5a6a, width: 1.4 });
+    mk.moveTo(-7, cy); mk.lineTo(-3, cy); mk.stroke({ color: 0xff5a6a, width: 1 });
+    mk.moveTo(3, cy); mk.lineTo(7, cy); mk.stroke({ color: 0xff5a6a, width: 1 });
+    node.ornaments.addChild(mk);
+  }
+  if (u.alive && u.status.seeThroughSmoke) {
+    // Violet rune above head — Mystic's Arcane Sight cue.
+    const asg = new Graphics();
+    asg.circle(0, node.spriteTop - 14, 3.5).stroke({ color: 0xc79aff, width: 1.2 });
+    asg.circle(0, node.spriteTop - 14, 1).fill(0xeaf6ff);
+    node.ornaments.addChild(asg);
   }
 
   // ---- Selection ring.

@@ -15,7 +15,7 @@ import { hasLineOfSight } from '../game/engine/los';
 import { makeRng, type RNG } from '../game/engine/rng';
 import { decide } from '../game/engine/ai';
 
-export type ActionMode = 'idle' | 'move' | 'fire' | 'sidearm' | 'utility';
+export type ActionMode = 'idle' | 'move' | 'fire' | 'sidearm' | 'utility' | 'ability';
 
 /** Smoke cloud lifetime (in player rounds) before it dissipates. */
 const SMOKE_DURATION = 2;
@@ -97,6 +97,15 @@ type CombatState = {
   toggleOverwatch: () => boolean;
   /** Mid-mission Field Refit: swap one mod slot for 1 AP. Pass `null` to clear. */
   tryRefit: (slot: ModSlot, useSidearm: boolean, modId: string | null) => boolean;
+  /** Ranger ability: 1 AP + LOS. Marks an enemy for bonus damage on next hit. */
+  tryRangerMark: (targetId: UnitId) => boolean;
+  /** Warden ability (heavy weapons only): 1 AP + 1 primary ammo + LOS + range.
+   *  Suppresses target and any enemies chebyshev-1 from it. No damage. */
+  tryWardenBracingFire: (targetId: UnitId) => boolean;
+  /** Mystic ability: 1 AP, self-cast. Grants seeThroughSmoke for this turn. */
+  tryMysticArcaneSight: () => boolean;
+  /** Sapper ability: 1 AP + chebyshev range 3. Downgrade a cover tile. */
+  trySapperDemolish: (pos: Vec2) => boolean;
   endPlayerTurn: () => void;
   runEnemyTurn: () => Promise<void>;
   getShotPreview: (targetId: UnitId, useSidearm?: boolean) => ShotPreview | null;
@@ -194,7 +203,7 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
     utilityCharges,
     // Players don't use innate attack stats — combat resolves through their weapon.
     dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
-    status: { overwatch: false, blinded: false, suppressed: false },
+    status: { overwatch: false, blinded: false, suppressed: false, marked: false, seeThroughSmoke: false },
     alive: true,
     color: t.portraitColor,
     dirt: carry?.dirt ?? 0,
@@ -220,7 +229,7 @@ function mkEnemyUnit(templateId: string): Unit {
     dmgMax: t.dmgMax,
     rangeShort: t.rangeShort,
     rangeLong: t.rangeLong,
-    status: { overwatch: false, blinded: false, suppressed: false },
+    status: { overwatch: false, blinded: false, suppressed: false, marked: false, seeThroughSmoke: false },
     alive: true,
     color: t.color,
   };
@@ -399,10 +408,11 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const w = unitPrimary(u);
     if (!w) return false;
     if (u.ap < w.apCost || u.ammo <= 0) return false;
-    // Thermal optic ignores smoke for the LOS check.
+    // Thermal optic OR Mystic's Arcane Sight status ignores smoke.
     const mods = unitMods(u, false);
-    const blockers = mods.some((m) => m.effects.flags?.includes('thermal'))
-      ? undefined : new Set(st.smokeTiles.keys());
+    const seesSmoke = u.status.seeThroughSmoke
+      || mods.some((m) => m.effects.flags?.includes('thermal'));
+    const blockers = seesSmoke ? undefined : new Set(st.smokeTiles.keys());
     if (!hasLineOfSight(st.map, u.pos, t.pos, blockers)) return false;
     set({ pendingShotTargetId: targetId, pendingShotUsesSidearm: false, mode: 'fire' });
     return true;
@@ -418,8 +428,9 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     if (!w) return false;
     if (u.ap < w.apCost || u.sidearmAmmo <= 0) return false;
     const mods = unitMods(u, true);
-    const blockers = mods.some((m) => m.effects.flags?.includes('thermal'))
-      ? undefined : new Set(st.smokeTiles.keys());
+    const seesSmoke = u.status.seeThroughSmoke
+      || mods.some((m) => m.effects.flags?.includes('thermal'));
+    const blockers = seesSmoke ? undefined : new Set(st.smokeTiles.keys());
     if (!hasLineOfSight(st.map, u.pos, t.pos, blockers)) return false;
     set({ pendingShotTargetId: targetId, pendingShotUsesSidearm: true, mode: 'sidearm' });
     return true;
@@ -496,6 +507,88 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       : o);
     const verb = modId === null ? 'removes' : 'fits';
     set({ units, log: pushLog(st.log, `${u.name} ${verb} a mod (Field Refit).`) });
+    return true;
+  },
+
+  tryRangerMark: (targetId) => {
+    const st = get();
+    if (st.phase !== 'player') return false;
+    const u = st.units.find((x) => x.id === st.selectedId);
+    const t = st.units.find((x) => x.id === targetId);
+    if (!u || !u.alive || !t || !t.alive || t.faction === u.faction) return false;
+    if (getSoldierTemplate(u.templateId).class !== 'Ranger') return false;
+    if (u.ap < 1) return false;
+    if (!hasLineOfSight(st.map, u.pos, t.pos, new Set(st.smokeTiles.keys()))) return false;
+    const units = st.units.map((o) =>
+      o.id === u.id ? { ...o, ap: o.ap - 1 }
+      : o.id === t.id ? { ...o, status: { ...o.status, marked: true } }
+      : o);
+    set({ units, mode: 'idle',
+      log: pushLog(st.log, `${u.name} marks ${t.name} — next hit bites deeper.`) });
+    return true;
+  },
+
+  tryWardenBracingFire: (targetId) => {
+    const st = get();
+    if (st.phase !== 'player') return false;
+    const u = st.units.find((x) => x.id === st.selectedId);
+    const t = st.units.find((x) => x.id === targetId);
+    if (!u || !u.alive || !t || !t.alive || t.faction === u.faction) return false;
+    if (getSoldierTemplate(u.templateId).class !== 'Warden') return false;
+    const primary = u.loadout ? getWeapon(u.loadout.primaryId) : null;
+    if (!primary || primary.class !== 'heavy') return false;
+    if (u.ap < 1 || u.ammo <= 0) return false;
+    if (chebyshev(u.pos, t.pos) > primary.rangeLong) return false;
+    if (!hasLineOfSight(st.map, u.pos, t.pos, new Set(st.smokeTiles.keys()))) return false;
+    // Suppress target + any enemy within chebyshev-1 of them.
+    const units = st.units.map((o) => {
+      if (o.id === u.id) {
+        return { ...o, ap: o.ap - 1, ammo: Math.max(0, o.ammo - 1),
+          status: { ...o.status, overwatch: false } };
+      }
+      if (o.alive && o.faction !== u.faction && chebyshev(o.pos, t.pos) <= 1) {
+        return { ...o, status: { ...o.status, suppressed: true } };
+      }
+      return o;
+    });
+    set({ units, mode: 'idle',
+      log: pushLog(st.log, `${u.name} rakes the area with bracing fire — heads down.`) });
+    return true;
+  },
+
+  tryMysticArcaneSight: () => {
+    const st = get();
+    if (st.phase !== 'player') return false;
+    const u = st.units.find((x) => x.id === st.selectedId);
+    if (!u || !u.alive) return false;
+    if (getSoldierTemplate(u.templateId).class !== 'Mystic') return false;
+    if (u.ap < 1) return false;
+    const units = st.units.map((o) => o.id === u.id
+      ? { ...o, ap: o.ap - 1, status: { ...o.status, seeThroughSmoke: true } }
+      : o);
+    set({ units, mode: 'idle',
+      log: pushLog(st.log, `${u.name} weaves an Arcane Sight — smoke becomes glass.`) });
+    return true;
+  },
+
+  trySapperDemolish: (pos) => {
+    const st = get();
+    if (st.phase !== 'player') return false;
+    const u = st.units.find((x) => x.id === st.selectedId);
+    if (!u || !u.alive) return false;
+    if (getSoldierTemplate(u.templateId).class !== 'Sapper') return false;
+    if (u.ap < 1) return false;
+    if (chebyshev(u.pos, pos) > 3) return false;
+    const idx = pos.y * st.map.width + pos.x;
+    const tile = st.map.tiles[idx];
+    if (!tile || (tile.kind !== 'cover_full' && tile.kind !== 'cover_half')) return false;
+    const nextKind = tile.kind === 'cover_full' ? 'cover_half' : 'floor';
+    const nextTiles = st.map.tiles.slice();
+    nextTiles[idx] = { ...tile, kind: nextKind };
+    const nextMap = { ...st.map, tiles: nextTiles };
+    const units = st.units.map((o) => o.id === u.id ? { ...o, ap: o.ap - 1 } : o);
+    set({ units, map: nextMap, mode: 'idle',
+      log: pushLog(st.log, `${u.name} demolishes a cover tile — ${tile.kind} → ${nextKind}.`) });
     return true;
   },
 
@@ -615,8 +708,10 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       }
     }
     // Reset AP, clear short-lived statuses, and tick smoke clouds down.
+    // marked + seeThroughSmoke also clear here: both are 1-round buffs.
     const units = get().units.map((u) => u.alive
-      ? { ...u, ap: u.apMax, status: { ...u.status, blinded: false, suppressed: false } }
+      ? { ...u, ap: u.apMax, status: { ...u.status,
+          blinded: false, suppressed: false, marked: false, seeThroughSmoke: false } }
       : u);
     const nextSmoke = new Map<number, number>();
     let dissipated = 0;
@@ -746,26 +841,33 @@ function applyShotResult(
     };
     floaters.push(floaterFor(t.pos, 'MISS', 0x6b7689));
   } else {
-    const newHp = Math.max(0, t.hp - result.damage);
+    // Ranger's Mark adds +3 damage to the first incoming hit, then the
+    // mark clears. Applied BEFORE HP clamp so the bonus is real and the
+    // "rounds hit" log stays honest about the weapon roll.
+    const markBonus = t.status.marked ? 3 : 0;
+    const effDamage = result.damage + markBonus;
+    const newHp = Math.max(0, t.hp - effDamage);
     const died = newHp <= 0;
     // Heavy weapons suppress their target on hit — hosing the target
     // with a burst puts their head down. Cleared at end of enemy turn.
     const suppresses = !died && weapon.class === 'heavy';
     units = units.map((o) => o.id === t.id
       ? { ...o, hp: newHp, alive: !died,
-          status: suppresses ? { ...o.status, suppressed: true } : o.status }
+          status: { ...o.status, marked: false,
+            suppressed: suppresses ? true : o.status.suppressed } }
       : o);
     if (died) kills += 1;
     const refundTag = ammoRefund ? ' (round salvaged)' : '';
     const burstTag = result.hits && result.burstRounds
       ? ` — ${result.hits}/${result.burstRounds} rounds hit`
       : '';
+    const markTag = markBonus > 0 ? ' (marked +3)' : '';
     entry = {
       id: nextLogId++,
-      text: `${u.name} ${verb}${result.critical ? 'critically ' : ''}hits ${t.name} for ${result.damage}${burstTag}${refundTag}${died ? ' — eliminated!' : ''}.`,
+      text: `${u.name} ${verb}${result.critical ? 'critically ' : ''}hits ${t.name} for ${effDamage}${markTag}${burstTag}${refundTag}${died ? ' — eliminated!' : ''}.`,
       kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
     };
-    floaters.push(floaterFor(t.pos, `-${result.damage}`, result.critical ? 0xff9a3c : 0x57d18b));
+    floaters.push(floaterFor(t.pos, `-${effDamage}`, result.critical ? 0xff9a3c : 0x57d18b));
   }
   set({ units, kills, log: [...st.log, entry].slice(-60),
     mode: 'idle', pendingShotTargetId: null, pendingShotUsesSidearm: false,

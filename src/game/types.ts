@@ -234,6 +234,10 @@ export type Unit = {
     overwatch: boolean;
     blinded: boolean;
     suppressed: boolean;
+    /** Ranger ability: next damaging hit deals +3 bonus damage and clears the mark. */
+    marked: boolean;
+    /** Mystic ability: this unit's next shot ignores smoke LOS blockers. */
+    seeThroughSmoke: boolean;
   };
   alive: boolean;
   color: string;
