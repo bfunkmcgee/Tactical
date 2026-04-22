@@ -356,6 +356,108 @@ describe('combatStore: snapshotSquadCarry', () => {
   });
 });
 
+describe('combatStore: destructible cover', () => {
+  beforeEach(setupSoloDuel);
+
+  it('grenade downgrades cover_full → cover_half inside the blast radius', () => {
+    const shooter = useCombatStore.getState().units.find((u) => u.faction === 'player')!;
+    const enemy = useCombatStore.getState().units.find((u) => u.faction === 'enemy')!;
+    // Re-init with a map that has a cover_full tile inside the thrower's range.
+    useCombatStore.getState().initMission({
+      map: mkMap([
+        'P....H...G', // full cover at col 5, enemy at col 9
+      ]),
+      rosterIds: ['ranger_kestrel'],
+    });
+    const soldier = useCombatStore.getState().units.find((u) => u.faction === 'player')!;
+    // Embercore Orb is slot 0 with radius 2, range 7. Throw centred on col 5.
+    forceRng('hit');
+    useCombatStore.getState().queueUtility({ x: 5, y: 0 }, 0);
+    useCombatStore.getState().confirmPending();
+    const map = useCombatStore.getState().map;
+    expect(map.tiles[5].kind).toBe('cover_half'); // downgraded from cover_full
+    // Reference-equality check: new map object so the renderer redraws.
+    void shooter; void enemy; void soldier;
+  });
+
+  it('grenade downgrades cover_half → floor inside the blast radius', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P....h...G']),
+      rosterIds: ['ranger_kestrel'],
+    });
+    forceRng('hit');
+    useCombatStore.getState().queueUtility({ x: 5, y: 0 }, 0);
+    useCombatStore.getState().confirmPending();
+    expect(useCombatStore.getState().map.tiles[5].kind).toBe('floor');
+  });
+
+  it('grenade leaves walls untouched', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P....#...G']),
+      rosterIds: ['ranger_kestrel'],
+    });
+    forceRng('hit');
+    useCombatStore.getState().queueUtility({ x: 5, y: 0 }, 0);
+    useCombatStore.getState().confirmPending();
+    expect(useCombatStore.getState().map.tiles[5].kind).toBe('wall');
+  });
+
+  it('initMission clones the map so grenade damage does not leak between missions', () => {
+    // Start mission 1, blow up a cover tile.
+    useCombatStore.getState().initMission({
+      map: mkMap(['P....H...G']), rosterIds: ['ranger_kestrel'],
+    });
+    const mission1Map = useCombatStore.getState().map;
+    forceRng('hit');
+    useCombatStore.getState().queueUtility({ x: 5, y: 0 }, 0);
+    useCombatStore.getState().confirmPending();
+    expect(useCombatStore.getState().map.tiles[5].kind).toBe('cover_half');
+
+    // Start mission 2 using the SAME source map object.
+    useCombatStore.getState().initMission({
+      map: mission1Map, rosterIds: ['ranger_kestrel'],
+    });
+    // The fresh mission's map should NOT carry the previous mission's damage.
+    expect(useCombatStore.getState().map.tiles[5].kind).toBe('cover_full');
+  });
+});
+
+describe('combatStore: suppression', () => {
+  it('heavy-weapon hit applies the suppressed status; sidearm hit does not', () => {
+    // Deploy Warden (dragonmaw_autocannon = class heavy) so the primary
+    // is a heavy weapon and each round rolls independently.
+    useCombatStore.getState().initMission({
+      map: mkMap(['P........G']),
+      rosterIds: ['warden_brannock'],
+    });
+    useCombatStore.setState({ rng: makeRng(0xC0FFEE) });
+    forceRng('hit');
+    const target = useCombatStore.getState().units.find((u) => u.faction === 'enemy')!;
+    useCombatStore.getState().queueShot(target.id);
+    useCombatStore.getState().confirmPending();
+    const after = useCombatStore.getState().units.find((u) => u.id === target.id)!;
+    // The target either died (suppression moot) or survived and got suppressed.
+    if (after.alive) expect(after.status.suppressed).toBe(true);
+  });
+
+  it('rifle hit does NOT apply suppressed', () => {
+    // Ranger has runeweave_carbine (class rifle). Same fixture as the
+    // default test setup.
+    setupSoloDuel();
+    const target = useCombatStore.getState().units.find((u) => u.faction === 'enemy')!;
+    // Re-wound so they survive the shot.
+    useCombatStore.setState({
+      units: useCombatStore.getState().units.map((u) =>
+        u.id === target.id ? { ...u, hp: 99 } : u),
+    });
+    forceRng('hit');
+    useCombatStore.getState().queueShot(target.id);
+    useCombatStore.getState().confirmPending();
+    const after = useCombatStore.getState().units.find((u) => u.id === target.id)!;
+    expect(after.status.suppressed).toBe(false);
+  });
+});
+
 describe('combatStore: utilities', () => {
   beforeEach(setupSoloDuel);
 

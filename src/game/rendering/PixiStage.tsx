@@ -153,6 +153,7 @@ export default function PixiStage() {
       };
 
       const initialState = useCombatStore.getState();
+      let lastMap = initialState.map;
       drawMap(tileLayer, initialState.map);
       applyCam();
 
@@ -318,6 +319,13 @@ export default function PixiStage() {
           const now = performance.now();
           for (const f of s.floaters) active.push({ text: f.text, color: f.color, pos: f.pos, bornMs: now });
           useCombatStore.setState({ floaters: [] });
+        }
+        // The map is immutable during a mission except for destructible
+        // cover (grenades, demolish ability). Reference equality is
+        // enough to catch those swaps.
+        if (s.map !== lastMap) {
+          lastMap = s.map;
+          drawMap(tileLayer, s.map);
         }
         redrawOverlays(overlayLayer, s);
         if (spritesReady) syncUnits(unitLayer, unitNodes, s, spawnBlood);
@@ -1141,7 +1149,7 @@ function updateUnitNode(
   node.label.position.set(0, barY - 4);
   node.label.visible = u.alive;
 
-  // ---- Ornaments (overwatch, blinded).
+  // ---- Ornaments (overwatch, blinded, suppressed).
   node.ornaments.removeChildren();
   if (u.alive && u.status.overwatch) {
     const ow = new Graphics();
@@ -1153,6 +1161,16 @@ function updateUnitNode(
     bl.circle(-6, node.spriteTop - 10, 3).fill(0xc79aff);
     bl.circle(6, node.spriteTop - 10, 3).fill(0xc79aff);
     node.ornaments.addChild(bl);
+  }
+  if (u.alive && u.status.suppressed) {
+    // Three downward-pointing orange triangles — "head down" cue.
+    const sp = new Graphics();
+    for (let i = -1; i <= 1; i++) {
+      const cx = i * 6;
+      sp.poly([cx - 3, node.spriteTop - 12, cx + 3, node.spriteTop - 12, cx, node.spriteTop - 6])
+        .fill(0xff9a3c);
+    }
+    node.ornaments.addChild(sp);
   }
 
   // ---- Selection ring.

@@ -306,7 +306,14 @@ export const useCombatStore = create<CombatState>((set, get) => ({
 
   initMission: (opts) => {
     nextUnitId = 1; nextLogId = 1; nextFloaterId = 1;
-    const map = opts?.map ?? pickRandomMap();
+    const sourceMap = opts?.map ?? pickRandomMap();
+    // Clone the map + tiles so any in-mission mutations (destructible
+    // cover via grenades, demolish ability) don't bleed back into the
+    // engine-owned map singleton between missions.
+    const map: GridMap = {
+      ...sourceMap,
+      tiles: sourceMap.tiles.map((t) => ({ ...t })),
+    };
     const roster = opts?.rosterIds ?? useGameStore.getState().roster;
     const carries = opts?.carries ?? {};
     const units: Unit[] = [];
@@ -582,7 +589,12 @@ export const useCombatStore = create<CombatState>((set, get) => ({
           } else {
             const newHp = Math.max(0, target.hp - result.damage);
             const died = newHp <= 0;
-            units = units.map((o) => o.id === target.id ? { ...o, hp: newHp, alive: !died } : o);
+            // Enemy heavy weapons (scrap MG) suppress their target too.
+            const suppresses = !died && enemyTmpl?.fireClass === 'heavy';
+            units = units.map((o) => o.id === target.id
+              ? { ...o, hp: newHp, alive: !died,
+                  status: suppresses ? { ...o.status, suppressed: true } : o.status }
+              : o);
             if (target.faction === 'player') damageTaken += result.damage;
             const burstTag = result.hits && result.burstRounds
               ? ` — ${result.hits}/${result.burstRounds} rounds hit`
@@ -651,6 +663,38 @@ export const useCombatStore = create<CombatState>((set, get) => ({
 type Setter = (partial: Partial<CombatState> | ((s: CombatState) => Partial<CombatState>)) => void;
 type Getter = () => CombatState;
 
+/**
+ * Degrade every cover tile in a chebyshev radius around `center`:
+ * cover_full → cover_half → floor. Walls are unaffected. Produces a new
+ * map + tiles array only if something actually changed; callers can
+ * reference-equality check to decide whether to re-render.
+ */
+function damageCoverInRadius(
+  map: GridMap, center: Vec2, radius: number,
+): { map: GridMap; tilesChanged: number } {
+  let changed = 0;
+  let nextTiles: GridMap['tiles'] | null = null;
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) > radius) continue;
+      const x = center.x + dx, y = center.y + dy;
+      if (x < 0 || y < 0 || x >= map.width || y >= map.height) continue;
+      const idx = y * map.width + x;
+      const t = map.tiles[idx];
+      if (!t) continue;
+      if (t.kind !== 'cover_full' && t.kind !== 'cover_half') continue;
+      if (!nextTiles) nextTiles = map.tiles.slice();
+      nextTiles[idx] = {
+        ...t,
+        kind: t.kind === 'cover_full' ? 'cover_half' : 'floor',
+      };
+      changed++;
+    }
+  }
+  if (!nextTiles) return { map, tilesChanged: 0 };
+  return { map: { ...map, tiles: nextTiles }, tilesChanged: changed };
+}
+
 /** Shared shot-resolution path used by both primary and sidearm fire. */
 function applyShotResult(
   set: Setter, get: Getter, shooterId: UnitId, targetId: UnitId,
@@ -704,7 +748,13 @@ function applyShotResult(
   } else {
     const newHp = Math.max(0, t.hp - result.damage);
     const died = newHp <= 0;
-    units = units.map((o) => o.id === t.id ? { ...o, hp: newHp, alive: !died } : o);
+    // Heavy weapons suppress their target on hit — hosing the target
+    // with a burst puts their head down. Cleared at end of enemy turn.
+    const suppresses = !died && weapon.class === 'heavy';
+    units = units.map((o) => o.id === t.id
+      ? { ...o, hp: newHp, alive: !died,
+          status: suppresses ? { ...o.status, suppressed: true } : o.status }
+      : o);
     if (died) kills += 1;
     const refundTag = ammoRefund ? ' (round salvaged)' : '';
     const burstTag = result.hits && result.burstRounds
@@ -756,6 +806,9 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
   let msg = '';
   const floaters = [...st.floaters];
   let nextSmoke: Map<number, number> | null = null;
+  // Grenades can downgrade cover tiles in their radius. When tiles
+  // change we produce a new map reference so the renderer picks it up.
+  let nextMap: GridMap | null = null;
 
   if (util.kind === 'grenade' && util.dmgMin !== undefined && util.dmgMax !== undefined) {
     const dmgMin = util.dmgMin!, dmgMax = util.dmgMax!;
@@ -774,7 +827,17 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
       floaters.push(floaterFor(o.pos, `-${dmg}`, 0xff9a3c));
       return { ...o, hp: newHp, alive: !died };
     });
-    msg = `${u.name} throws ${util.name} — ${victims.length} caught in the blast.`;
+    // Destructible cover: full → half → floor for any cover tile inside
+    // the blast radius. Lights up a tactical option for grenades beyond
+    // just killing things.
+    const demolished = damageCoverInRadius(st.map, center, util.radius);
+    if (demolished.map !== st.map) {
+      nextMap = demolished.map;
+      if (demolished.tilesChanged > 0) {
+        msg = `${u.name} throws ${util.name} — ${victims.length} caught, ${demolished.tilesChanged} cover tile${demolished.tilesChanged === 1 ? '' : 's'} shredded.`;
+      }
+    }
+    if (!msg) msg = `${u.name} throws ${util.name} — ${victims.length} caught in the blast.`;
   } else if (util.kind === 'flashbang') {
     units = units.map((o) =>
       chebyshev(o.pos, center) <= util.radius && o.faction !== u.faction && o.alive
@@ -822,7 +885,8 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
   set({ units, kills, mode: 'idle', selectedUtilityIdx: null, pendingUtility: null,
     log: pushLog(st.log, msg, util.kind === 'medkit' ? 'heal' : 'info'),
     shakeFrames: util.kind === 'grenade' ? 10 : 0, floaters,
-    ...(nextSmoke ? { smokeTiles: nextSmoke } : {}) });
+    ...(nextSmoke ? { smokeTiles: nextSmoke } : {}),
+    ...(nextMap ? { map: nextMap } : {}) });
   set((s) => ({ reach: recalcReach(s) }));
   const end = checkEnd(get());
   if (end) set(end);
