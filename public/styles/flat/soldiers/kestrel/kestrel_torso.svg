@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Kestrel torso: olive tee + tan shoulder harness. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <rect x="44" y="40" width="8" height="10" fill="#e8c4a4"/>
+  <path d="M 34 50 L 62 50 L 64 82 L 32 82 Z" fill="#6a7a54"/>
+  <rect x="36" y="52" width="3" height="28" fill="#3a2a1c"/>
+  <rect x="57" y="52" width="3" height="28" fill="#3a2a1c"/>
+  <rect x="33" y="66" width="30" height="3" fill="#3a2a1c"/>
+</svg>

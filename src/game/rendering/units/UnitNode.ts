@@ -157,6 +157,25 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
       pushLoad(overlayCacheKey(o.legsSvg), o.legsSvg);
     }
   }
+  // Per-soldier rig-part overrides. Each soldier template that sets
+  // appearance.partOverrides contributes a handful of URLs that
+  // substitute for the shared rig parts at composition time. Cached
+  // under overlay:${url} matching the key shape buildHumanRigBody
+  // checks for overridden parts.
+  for (const s of Object.values(pack.soldierTemplates)) {
+    const overrides = s.appearance?.partOverrides;
+    if (!overrides) continue;
+    for (const url of Object.values(overrides)) {
+      if (url) pushLoad(overlayCacheKey(url), url);
+    }
+  }
+  for (const e of Object.values(pack.enemyTemplates)) {
+    const overrides = e.appearance?.partOverrides;
+    if (!overrides) continue;
+    for (const url of Object.values(overrides)) {
+      if (url) pushLoad(overlayCacheKey(url), url);
+    }
+  }
   await Promise.all(loads);
 }
 

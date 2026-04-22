@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Seraphine head: fair skin, grey eyes, delicate features + rune. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <ellipse cx="48" cy="28" rx="9" ry="12" fill="#e8c4a4" stroke="#8a6844" stroke-width="0.4"/>
+  <rect x="45" y="40" width="6" height="5" fill="#e8c4a4"/>
+  <ellipse cx="44" cy="28" rx="1.7" ry="1.1" fill="#ffffff"/>
+  <circle cx="44" cy="28" r="0.9" fill="#6a7078"/>
+  <ellipse cx="52" cy="28" rx="1.7" ry="1.1" fill="#ffffff"/>
+  <circle cx="52" cy="28" r="0.9" fill="#6a7078"/>
+  <line x1="46" y1="34" x2="50" y2="34" stroke="#8a4848" stroke-width="0.6" stroke-linecap="round"/>
+  <line x1="48" y1="30" x2="48" y2="33" stroke="#8a6844" stroke-width="0.3" opacity="0.5"/>
+  <circle cx="48" cy="22" r="0.8" fill="#c79aff" opacity="0.8"/>
+</svg>

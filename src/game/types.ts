@@ -238,6 +238,17 @@ export interface HumanAppearance {
   eyeColor: number;
   /** Id into pack.baseOutfits — clothes worn when no armor is equipped. */
   baseOutfit: string;
+  /**
+   * Optional per-part SVG overrides. When a rig part id appears here,
+   * the renderer uses the URL instead of the shared rig-part default.
+   * Lets signature characters (Eagle Corps heroes, future hand-authored
+   * enemies) ship distinct body art without creating a whole new rig.
+   *
+   * Keyed by `RigPartId` — 'legs' | 'torso' | 'arms-back' | 'head' |
+   * 'arms-front'. Types are stringly here to avoid an engine import
+   * into the content type. Unknown keys are ignored.
+   */
+  partOverrides?: Partial<Record<string, string>>;
 }
 
 export type SoldierTemplate = {

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Brannock head: tan skin, bald w/ brown stubble, hazel eyes, heavy brow + jaw. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <ellipse cx="48" cy="26" rx="11" ry="13" fill="#9a6a4a" stroke="#5a3020" stroke-width="0.4"/>
+  <rect x="42" y="38" width="12" height="6" fill="#9a6a4a"/>
+  <path d="M 38 20 Q 48 14 58 20 L 58 22 Q 48 20 38 22 Z" fill="#4a3020" opacity="0.6"/>
+  <path d="M 40 23 L 46 22 M 50 22 L 56 23" stroke="#3a2014" stroke-width="0.8" fill="none"/>
+  <ellipse cx="44" cy="26" rx="1.7" ry="1" fill="#ffffff"/>
+  <circle cx="44" cy="26" r="0.9" fill="#6a4a28"/>
+  <ellipse cx="52" cy="26" rx="1.7" ry="1" fill="#ffffff"/>
+  <circle cx="52" cy="26" r="0.9" fill="#6a4a28"/>
+  <path d="M 46 30 L 48 33 L 50 30" fill="none" stroke="#5a3020" stroke-width="0.5"/>
+  <line x1="44" y1="35" x2="52" y2="35" stroke="#3a2014" stroke-width="1" stroke-linecap="round"/>
+  <ellipse cx="48" cy="37" rx="6" ry="1.2" fill="#4a3020" opacity="0.5"/>
+</svg>

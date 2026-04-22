@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Kestrel head: fair skin, blue eyes. Hair layers on top (slot-mounted). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <ellipse cx="48" cy="28" rx="10" ry="12" fill="#e8c4a4" stroke="#8a6844" stroke-width="0.4"/>
+  <rect x="44" y="40" width="8" height="5" fill="#e8c4a4"/>
+  <ellipse cx="44" cy="28" rx="1.8" ry="1.2" fill="#ffffff"/>
+  <circle cx="44" cy="28" r="1" fill="#4a6a9a"/>
+  <ellipse cx="52" cy="28" rx="1.8" ry="1.2" fill="#ffffff"/>
+  <circle cx="52" cy="28" r="1" fill="#4a6a9a"/>
+  <line x1="45" y1="34" x2="51" y2="34" stroke="#4a2818" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="48" y1="30" x2="48" y2="33" stroke="#8a6844" stroke-width="0.4" opacity="0.6"/>
+</svg>

@@ -34,11 +34,19 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
     },
     appearance: {
       rig: 'human',
-      skinTone: 0xe8c4a4, // fair
+      skinTone: 0xe8c4a4, // fair (baked into part SVGs; kept for any slot
+                          // that falls back to the shared rig part)
       hairStyle: 'short_crop',
       hairColor: 0x1a1410, // black
       eyeColor: 0x4a6a9a,  // blue
       baseOutfit: 'fatigues',
+      partOverrides: {
+        legs:         '/styles/flat/soldiers/kestrel/kestrel_legs.svg',
+        torso:        '/styles/flat/soldiers/kestrel/kestrel_torso.svg',
+        'arms-back':  '/styles/flat/soldiers/kestrel/kestrel_arms_back.svg',
+        head:         '/styles/flat/soldiers/kestrel/kestrel_head.svg',
+        'arms-front': '/styles/flat/soldiers/kestrel/kestrel_arms_front.svg',
+      },
     },
   },
   warden_brannock: {
@@ -62,6 +70,13 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       hairColor: 0x4a3020, // brown (stubble / beard tint)
       eyeColor: 0x6a4a28,  // hazel
       baseOutfit: 'utility',
+      partOverrides: {
+        legs:         '/styles/flat/soldiers/brannock/brannock_legs.svg',
+        torso:        '/styles/flat/soldiers/brannock/brannock_torso.svg',
+        'arms-back':  '/styles/flat/soldiers/brannock/brannock_arms_back.svg',
+        head:         '/styles/flat/soldiers/brannock/brannock_head.svg',
+        'arms-front': '/styles/flat/soldiers/brannock/brannock_arms_front.svg',
+      },
     },
   },
   mystic_seraphine: {
@@ -85,6 +100,13 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       hairColor: 0xe8e4d8, // white
       eyeColor: 0x6a7078,  // grey
       baseOutfit: 'robes',
+      partOverrides: {
+        legs:         '/styles/flat/soldiers/seraphine/seraphine_legs.svg',
+        torso:        '/styles/flat/soldiers/seraphine/seraphine_torso.svg',
+        'arms-back':  '/styles/flat/soldiers/seraphine/seraphine_arms_back.svg',
+        head:         '/styles/flat/soldiers/seraphine/seraphine_head.svg',
+        'arms-front': '/styles/flat/soldiers/seraphine/seraphine_arms_front.svg',
+      },
     },
   },
   sapper_orin: {
@@ -108,6 +130,13 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       hairColor: 0x7a3a20, // auburn
       eyeColor: 0x3a5a3a,  // green
       baseOutfit: 'utility',
+      partOverrides: {
+        legs:         '/styles/flat/soldiers/orin/orin_legs.svg',
+        torso:        '/styles/flat/soldiers/orin/orin_torso.svg',
+        'arms-back':  '/styles/flat/soldiers/orin/orin_arms_back.svg',
+        head:         '/styles/flat/soldiers/orin/orin_head.svg',
+        'arms-front': '/styles/flat/soldiers/orin/orin_arms_front.svg',
+      },
     },
   },
 };

@@ -94,10 +94,18 @@ export function buildHumanRigBody(
   const partTopY = footOffsetY - scaledH;
   const partLeftX = -(rig.viewBox.w * SPRITE_SCALE) / 2;
 
-  // Instantiate each base part in the rig's draw order.
+  // Instantiate each base part in the rig's draw order. Per-soldier
+  // `appearance.partOverrides` can substitute a custom SVG for any
+  // individual part — the renderer prefers the override URL (cached
+  // under `overlay:${url}`) when present, falling back to the shared
+  // rig part (`rig:${rigId}:${partId}`) when not.
   const parts: Partial<Record<RigPartId, Sprite>> = {};
   for (const partId of rig.parts) {
-    const sprite = new Sprite(cache.get(`rig:${rig.id}:${partId}`));
+    const overrideUrl = appearance.partOverrides?.[partId];
+    const tex = overrideUrl
+      ? cache.get(`overlay:${overrideUrl}`) ?? cache.get(`rig:${rig.id}:${partId}`)
+      : cache.get(`rig:${rig.id}:${partId}`);
+    const sprite = new Sprite(tex);
     sprite.anchor.set(0, 0);
     sprite.scale.set(SPRITE_SCALE);
     sprite.position.set(partLeftX, partTopY);
@@ -106,9 +114,13 @@ export function buildHumanRigBody(
     if (partId !== 'arms-front') root.addChild(sprite);
   }
 
-  applyPartTint(parts, 'head', appearance.skinTone);
-  applyPartTint(parts, 'arms-back', appearance.skinTone);
-  applyPartTint(parts, 'arms-front', appearance.skinTone);
+  // Skin tint applies only to shared-rig parts. When a soldier ships
+  // their own authored part SVG via partOverrides, the skin tone is
+  // baked in — multiplying it with a whole-sprite tint would double-
+  // darken the authored colour. Override parts stay at identity tint.
+  if (!appearance.partOverrides?.head) applyPartTint(parts, 'head', appearance.skinTone);
+  if (!appearance.partOverrides?.['arms-back']) applyPartTint(parts, 'arms-back', appearance.skinTone);
+  if (!appearance.partOverrides?.['arms-front']) applyPartTint(parts, 'arms-front', appearance.skinTone);
 
   // Attachment slots. Positioning follows joint anchors scaled into local
   // coords; z-order is enforced by insertion order relative to the base

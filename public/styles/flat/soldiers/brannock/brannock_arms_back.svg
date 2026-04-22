@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Brannock arms-back: heavy sleeve + large tan hand. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <path d="M 26 52 L 32 52 L 34 78 L 28 80 Z" fill="#4a4230" stroke="#1a1008" stroke-width="0.4"/>
+  <ellipse cx="30" cy="82" rx="3.5" ry="4" fill="#9a6a4a"/>
+</svg>

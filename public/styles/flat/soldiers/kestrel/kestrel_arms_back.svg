@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Kestrel arms-back: olive sleeve + fair-skin hand, bracing position. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <path d="M 30 52 L 36 52 L 38 78 L 32 80 Z" fill="#6a7a54" stroke="#2a3020" stroke-width="0.4"/>
+  <ellipse cx="34" cy="82" rx="3" ry="3.5" fill="#e8c4a4"/>
+</svg>
