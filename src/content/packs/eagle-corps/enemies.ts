@@ -29,6 +29,9 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     kind: 'ranged',
     color: '#6a7048', // deeper moss green
     fireClass: 'rifle', // scrap assault rifle — single shouldered shot.
+    // Orcs carry a crude satchel-bomb. When the AI sees two or more
+    // squad members huddled in the same 2-tile ring, it lobs it.
+    grenade: { dmgMin: 3, dmgMax: 5, radius: 2, range: 6 },
   },
   rust_troll: {
     id: 'rust_troll',

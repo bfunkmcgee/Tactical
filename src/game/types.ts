@@ -198,6 +198,17 @@ export type EnemyTemplate = {
    * round independently. Defaults to 1 when omitted.
    */
   burstShots?: number;
+  /**
+   * Enemy-thrown grenade stats. When present, the AI may pick a throw
+   * action when it sees two or more players clustered inside `radius`
+   * of one another. Omitted enemies never throw.
+   */
+  grenade?: {
+    dmgMin: number;
+    dmgMax: number;
+    radius: number;  // chebyshev blast radius
+    range: number;   // chebyshev max throw distance from the enemy
+  };
 };
 
 export type Faction = 'player' | 'enemy';

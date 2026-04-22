@@ -201,6 +201,69 @@ describe('AI decide()', () => {
     expect(intent.kind).not.toBe('attack');
   });
 
+  it('throws a grenade when two players cluster inside the blast radius', () => {
+    const m = mkMap(['..........']);
+    const orc = mkEnemy({ pos: { x: 0, y: 0 }, rangeLong: 5 });
+    const p1 = mkPlayer({ id: 1, pos: { x: 3, y: 0 } });
+    // Cluster: p2 sits within chebyshev-2 of p1 so a grenade at p1's
+    // tile catches both.
+    const p2 = mkPlayer({ id: 2, pos: { x: 4, y: 0 } });
+    const intent = decide(m, orc, [orc, p1, p2], undefined,
+      { dmgMin: 3, dmgMax: 5, radius: 2, range: 6 });
+    expect(intent.kind).toBe('throw');
+    if (intent.kind === 'throw') {
+      // Centre should be one of the two players' tiles.
+      expect([[p1.pos.x, p1.pos.y], [p2.pos.x, p2.pos.y]])
+        .toContainEqual([intent.center.x, intent.center.y]);
+    }
+  });
+
+  it('does NOT throw when only one player is in blast range', () => {
+    const m = mkMap(['..........']);
+    const orc = mkEnemy({ pos: { x: 0, y: 0 }, rangeLong: 5 });
+    const lone = mkPlayer({ pos: { x: 3, y: 0 } });
+    const intent = decide(m, orc, [orc, lone], undefined,
+      { dmgMin: 3, dmgMax: 5, radius: 2, range: 6 });
+    // Should fall through to attack (in range) — NOT throw.
+    expect(intent.kind).not.toBe('throw');
+  });
+
+  it('sets overwatch when a ranged enemy with full AP has no shot but a player is approaching', () => {
+    // Enemy at (1, 1) with cover (wall at (1, 0)). Player at (5, 1) —
+    // nearest distance 4, enemy rangeLong=3, so player is within
+    // rangeLong + 3 and we should overwatch.
+    const m = mkMap([
+      '.#........',
+      '..........',
+      '..........',
+    ]);
+    const enemy = mkEnemy({
+      pos: { x: 1, y: 1 },
+      hp: 10, hpMax: 10,     // full HP (not wounded)
+      rangeLong: 3,
+      ap: 2, apMax: 2,
+    });
+    const player = mkPlayer({ pos: { x: 5, y: 1 } });
+    const intent = decide(m, enemy, [enemy, player]);
+    expect(intent.kind).toBe('overwatch');
+  });
+
+  it('does NOT overwatch a melee enemy (berserker keeps charging)', () => {
+    const m = mkMap([
+      '.#........',
+      '..........',
+      '..........',
+    ]);
+    const berserker = mkEnemy({
+      pos: { x: 1, y: 1 },
+      rangeLong: 1,     // melee — bypasses overwatch branch
+      ap: 2, apMax: 2,
+    });
+    const player = mkPlayer({ pos: { x: 5, y: 1 } });
+    const intent = decide(m, berserker, [berserker, player]);
+    expect(intent.kind).not.toBe('overwatch');
+  });
+
   it('move path is never empty when returned', () => {
     const m = mkMap(['.....']);
     const enemy = mkEnemy({ pos: { x: 0, y: 0 }, rangeLong: 1, mobility: 2 });

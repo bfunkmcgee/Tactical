@@ -453,6 +453,11 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       : o);
     set({ units: next, mode: 'idle' });
     set((s) => ({ reach: recalcReach(s), log: pushLog(s.log, `${u.name} moves.`) }));
+    // Enemy overwatch: if the player just stepped into LOS of a
+    // watching enemy, trigger their reactive shot. This mirrors the
+    // runEnemyTurn triggerOverwatch that already exists for players
+    // watching enemies.
+    triggerEnemyOverwatch(set, get, u.id);
     // reach_tile missions end when a player foot lands on the goal.
     const end = checkEnd(get());
     if (end) set(end);
@@ -683,8 +688,28 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     for (const eSnap of enemies) {
       let actor = get().units.find((u) => u.id === eSnap.id);
       while (actor && actor.alive && actor.ap > 0) {
-        const intent = decide(get().map, actor, get().units, smokeSet());
+        const actorTmpl = useContent().enemyTemplates[actor.templateId];
+        const intent = decide(get().map, actor, get().units, smokeSet(), actorTmpl?.grenade);
         if (intent.kind === 'wait') break;
+        if (intent.kind === 'overwatch') {
+          // Zero AP + set the flag. Player moves on the next turn
+          // trigger reactive fire via triggerEnemyOverwatch below.
+          set({
+            units: get().units.map((o) => o.id === actor!.id
+              ? { ...o, ap: 0, status: { ...o.status, overwatch: true } }
+              : o),
+            log: pushLog(get().log, `${actor.name} sets overwatch.`),
+          });
+          break;
+        }
+        if (intent.kind === 'throw' && actorTmpl?.grenade) {
+          resolveEnemyThrow(set, get, actor.id, intent.center, actorTmpl.grenade);
+          if (delay) await sleep(delay);
+          const end = checkEnd(get());
+          if (end) { set(end); return; }
+          actor = get().units.find((u) => u.id === eSnap.id);
+          continue;
+        }
         if (intent.kind === 'move') {
           const steps = Math.min(intent.path.length - 1, actor.mobility * actor.ap);
           if (steps <= 0) break;
@@ -1120,4 +1145,123 @@ function triggerOverwatch(set: Setter, get: Getter, enemyId: UnitId): boolean {
   }];
   set({ units, kills, floaters, fireEvents, log: [...st.log, entry].slice(-60), shakeFrames: result.kind === 'hit' ? 8 : 0 });
   return true;
+}
+
+/**
+ * Mirror of triggerOverwatch for the enemy side. When a player moves
+ * and steps into LOS of an overwatching enemy, that enemy takes a
+ * reactive shot at penalised accuracy. Consumes overwatch regardless
+ * of hit.
+ */
+function triggerEnemyOverwatch(set: Setter, get: Getter, playerId: UnitId): boolean {
+  const st = get();
+  const player = st.units.find((u) => u.id === playerId);
+  if (!player || !player.alive) return false;
+  const smokeSet = new Set(st.smokeTiles.keys());
+  const watcher = st.units.find((u) => {
+    if (u.faction !== 'enemy' || !u.alive || !u.status.overwatch) return false;
+    return hasLineOfSight(st.map, u.pos, player.pos, smokeSet);
+  });
+  if (!watcher) return false;
+  const armorDr = unitArmor(player);
+  const watcherTmpl = useContent().enemyTemplates[watcher.templateId];
+  const base = resolveEnemyAttack(
+    st.map, watcher, player, armorDr, st.rng, smokeSet, watcherTmpl?.burstShots,
+  );
+  // Apply the overwatch accuracy penalty retroactively: if the base
+  // hit rolled "just barely", we convert it to a miss. This keeps the
+  // existing resolveEnemyAttack path (with its burst / crit math)
+  // intact without duplicating the whole function.
+  const result = base.preview.hitChance < OVERWATCH_HIT_PENALTY + 15
+    ? { ...base, kind: 'miss' as const } // dismiss low-odds overwatch hits
+    : base;
+
+  let units = st.units.map((o) => o.id === watcher.id
+    ? { ...o, ap: 0, status: { ...o.status, overwatch: false } } : o);
+  let damageTaken = st.damageTaken;
+  const floaters = [...st.floaters];
+  let entry: LogEntry;
+  if (result.kind === 'miss') {
+    entry = { id: nextLogId++, text: `${watcher.name} reacts — misses ${player.name}.`, kind: 'miss' };
+    floaters.push(floaterFor(player.pos, 'MISS', 0xff9a3c));
+  } else {
+    const newHp = Math.max(0, player.hp - result.damage);
+    const died = newHp <= 0;
+    units = units.map((o) => o.id === player.id ? { ...o, hp: newHp, alive: !died } : o);
+    damageTaken += result.damage;
+    entry = {
+      id: nextLogId++,
+      text: `${watcher.name} reacts — hits ${player.name} for ${result.damage}${died ? ' — down!' : ''}.`,
+      kind: died ? 'kill' : 'hit',
+    };
+    floaters.push(floaterFor(player.pos, `-${result.damage}`, 0xff5a6a));
+  }
+  const fireEvents = [...st.fireEvents, {
+    id: nextFireEventId++,
+    shooterId: watcher.id,
+    shooterPos: watcher.pos,
+    targetPos: player.pos,
+    fireClass: fireClassFor(watcher, null),
+  }];
+  set({ units, damageTaken, floaters, fireEvents, log: [...st.log, entry].slice(-60),
+    shakeFrames: result.kind === 'hit' ? 8 : 0 });
+  return true;
+}
+
+/**
+ * Enemy grenade throw. Mirrors the grenade branch of
+ * resolvePlayerUtility — same damage math, same cover-degrade pass.
+ * Pushes a FireEvent with fireClass 'heavy' so the renderer plays
+ * a throw-appropriate animation.
+ */
+function resolveEnemyThrow(
+  set: Setter, get: Getter, actorId: UnitId, center: Vec2,
+  grenade: { dmgMin: number; dmgMax: number; radius: number; range: number },
+) {
+  const st = get();
+  const actor = st.units.find((u) => u.id === actorId);
+  if (!actor || !actor.alive) return;
+
+  const victims: Unit[] = [];
+  for (const other of st.units) {
+    if (!other.alive) continue;
+    if (chebyshev(other.pos, center) <= grenade.radius) victims.push(other);
+  }
+  let units = st.units.map((o) => {
+    if (!victims.find((v) => v.id === o.id)) return o;
+    const dr = o.faction === 'player' ? unitArmor(o) : 0;
+    const dmg = Math.max(1, (grenade.dmgMin + st.rng.int(grenade.dmgMax - grenade.dmgMin + 1)) - dr);
+    const newHp = Math.max(0, o.hp - dmg);
+    const died = newHp <= 0;
+    return { ...o, hp: newHp, alive: !died };
+  });
+  // Spend 1 AP on the throw.
+  units = units.map((o) => o.id === actor.id ? { ...o, ap: o.ap - 1 } : o);
+  // Shred cover inside the blast — same rule as player grenades.
+  const demolished = damageCoverInRadius(st.map, center, grenade.radius);
+  const nextMap = demolished.map !== st.map ? demolished.map : st.map;
+
+  const floaters = [...st.floaters];
+  for (const v of victims) {
+    const fresh = units.find((u) => u.id === v.id);
+    if (!fresh) continue;
+    const dmgTaken = v.hp - fresh.hp;
+    if (dmgTaken > 0) floaters.push(floaterFor(v.pos, `-${dmgTaken}`, 0xff9a3c));
+  }
+  const damageTaken = st.damageTaken + units
+    .filter((u) => u.faction === 'player' && !u.alive && st.units.find((o) => o.id === u.id)?.alive)
+    .reduce((s, u) => s + (st.units.find((o) => o.id === u.id)?.hp ?? 0), 0);
+
+  const fireEvents = [...st.fireEvents, {
+    id: nextFireEventId++,
+    shooterId: actor.id,
+    shooterPos: actor.pos,
+    targetPos: center,
+    fireClass: 'heavy' as WeaponClass,  // reuses the heavy burst animation for the throw arc + flash
+  }];
+  set({
+    units, damageTaken, floaters, fireEvents, map: nextMap,
+    log: pushLog(st.log, `${actor.name} lobs a crude grenade — ${victims.length} caught${demolished.tilesChanged > 0 ? `, ${demolished.tilesChanged} cover tile${demolished.tilesChanged === 1 ? '' : 's'} shredded` : ''}.`),
+    shakeFrames: 10,
+  });
 }
