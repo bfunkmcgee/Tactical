@@ -3,6 +3,7 @@ import { useCombatStore } from '../state/combatStore';
 import { useContent, getWeapon, getMod } from '../content/registry';
 import { SIDEARM_MOD_SLOTS } from '../game/types';
 import type { ModSlot } from '../game/types';
+import { soundEngine } from '../game/audio/soundEngine';
 import ModPicker from './components/ModPicker';
 
 const PRIMARY_SLOTS: ModSlot[] = ['optic', 'magazine', 'muzzle', 'stock'];
@@ -33,6 +34,9 @@ export default function CombatHUD() {
   // Field Refit panel state lives in the HUD (not the store) — it's UI-only.
   const [refitOpen, setRefitOpen] = useState(false);
   const [refitPicker, setRefitPicker] = useState<{ slot: ModSlot; sidearm: boolean } | null>(null);
+  // Mirror the sound engine's mute flag so React re-renders the chip
+  // when it toggles. soundEngine persists the value to localStorage.
+  const [muted, setMuted] = useState(() => soundEngine.isMuted());
 
   const selected = units.find((u) => u.id === selectedId);
   const playerUnits = units.filter((u) => u.faction === 'player');
@@ -57,8 +61,19 @@ export default function CombatHUD() {
       {/* Top status */}
       <div style={{ position: 'fixed', top: 'calc(var(--safe-top) + var(--s-2))', left: 'var(--s-2)', right: 'var(--s-2)', display: 'flex', gap: 'var(--s-2)', pointerEvents: 'none', zIndex: 10 }}>
         <div className="panel stack" style={{ padding: '6px 10px', fontSize: 13, pointerEvents: 'auto', gap: 2 }}>
-          <div>
-            <strong>Round {round}</strong> · {phase === 'player' ? 'Your turn' : phase === 'enemy' ? 'Enemy turn' : phase === 'won' ? 'Victory' : 'Defeat'}
+          <div className="row" style={{ gap: 8, alignItems: 'center' }}>
+            <strong>Round {round}</strong>
+            <span>· {phase === 'player' ? 'Your turn' : phase === 'enemy' ? 'Enemy turn' : phase === 'won' ? 'Victory' : 'Defeat'}</span>
+            <button
+              onClick={() => { setMuted(soundEngine.toggleMute()); }}
+              aria-label={muted ? 'Unmute' : 'Mute'}
+              style={{
+                padding: '2px 8px', minHeight: 22, minWidth: 28,
+                fontSize: 13, background: 'transparent',
+                border: '1px solid var(--bg-3)', color: muted ? 'var(--fg-2)' : 'var(--accent)',
+              }}>
+              {muted ? '🔇' : '🔊'}
+            </button>
           </div>
           <div style={{ fontSize: 11, color: 'var(--fg-2)', textTransform: 'uppercase', letterSpacing: 0.6 }}>
             {objectiveLabel(objective, units, useCombatStore.getState().defendTurns)}
@@ -249,7 +264,9 @@ export default function CombatHUD() {
           );
         })()}
         <div style={{ flex: 1 }} />
-        <button className="primary" onClick={() => endPlayerTurn()} disabled={phase !== 'player'}>End Turn</button>
+        <button className="primary"
+          onClick={() => { soundEngine.play('ui.primary'); endPlayerTurn(); }}
+          disabled={phase !== 'player'}>End Turn</button>
       </div>
 
       {/* Refit overlay */}

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Application, Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { useCombatStore, type FireEvent } from '../../state/combatStore';
 import { useContent } from '../../content/registry';
+import { soundEngine, type SoundKey } from '../audio/soundEngine';
 import type { GridMap, TileKind, Unit, UnitId, Vec2, WeaponClass } from '../types';
 import { TILE_W, TILE_H, gridToScreen, screenToGrid } from './isoProjection';
 import { chebyshev, keyOf, tileAt } from '../engine/grid';
@@ -335,10 +336,29 @@ export default function PixiStage() {
           });
         }
         bloods.push({ bornMs: performance.now(), droplets });
+        // "Crit" shorthand: any hit dealing 8+ damage gets the
+        // punchier crit sound; smaller hits play the standard hit
+        // clip. Kill SFX is layered on top in the subscriber below
+        // when HP drops to zero.
+        soundEngine.play(damage >= 8 ? 'crit' : 'hit');
       }
 
+      let lastPhase = useCombatStore.getState().phase;
+      let lastRound = useCombatStore.getState().round;
       const unsub = useCombatStore.subscribe(() => {
         const s = useCombatStore.getState();
+        // Phase + round transition stingers. Round-start fires only
+        // for rounds ≥ 2 so the initial deploy doesn't blast audio
+        // before the screen even settles.
+        if (s.phase !== lastPhase) {
+          if (s.phase === 'won') soundEngine.play('victory');
+          else if (s.phase === 'lost') soundEngine.play('defeat');
+          lastPhase = s.phase;
+        }
+        if (s.round !== lastRound && s.round > 1 && s.phase === 'player') {
+          soundEngine.play('round.start');
+          lastRound = s.round;
+        }
         if (s.floaters.length > 0) {
           const now = performance.now();
           for (const f of s.floaters) active.push({ text: f.text, color: f.color, pos: f.pos, bornMs: now });
@@ -358,6 +378,12 @@ export default function PixiStage() {
         // for any shooter just spawned by initMission.
         if (s.fireEvents.length > 0) {
           if (spritesReady) applyFireEvents(unitNodes, s.fireEvents);
+          // Fire SFX keyed by fireClass — e.g. 'shot.rifle' / 'shot.heavy'.
+          // Missing assets silently no-op so the game still plays if
+          // the audio directory is incomplete.
+          for (const evt of s.fireEvents) {
+            soundEngine.play(`shot.${evt.fireClass}` as SoundKey);
+          }
           useCombatStore.setState({ fireEvents: [] });
         }
       });
