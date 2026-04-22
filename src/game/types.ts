@@ -163,6 +163,29 @@ export type Kit = {
   tag: ElementTag;
 };
 
+/**
+ * Per-character appearance data for rig-composed units. When set on a
+ * SoldierTemplate (or future EnemyTemplate), the renderer builds the
+ * unit from the standard human rig + the palette fields below instead
+ * of the legacy bespoke `${id}:body/arms/weapon` SVG triple.
+ *
+ * Rig foundations live in `src/game/engine/rig.ts` and
+ * `src/content/rigs/human.ts`.
+ */
+export interface HumanAppearance {
+  /** Rig id — currently only 'human' is registered. */
+  rig: 'human';
+  /** Multiplicative tint applied to exposed-skin patches
+   *  (paths authored with class="skin") on head + arms. */
+  skinTone: number;
+  /** Id into pack.hairStyles. */
+  hairStyle: string;
+  hairColor: number;
+  eyeColor: number;
+  /** Id into pack.baseOutfits — clothes worn when no armor is equipped. */
+  baseOutfit: string;
+}
+
 export type SoldierTemplate = {
   id: string;
   name: string;
@@ -172,6 +195,13 @@ export type SoldierTemplate = {
   mobility: number; // tiles per action point
   portraitColor: string; // MVP: flat color until sprites land
   defaultLoadout: Loadout;
+  /**
+   * When set, the renderer composes this soldier from the named rig +
+   * appearance palette instead of the bespoke SVG triple. Optional;
+   * existing soldiers without this field keep rendering via the legacy
+   * path.
+   */
+  appearance?: HumanAppearance;
 };
 
 export type EnemyTemplate = {

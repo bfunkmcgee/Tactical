@@ -50,6 +50,20 @@ export interface ContentPack {
   /** Initial base-stockpile counts on a fresh campaign for this pack. */
   initialStockpile?: Record<string, number>;
 
+  // -------- Rig-based appearance catalogs (optional) --------
+  // Consulted only when a template sets `appearance` (see HumanAppearance in
+  // game/types.ts). Packs without rig-composed characters can omit both.
+
+  /** Hair-style SVGs. Rendered centered on `joints.head` at natural scale.
+   *  Keyed by style id — referenced from HumanAppearance.hairStyle. */
+  hairStyles?: Record<string, { id: string; name: string; svg: string }>;
+
+  /** Base outfits — civvies worn when no armor is equipped. Two SVGs per
+   *  outfit (torso + legs) so the base silhouette can differ from any
+   *  armor overlays that equip on top. Keyed by outfit id — referenced
+   *  from HumanAppearance.baseOutfit. */
+  baseOutfits?: Record<string, { id: string; name: string; torsoSvg: string; legsSvg: string }>;
+
   // -------- Optional theming --------
   theme?: PackTheme;
 }
