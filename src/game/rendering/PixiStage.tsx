@@ -480,8 +480,8 @@ const DESERT_PALETTE: TilePalette = {
   wall: 0x4a3520,                         // weathered adobe
   wallHighlight: 0x8a6838,                // sun-hit top ridge of adobe
   wallStain: 0x2a1a0a,                    // dark weathering drips
-  halfCover: 0xa97947,                    // broken clay brick
-  fullCover: 0xd09355,                    // taller sandstone column
+  halfCover: 0x8a5a2e,                    // dark clay-brick (deeper + earthier)
+  fullCover: 0xd9b074,                    // pale sandstone column (bright + cool)
   coverHighlight: 0xe8c488,               // gold-lit top surface
   coverShade: 0x704a20,                   // shaded right side
   coverStroke: 0x3a2814,
@@ -556,18 +556,26 @@ function drawMap(layer: Container, map: GridMap) {
           drawRefineryCover(g, t.kind, p.x, p.y, h, pal);
         } else {
           // Per-tile fill variance so adjacent blocks don't look
-          // stamped from the same die. Pseudo-random ±12% brightness
-          // shift driven by the shared tile hash.
-          const variance = ((tileHash >>> 4) % 25) - 12;
+          // stamped from the same die. Pseudo-random ±20% brightness
+          // shift — doubled from the first pass so the rhythm reads
+          // at tile zoom.
+          const variance = ((tileHash >>> 4) % 41) - 20;
           const tintedFill = shiftBrightness(fill, variance);
-          // ~30% of blocks get a broken-top silhouette — adds
-          // visual rhythm without touching the map data.
-          const broken = t.kind === 'cover_half' && ((tileHash >>> 12) % 10) < 3;
+          // ~40% of half-cover blocks break (up from 30%) — the
+          // silhouette rhythm was still too subtle at lower rates.
+          const broken = t.kind === 'cover_half' && ((tileHash >>> 12) % 10) < 4;
           if (broken) {
             drawBrokenCoverShape(g, p.x, p.y, h, tileHash, tintedFill, pal.coverStroke);
           } else {
-            g.rect(p.x - 14, p.y - h, 28, h)
-              .fill({ color: tintedFill, alpha: 0.95 })
+            // Trapezoid silhouette with a slight inward batter at the
+            // top (2px per side). Desert masonry tapers; rectangles
+            // read as wooden crates.
+            g.poly([
+              p.x - 14,     p.y,
+              p.x - 14 + 2, p.y - h,
+              p.x + 14 - 2, p.y - h,
+              p.x + 14,     p.y,
+            ]).fill({ color: tintedFill, alpha: 0.95 })
               .stroke({ color: pal.coverStroke, width: 1 });
           }
           if (desert) drawDesertCoverDetail(g, t.kind, p.x, p.y, h, x, y, pal);
@@ -606,25 +614,33 @@ function drawBrokenCoverShape(
   g: Graphics, px: number, py: number, h: number,
   tileHash: number, fill: number, stroke: number,
 ) {
+  // Slight batter on the intact sides so this cousin of the
+  // standard-silhouette block still feels like the same material.
   const left = px - 14, right = px + 14, top = py - h, bot = py;
-  // Notch position + width seeded from hash so the same tile always
-  // looks the same.
-  const notchStart = left + 6 + ((tileHash >>> 20) % 10);
-  const notchW = 5;
-  const notchDepth = 4;
-  // Build the silhouette as a polygon with a V-notch on the top edge.
+  const topLeft = left + 2, topRight = right - 2;
+  // Bigger notch: 8 wide, 6 deep (was 5 / 4). Reads at tile zoom.
+  const notchStart = topLeft + 3 + ((tileHash >>> 20) % 8);
+  const notchW = 8;
+  const notchDepth = 6;
+  // Jagged V with a central hump so the notch doesn't look like a
+  // perfect triangular cut.
   g.poly([
     left, bot,
-    left, top,
-    notchStart, top,
-    notchStart + notchW / 2, top + notchDepth,
+    topLeft, top,
+    notchStart,          top,
+    notchStart + notchW * 0.3, top + notchDepth,
+    notchStart + notchW * 0.55, top + notchDepth - 2,
+    notchStart + notchW * 0.7, top + notchDepth,
     notchStart + notchW, top,
-    right, top,
+    topRight, top,
     right, bot,
   ]).fill({ color: fill, alpha: 0.95 }).stroke({ color: stroke, width: 1 });
-  // Rubble dot nestled in the notch, reads as debris.
-  g.circle(notchStart + notchW / 2, top + notchDepth + 0.5, 0.9)
-    .fill({ color: stroke, alpha: 0.75 });
+  // Three rubble dots nestled into the notch — a pile of debris.
+  const baseX = notchStart + notchW / 2;
+  const baseY = top + notchDepth;
+  g.circle(baseX - 1.5, baseY + 0.4, 1.2).fill({ color: stroke, alpha: 0.85 });
+  g.circle(baseX + 1.3, baseY - 0.2, 1.0).fill({ color: stroke, alpha: 0.75 });
+  g.circle(baseX,       baseY - 1.6, 0.8).fill({ color: stroke, alpha: 0.6 });
 }
 
 /**
@@ -640,15 +656,26 @@ function drawEnvProps(g: Graphics, map: GridMap) {
     : biome === 'desert-refinery' ? REFINERY_PROPS
     : URBAN_PROPS;
   if (props.length === 0) return;
-  const spawnKeys = new Set<number>();
-  for (const p of map.playerSpawns) spawnKeys.add(p.y * 4096 + p.x);
-  for (const e of map.enemySpawns) spawnKeys.add(e.pos.y * 4096 + e.pos.x);
+  // Exclude spawn tiles AND their chebyshev-1 neighbours. This gives
+  // every soldier a clean "stepping-out" zone at mission start — the
+  // first screenshot had bones scattered on the exact tiles where
+  // player units needed to move.
+  const bufferKeys = new Set<number>();
+  const addBuffer = (px: number, py: number) => {
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        bufferKeys.add((py + dy) * 4096 + (px + dx));
+      }
+    }
+  };
+  for (const p of map.playerSpawns) addBuffer(p.x, p.y);
+  for (const e of map.enemySpawns) addBuffer(e.pos.x, e.pos.y);
 
   for (let y = 0; y < map.height; y++) {
     for (let x = 0; x < map.width; x++) {
       const t = tileAt(map, x, y);
       if (!t || t.kind !== 'floor') continue;
-      if (spawnKeys.has(y * 4096 + x)) continue;
+      if (bufferKeys.has(y * 4096 + x)) continue;
       const h = (x * 73856093 ^ y * 19349663) >>> 0;
       // Bump density: sparse 8% read as "abandoned"; 15% reads as
       // "lived-in." Tile-hash still drives placement so it's stable.
@@ -730,8 +757,29 @@ const drawDesertRag: PropDraw = (g, cx, cy) => {
   g.stroke({ color: dark, width: 0.6, alpha: 0.8 });
 };
 
+/**
+ * A small tuft of dry grass — six diverging thin strokes in warm
+ * straw-yellow. Ecologically appropriate for a desert scrub floor
+ * and breaks up the clumps of large props.
+ */
+const drawDesertGrass: PropDraw = (g, cx, cy) => {
+  const straw = 0xc8a862, darker = 0x6a4a22;
+  // Base clump — tiny dark pad at the root.
+  g.ellipse(cx, cy + 2, 3, 0.8).fill({ color: darker, alpha: 0.7 });
+  // Six diverging blades — slight fanning.
+  for (const [dx, dy] of [[-3, -5], [-1.5, -7], [0, -8], [1, -6.5], [2.5, -7], [3.5, -4]] as const) {
+    g.moveTo(cx, cy + 2);
+    g.lineTo(cx + dx, cy + dy);
+    g.stroke({ color: straw, width: 1 });
+  }
+  // One taller highlighted blade in gold.
+  g.moveTo(cx, cy + 2);
+  g.lineTo(cx - 0.5, cy - 9);
+  g.stroke({ color: 0xe8c488, width: 0.9, alpha: 0.85 });
+};
+
 const DESERT_PROPS: PropDraw[] = [
-  drawDesertBones, drawDesertSignpost, drawDesertCactus, drawDesertRag,
+  drawDesertBones, drawDesertSignpost, drawDesertCactus, drawDesertRag, drawDesertGrass,
 ];
 
 // --- REFINERY props -------------------------------------------------
@@ -1099,8 +1147,11 @@ function redrawOverlays(layer: Container, st: ReturnType<typeof useCombatStore.g
       if (x === sel.pos.x && y === sel.pos.y) continue;
       const p = gridToScreen({ x, y });
       const apCost = Math.ceil(d / sel.mobility);
-      const color = apCost <= 1 ? 0x7cc4ff : 0xf5c55a;
-      diamond(g, p.x, p.y, color, 0.18, color);
+      // Gold for 1-AP (primary "your reach"), copper for 2-AP (stretched).
+      // Both tones harmonise with the desert palette instead of fighting
+      // it like the old blue/yellow pair did.
+      const color = apCost <= 1 ? 0xe8c488 : 0xc87846;
+      diamond(g, p.x, p.y, color, 0.22, color);
     }
   }
 
