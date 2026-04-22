@@ -527,7 +527,11 @@ function drawMap(layer: Container, map: GridMap) {
     for (let x = 0; x < map.width; x++) {
       const t = tileAt(map, x, y)!;
       const p = gridToScreen({ x, y });
-      const variant = (t.variant ?? 0) % 3;
+      // Tile variant is computed at render time from a real hash so the
+      // map doesn't stripe diagonally (the old (x*5 + y*13) % 3 formula
+      // produced visible NE→SW tonal bands across every map).
+      const tileHash = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+      const variant = tileHash % 3;
       let fill = pal.floor[0];
       if (t.kind === 'floor') fill = pal.floor[variant];
       else if (t.kind === 'wall') fill = pal.wall;
@@ -540,13 +544,32 @@ function drawMap(layer: Container, map: GridMap) {
 
       if (t.kind === 'cover_half' || t.kind === 'cover_full') {
         const h = t.kind === 'cover_full' ? 22 : 12;
+        // Cast shadow at the base of the block, pooling to the SW
+        // (sun is NE — same direction as the rim-highlight on every
+        // tile). Drawn BEFORE the block so the block sits on top of
+        // it and the shadow peeks out.
+        g.ellipse(p.x - 5, p.y + 5, 17, 5)
+          .fill({ color: 0x000000, alpha: 0.35 });
+
         if (refinery) {
           // Refinery cover: cylindrical pipes (half) or storage tanks (full).
           drawRefineryCover(g, t.kind, p.x, p.y, h, pal);
         } else {
-          g.rect(p.x - 14, p.y - h, 28, h)
-            .fill({ color: fill, alpha: 0.95 })
-            .stroke({ color: pal.coverStroke, width: 1 });
+          // Per-tile fill variance so adjacent blocks don't look
+          // stamped from the same die. Pseudo-random ±12% brightness
+          // shift driven by the shared tile hash.
+          const variance = ((tileHash >>> 4) % 25) - 12;
+          const tintedFill = shiftBrightness(fill, variance);
+          // ~30% of blocks get a broken-top silhouette — adds
+          // visual rhythm without touching the map data.
+          const broken = t.kind === 'cover_half' && ((tileHash >>> 12) % 10) < 3;
+          if (broken) {
+            drawBrokenCoverShape(g, p.x, p.y, h, tileHash, tintedFill, pal.coverStroke);
+          } else {
+            g.rect(p.x - 14, p.y - h, 28, h)
+              .fill({ color: tintedFill, alpha: 0.95 })
+              .stroke({ color: pal.coverStroke, width: 1 });
+          }
           if (desert) drawDesertCoverDetail(g, t.kind, p.x, p.y, h, x, y, pal);
         }
       }
@@ -557,6 +580,51 @@ function drawMap(layer: Container, map: GridMap) {
   // character silhouettes so they stop looking pasted-on.
   drawEnvProps(g, map);
   layer.addChild(g);
+}
+
+/**
+ * Shift a 24-bit RGB color by ±pct (0..100) toward white or black.
+ * Used per tile so a grid of cover blocks looks hand-placed instead
+ * of die-stamped.
+ */
+function shiftBrightness(color: number, pct: number): number {
+  const r = (color >> 16) & 0xff, g = (color >> 8) & 0xff, b = color & 0xff;
+  const k = pct / 100;
+  const adj = (c: number) => {
+    const v = k >= 0 ? c + (255 - c) * k : c + c * k;
+    return Math.max(0, Math.min(255, Math.round(v)));
+  };
+  return (adj(r) << 16) | (adj(g) << 8) | adj(b);
+}
+
+/**
+ * Draw a cover_half block with a jagged broken-top silhouette. The
+ * notch position is seeded from the tile hash so the same tile
+ * always breaks the same way across redraws.
+ */
+function drawBrokenCoverShape(
+  g: Graphics, px: number, py: number, h: number,
+  tileHash: number, fill: number, stroke: number,
+) {
+  const left = px - 14, right = px + 14, top = py - h, bot = py;
+  // Notch position + width seeded from hash so the same tile always
+  // looks the same.
+  const notchStart = left + 6 + ((tileHash >>> 20) % 10);
+  const notchW = 5;
+  const notchDepth = 4;
+  // Build the silhouette as a polygon with a V-notch on the top edge.
+  g.poly([
+    left, bot,
+    left, top,
+    notchStart, top,
+    notchStart + notchW / 2, top + notchDepth,
+    notchStart + notchW, top,
+    right, top,
+    right, bot,
+  ]).fill({ color: fill, alpha: 0.95 }).stroke({ color: stroke, width: 1 });
+  // Rubble dot nestled in the notch, reads as debris.
+  g.circle(notchStart + notchW / 2, top + notchDepth + 0.5, 0.9)
+    .fill({ color: stroke, alpha: 0.75 });
 }
 
 /**
@@ -582,10 +650,14 @@ function drawEnvProps(g: Graphics, map: GridMap) {
       if (!t || t.kind !== 'floor') continue;
       if (spawnKeys.has(y * 4096 + x)) continue;
       const h = (x * 73856093 ^ y * 19349663) >>> 0;
-      if ((h % 100) >= 8) continue; // ~8% density
+      // Bump density: sparse 8% read as "abandoned"; 15% reads as
+      // "lived-in." Tile-hash still drives placement so it's stable.
+      if ((h % 100) >= 15) continue;
       const pickIdx = ((h >>> 8) % props.length) | 0;
-      const jx = ((h >>> 12) % 7) - 3;
-      const jy = ((h >>> 17) % 5) - 2;
+      // Wider jitter (±5 x, ±3 y) so adjacent props don't look
+      // grid-aligned on a screenshot.
+      const jx = ((h >>> 12) % 11) - 5;
+      const jy = ((h >>> 17) % 7) - 3;
       const p = gridToScreen({ x, y });
       props[pickIdx](g, p.x + jx, p.y + jy);
     }
@@ -598,51 +670,64 @@ type PropDraw = (g: Graphics, cx: number, cy: number) => void;
 
 const drawDesertBones: PropDraw = (g, cx, cy) => {
   const bone = 0xe4d8b0, dark = 0x3a2a1c;
-  // Main femur at a tilt.
-  g.moveTo(cx - 5, cy + 1); g.lineTo(cx + 5, cy - 2);
-  g.stroke({ color: bone, width: 1.6 });
-  // Two crossed ribs.
-  g.moveTo(cx - 3, cy - 2); g.lineTo(cx + 2, cy + 2);
-  g.stroke({ color: bone, width: 1.1 });
-  // Tiny socket dot at the femur tip.
-  g.circle(cx + 5, cy - 2, 0.9).fill({ color: dark, alpha: 0.9 });
+  // Femur — longer + thicker than the old scatter so it reads at tile zoom.
+  g.moveTo(cx - 7, cy + 1); g.lineTo(cx + 7, cy - 3);
+  g.stroke({ color: bone, width: 2.2 });
+  // Crossed rib.
+  g.moveTo(cx - 4, cy - 3); g.lineTo(cx + 3, cy + 3);
+  g.stroke({ color: bone, width: 1.5 });
+  // Knuckle knobs at each end of the femur.
+  g.circle(cx - 7, cy + 1, 1.4).fill({ color: bone });
+  g.circle(cx + 7, cy - 3, 1.4).fill({ color: bone });
+  g.circle(cx + 7, cy - 3, 0.7).fill({ color: dark, alpha: 0.8 });
 };
 
 const drawDesertSignpost: PropDraw = (g, cx, cy) => {
   const wood = 0x6a4828, dark = 0x2a1a0a, gold = 0xe8c488;
-  // Vertical post.
-  g.rect(cx - 0.5, cy - 8, 1.2, 10).fill({ color: wood, alpha: 0.95 });
-  // Tilted board at top, with a gold rim for a sun-hit edge.
-  g.rect(cx - 4, cy - 9, 8, 2.5).fill({ color: wood }).stroke({ color: dark, width: 0.6 });
-  g.rect(cx - 4, cy - 9, 8, 0.5).fill({ color: gold, alpha: 0.6 });
+  // Taller post + wider board.
+  g.rect(cx - 0.7, cy - 11, 1.5, 14).fill({ color: wood, alpha: 0.95 });
+  // Tilted board — slight rotation feel via asymmetric top/bottom edges.
+  g.poly([
+    cx - 6, cy - 12,
+    cx + 6, cy - 13,
+    cx + 6, cy - 9,
+    cx - 6, cy - 8,
+  ]).fill({ color: wood }).stroke({ color: dark, width: 0.7 });
+  // Gold rim on the sun-hit top edge.
+  g.moveTo(cx - 6, cy - 12); g.lineTo(cx + 6, cy - 13);
+  g.stroke({ color: gold, width: 0.8, alpha: 0.75 });
 };
 
 const drawDesertCactus: PropDraw = (g, cx, cy) => {
   const green = 0x567a3a, darker = 0x2a3a18, spine = 0xd8cfa0;
   // Main trunk.
-  g.roundRect(cx - 1, cy - 8, 2.2, 10, 1).fill({ color: green }).stroke({ color: darker, width: 0.5 });
+  g.roundRect(cx - 1.4, cy - 12, 3, 14, 1.4).fill({ color: green }).stroke({ color: darker, width: 0.7 });
   // Left arm.
-  g.roundRect(cx - 3.2, cy - 5, 2, 3, 1).fill({ color: green });
-  g.roundRect(cx - 3.4, cy - 7, 0.8, 2.5, 0.4).fill({ color: green });
+  g.roundRect(cx - 4.6, cy - 7, 2.8, 4, 1.3).fill({ color: green }).stroke({ color: darker, width: 0.5 });
+  g.roundRect(cx - 4.8, cy - 10, 1.1, 3.5, 0.5).fill({ color: green });
   // Right arm.
-  g.roundRect(cx + 1.2, cy - 6, 2, 3, 1).fill({ color: green });
-  g.roundRect(cx + 2.6, cy - 8, 0.8, 2.5, 0.4).fill({ color: green });
-  // Two tiny spines / highlights.
-  g.circle(cx, cy - 4, 0.4).fill({ color: spine, alpha: 0.8 });
-  g.circle(cx, cy - 1, 0.4).fill({ color: spine, alpha: 0.8 });
+  g.roundRect(cx + 1.6, cy - 8, 2.8, 4, 1.3).fill({ color: green }).stroke({ color: darker, width: 0.5 });
+  g.roundRect(cx + 3.6, cy - 11, 1.1, 3.5, 0.5).fill({ color: green });
+  // Spine highlights.
+  for (const sy of [-9, -5, -1]) g.circle(cx, cy + sy, 0.5).fill({ color: spine, alpha: 0.85 });
 };
 
 const drawDesertRag: PropDraw = (g, cx, cy) => {
   const cloth = 0xa86848, dark = 0x4a2818;
-  // Wind-tattered cloth strip — drawn as two offset curves with a
-  // shadow underneath.
-  g.moveTo(cx - 5, cy + 1);
-  g.quadraticCurveTo(cx - 1, cy - 3, cx + 3, cy - 1);
-  g.quadraticCurveTo(cx + 4, cy + 2, cx + 5, cy + 1);
-  g.fill({ color: cloth });
-  g.moveTo(cx - 5, cy + 1);
-  g.quadraticCurveTo(cx - 1, cy - 3, cx + 3, cy - 1);
-  g.stroke({ color: dark, width: 0.5, alpha: 0.7 });
+  // Longer tattered cloth — two peaks + a frayed underline.
+  g.poly([
+    cx - 7, cy + 2,
+    cx - 3, cy - 3,
+    cx + 1, cy - 1,
+    cx + 4, cy - 4,
+    cx + 7, cy + 1,
+    cx + 5, cy + 3,
+    cx, cy + 1,
+    cx - 4, cy + 3,
+  ]).fill({ color: cloth });
+  g.moveTo(cx - 7, cy + 2);
+  g.quadraticCurveTo(cx, cy - 3, cx + 7, cy + 1);
+  g.stroke({ color: dark, width: 0.6, alpha: 0.8 });
 };
 
 const DESERT_PROPS: PropDraw[] = [
@@ -653,42 +738,45 @@ const DESERT_PROPS: PropDraw[] = [
 
 const drawRefineryDrum: PropDraw = (g, cx, cy) => {
   const body = 0x8a6a4a, rim = 0xe8c488, dark = 0x1a0e08, rust = 0xa04818;
-  // Drum body — small oval cylinder.
-  g.rect(cx - 3, cy - 6, 6, 8).fill({ color: body }).stroke({ color: dark, width: 0.6 });
-  // Rim band top + bottom.
-  g.rect(cx - 3, cy - 6, 6, 1).fill({ color: rim, alpha: 0.7 });
-  g.rect(cx - 3, cy + 1, 6, 0.6).fill({ color: dark, alpha: 0.7 });
-  // Rust streak down the face.
-  g.rect(cx - 1, cy - 4, 0.7, 5).fill({ color: rust, alpha: 0.8 });
+  // Bigger drum body.
+  g.rect(cx - 4, cy - 9, 8, 11).fill({ color: body }).stroke({ color: dark, width: 0.7 });
+  g.rect(cx - 4, cy - 9, 8, 1.4).fill({ color: rim, alpha: 0.75 });
+  g.rect(cx - 4, cy + 1, 8, 0.8).fill({ color: dark, alpha: 0.7 });
+  // Rust streaks.
+  g.rect(cx - 1.4, cy - 7, 0.9, 7).fill({ color: rust, alpha: 0.85 });
+  g.rect(cx + 1.4, cy - 4, 0.6, 5).fill({ color: rust, alpha: 0.7 });
 };
 
 const drawRefineryValve: PropDraw = (g, cx, cy) => {
   const steel = 0x8a7868, dark = 0x1a0e08, rim = 0xd4c4a4;
-  // Disk wheel with four spokes.
-  g.circle(cx, cy - 2, 4).fill({ color: steel }).stroke({ color: dark, width: 0.6 });
-  g.circle(cx, cy - 2, 1.2).fill({ color: dark });
-  for (const [dx, dy] of [[0, -3.5], [0, 3.5], [-3.5, 0], [3.5, 0]] as const) {
-    g.moveTo(cx, cy - 2); g.lineTo(cx + dx, cy - 2 + dy);
-    g.stroke({ color: rim, width: 0.8, alpha: 0.85 });
+  g.circle(cx, cy - 3, 5.5).fill({ color: steel }).stroke({ color: dark, width: 0.7 });
+  g.circle(cx, cy - 3, 1.8).fill({ color: dark });
+  for (const [dx, dy] of [[0, -5], [0, 5], [-5, 0], [5, 0], [3.5, -3.5], [-3.5, 3.5]] as const) {
+    g.moveTo(cx, cy - 3); g.lineTo(cx + dx, cy - 3 + dy);
+    g.stroke({ color: rim, width: 1, alpha: 0.85 });
   }
 };
 
 const drawRefineryToolbox: PropDraw = (g, cx, cy) => {
   const red = 0x9a2a1a, dark = 0x1a0a04, rim = 0xe8c488;
-  // Low rectangle with a handle up top.
-  g.rect(cx - 4, cy - 1, 8, 4).fill({ color: red }).stroke({ color: dark, width: 0.6 });
-  g.rect(cx - 4, cy - 1, 8, 0.6).fill({ color: rim, alpha: 0.5 });
-  // Handle arch.
-  g.moveTo(cx - 2, cy - 1); g.quadraticCurveTo(cx, cy - 3, cx + 2, cy - 1);
-  g.stroke({ color: dark, width: 0.9 });
+  // Toolbox body.
+  g.rect(cx - 5, cy - 2, 10, 5).fill({ color: red }).stroke({ color: dark, width: 0.7 });
+  g.rect(cx - 5, cy - 2, 10, 0.9).fill({ color: rim, alpha: 0.55 });
+  // Latch hint.
+  g.rect(cx - 0.6, cy - 2, 1.2, 1).fill({ color: dark });
+  // Handle.
+  g.moveTo(cx - 3, cy - 2);
+  g.quadraticCurveTo(cx, cy - 5, cx + 3, cy - 2);
+  g.stroke({ color: dark, width: 1.1 });
 };
 
 const drawRefineryHose: PropDraw = (g, cx, cy) => {
   const hose = 0x1a1010, shine = 0x5a4828;
-  // Coiled loop — two rings.
-  g.circle(cx - 2, cy, 2.6).stroke({ color: hose, width: 1.3 });
-  g.circle(cx + 2, cy - 1, 2.4).stroke({ color: hose, width: 1.3 });
-  g.circle(cx - 2, cy, 2.6).stroke({ color: shine, width: 0.4, alpha: 0.6 });
+  // Three overlapping rings, bigger.
+  g.circle(cx - 3, cy, 3.4).stroke({ color: hose, width: 1.6 });
+  g.circle(cx + 3, cy - 1, 3.2).stroke({ color: hose, width: 1.6 });
+  g.circle(cx, cy + 2, 2.8).stroke({ color: hose, width: 1.4 });
+  g.circle(cx - 3, cy, 3.4).stroke({ color: shine, width: 0.5, alpha: 0.6 });
 };
 
 const REFINERY_PROPS: PropDraw[] = [
