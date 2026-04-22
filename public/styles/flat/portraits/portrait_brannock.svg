@@ -93,10 +93,31 @@
   <ellipse cx="50" cy="72" rx="4" ry="2" fill="#c48a6a" opacity="0.35"/>
   <ellipse cx="78" cy="72" rx="4" ry="2" fill="#c48a6a" opacity="0.35"/>
 
-  <!-- Character detail: a thin scar crossing the right eyebrow
-       (cleaner than a diagonal slash across the cheek). -->
-  <line x1="68" y1="54" x2="76" y2="56" stroke="#e0a888" stroke-width="0.8" opacity="0.85"/>
-  <line x1="68" y1="54" x2="76" y2="56" stroke="#5a3020" stroke-width="0.3" opacity="0.5"/>
+  <!-- Character detail: a long diagonal scar across the left cheek,
+       running from just under the outer corner of the eye down to the
+       corner of the jaw. Double-stroked (light raised scar over a
+       dark outline) so it reads as a healed cut, not a skin mark. -->
+  <path d="M 48 70 Q 46 78 48 86" stroke="#5a3020" stroke-width="1.2" fill="none" opacity="0.7"/>
+  <path d="M 48 70 Q 46 78 48 86" stroke="#e0a888" stroke-width="0.8" fill="none" opacity="0.9"/>
+  <!-- Tiny cross-hatch suture marks along the scar for texture. -->
+  <line x1="46.6" y1="74" x2="48.6" y2="73.2" stroke="#4a2818" stroke-width="0.3" opacity="0.6"/>
+  <line x1="46" y1="78" x2="48" y2="77.4" stroke="#4a2818" stroke-width="0.3" opacity="0.6"/>
+  <line x1="46.3" y1="82" x2="48.3" y2="81.4" stroke="#4a2818" stroke-width="0.3" opacity="0.6"/>
+
+  <!-- Neck tattoo: stylized double-headed Eagle Corps sigil on the
+       right side of the neck, in dark ink. Faded slightly to read as
+       older ink. -->
+  <!-- Twin eagle heads. -->
+  <path d="M 72 96 L 71 93 L 72 91.5 L 73 93 Z M 74 96 L 73 93 L 74 91.5 L 75 93 Z" fill="#1a0804" opacity="0.78"/>
+  <!-- Beaks. -->
+  <path d="M 71.5 92 L 70 91 L 71.5 91.2 Z" fill="#1a0804" opacity="0.78"/>
+  <path d="M 73.5 92 L 75 91 L 73.5 91.2 Z" fill="#1a0804" opacity="0.78"/>
+  <!-- Wings spread horizontally beneath the heads. -->
+  <path d="M 67 97 L 72 95.5 L 77 97 L 76 98.5 L 72 97.5 L 68 98.5 Z" fill="#1a0804" opacity="0.78"/>
+  <!-- Body + tail. -->
+  <path d="M 72 97 L 73 97 L 74 100.5 L 72.5 101.5 L 71 100.5 Z" fill="#1a0804" opacity="0.78"/>
+  <!-- Small motto dash beneath the sigil. -->
+  <line x1="70" y1="103" x2="76" y2="103" stroke="#1a0804" stroke-width="0.5" opacity="0.6"/>
 
   <!-- Small ear hint (left side, peeks out from head shape). -->
   <ellipse cx="43" cy="66" rx="2" ry="4" fill="url(#brannock-skin)" stroke="#5a3020" stroke-width="0.4"/>
