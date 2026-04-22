@@ -245,6 +245,9 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
     // Rig-composed appearance copied from the template; undefined for
     // bespoke-SVG soldiers (they fall through to the legacy render path).
     appearance: t.appearance,
+    // loadoutVersion starts at 0. tryRefit bumps it; the renderer
+    // rebuilds rig overlays when the cached per-node value diverges.
+    loadoutVersion: 0,
   };
 }
 
@@ -585,7 +588,15 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       ? { ...u.loadout, sidearmMods: slotMap }
       : { ...u.loadout, primaryMods: slotMap };
     const units = st.units.map((o) => o.id === u.id
-      ? { ...o, loadout: nextLoadout, ap: o.ap - 1 }
+      ? {
+          ...o,
+          loadout: nextLoadout,
+          ap: o.ap - 1,
+          // Bump the loadout version so the renderer rebuilds rig
+          // overlays for rig-composed units. No-op for bespoke-SVG
+          // units (updateUnitNode only reacts when rigComposition exists).
+          loadoutVersion: (o.loadoutVersion ?? 0) + 1,
+        }
       : o);
     const verb = modId === null ? 'removes' : 'fits';
     set({ units, log: pushLog(st.log, `${u.name} ${verb} a mod (Field Refit).`) });

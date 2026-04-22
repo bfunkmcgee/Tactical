@@ -1,6 +1,6 @@
 import type {
-  Armor, Consumable, EnemyTemplate, Kit, SoldierTemplate, TileKind, Utility,
-  Weapon, WeaponMod, Zone,
+  Armor, Clothing, Consumable, EnemyTemplate, Kit, SoldierTemplate, TileKind,
+  Utility, Weapon, WeaponMod, Zone,
 } from '../game/types';
 import type { AbilityDef } from '../game/engine/abilities';
 
@@ -32,6 +32,10 @@ export interface ContentPack {
   mods: Record<string, WeaponMod>;
   /** Class abilities (Ranger Mark, Warden Bracing Fire, etc.). */
   abilities: Record<string, AbilityDef>;
+  /** Cosmetic clothing catalog — cloaks, tabards, backpacks. Optional;
+   *  packs without rig-composed characters can omit. Keyed by clothing id
+   *  (referenced from Loadout.clothingIds). */
+  clothing?: Record<string, Clothing>;
 
   /**
    * Resolves a map's abstract spawn keys to enemy template ids in this pack.

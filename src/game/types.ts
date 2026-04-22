@@ -68,6 +68,33 @@ export type Weapon = {
   spritePath?: string;
 };
 
+/**
+ * Optional visual overrides layered onto the rig by equipping this armor.
+ * Consulted only for rig-composed units (Unit.appearance set); the legacy
+ * bespoke-SVG path ignores these fields. Every entry is optional — a
+ * "jacket" armor might only set torsoOverlay, while full plate sets
+ * torso + helmet + shoulders + gauntlets + legs.
+ */
+export interface ArmorVisual {
+  /** Drawn on top of the base torso (chest plate, harness, under-plate tabard). */
+  torsoOverlay?: string;
+  /** Drawn at the head joint — helmets, hoods, goggles. Occlusion of base
+   *  hair is the artist's responsibility via SVG opacity. */
+  helmet?: string;
+  /** Shoulder-mounted overlay. Authored centered on a single shoulder
+   *  anchor; the renderer instantiates two copies (L unscaled, R mirrored). */
+  shoulderPads?: string;
+  /** Gauntlets split front/back to match the arms parts. */
+  gauntletsFront?: string;
+  gauntletsBack?: string;
+  /** Greaves, boots, combat trousers — layered on top of base legs. */
+  legsOverlay?: string;
+  /** Optional multiplicative tint applied across every overlay AND the
+   *  base torso + legs (but NOT the skin-tinted head + arms). Lets one
+   *  overlay SVG produce red/blue/black variants. */
+  tint?: number;
+}
+
 export type Armor = {
   id: string;
   name: string;
@@ -76,7 +103,30 @@ export type Armor = {
   dr: number;         // flat damage reduction
   mobility: number;   // +/- to soldier mobility
   tag: ElementTag;
+  /** Optional rig overlays. Rig-composed units consume these at spawn +
+   *  on loadout-change; bespoke-SVG units ignore them. */
+  visual?: ArmorVisual;
 };
+
+/**
+ * Cosmetic clothing layer — orthogonal to Armor. Can be worn over armor
+ * (greatcoat) or as an independent cosmetic (cloak, tabard). The `layer`
+ * field determines which slot in the rig composition it attaches to.
+ */
+export interface Clothing {
+  id: string;
+  name: string;
+  flavor: string;
+  /** Z-order slot.
+   *  - 'cloak'    — backSlot, hangs behind the torso from the neck anchor.
+   *  - 'tabard'   — on top of torso + torsoOverlay, under shoulder pads.
+   *  - 'backpack' — backSlot at waist height, visible over legs behind torso.
+   */
+  layer: 'cloak' | 'tabard' | 'backpack';
+  svg: string;
+  /** Optional multiplicative tint, same semantics as ArmorVisual.tint. */
+  tint?: number;
+}
 
 export type UtilityKind = 'grenade' | 'flashbang' | 'smoke' | 'medkit';
 
@@ -142,6 +192,10 @@ export type Loadout = {
   armorId: string;
   utilityIds: string[]; // length up to 2
   kitId: string | null; // optional passive equipment
+  /** Cosmetic clothing layer ids. Draw order = array order. Capped at 3
+   *  so the silhouette stays readable. Optional — unsets read as no
+   *  clothing. Consulted only for rig-composed units. */
+  clothingIds?: string[];
 };
 
 /**
@@ -304,6 +358,13 @@ export type Unit = {
    * path unchanged.
    */
   appearance?: HumanAppearance;
+  /**
+   * Bumped whenever the unit's loadout changes mid-mission (currently
+   * only via tryRefit). The renderer compares this against its cached
+   * per-node value and rebuilds the rig composition's overlays on
+   * mismatch, so equipment visuals update without a full re-spawn.
+   */
+  loadoutVersion?: number;
 };
 
 export type TurnPhase = 'player' | 'enemy' | 'won' | 'lost';

@@ -1,12 +1,12 @@
 import { Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { useCombatStore } from '../../../state/combatStore';
-import type { useContent } from '../../../content/registry';
+import { getArmor, getClothing, type useContent } from '../../../content/registry';
 import type { Unit, UnitId, Vec2 } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
 import { GRIP_ANCHOR, HIT_FLASH_MS, MOVE_TWEEN_MS } from './constants';
 import { FIRE_STYLES, type FireStyle } from './fireStyles';
-import { buildHumanRigBody, type RigBodyComposition } from './humanRigBody';
+import { buildHumanRigBody, overlayCacheKey, type RigBodyComposition } from './humanRigBody';
 import { allRigs, rigById, rigPartSvg } from '../../../content/rigs';
 
 /**
@@ -70,6 +70,12 @@ export type UnitNode = {
    *  Null for bespoke-SVG units. animate.ts and future equipment
    *  overlay passes reach named parts through this. */
   rigComposition: RigBodyComposition | null;
+  /** Cached loadoutVersion the current rigComposition was built for.
+   *  updateUnitNode compares against u.loadoutVersion and rebuilds the
+   *  overlays on mismatch. Undefined means "never seen a version" — the
+   *  first updateUnitNode will initialise it without triggering a rebuild
+   *  (the initial createUnitNode already composed for the current version). */
+  lastLoadoutVersion?: number;
 };
 
 /**
@@ -117,6 +123,24 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
   for (const rig of allRigs()) {
     for (const partId of rig.parts) {
       pushLoad(`rig:${rig.id}:${partId}`, rigPartSvg(rig.id, partId));
+    }
+  }
+  // Armor + clothing overlay SVGs — keyed by `overlay:${url}` so the
+  // rig composition's addBodyAlignedOverlay / addSlotOverlay helpers
+  // can look them up without re-deriving the key shape.
+  for (const armor of Object.values(pack.armor)) {
+    const v = armor.visual;
+    if (!v) continue;
+    if (v.torsoOverlay) pushLoad(overlayCacheKey(v.torsoOverlay), v.torsoOverlay);
+    if (v.helmet) pushLoad(overlayCacheKey(v.helmet), v.helmet);
+    if (v.shoulderPads) pushLoad(overlayCacheKey(v.shoulderPads), v.shoulderPads);
+    if (v.gauntletsFront) pushLoad(overlayCacheKey(v.gauntletsFront), v.gauntletsFront);
+    if (v.gauntletsBack) pushLoad(overlayCacheKey(v.gauntletsBack), v.gauntletsBack);
+    if (v.legsOverlay) pushLoad(overlayCacheKey(v.legsOverlay), v.legsOverlay);
+  }
+  if (pack.clothing) {
+    for (const c of Object.values(pack.clothing)) {
+      pushLoad(overlayCacheKey(c.svg), c.svg);
     }
   }
   await Promise.all(loads);
@@ -199,7 +223,12 @@ function createUnitNode(u: Unit): UnitNode {
   // the weapon grip for aim + recoil.
   const rig = u.appearance ? rigById(u.appearance.rig) : undefined;
   if (rig && u.appearance) {
-    rigComposition = buildHumanRigBody(rig, u.appearance, spriteCache);
+    rigComposition = buildHumanRigBody(rig, u.appearance, u.loadout, spriteCache, {
+      armorOf: (id) => {
+        try { return getArmor(id); } catch { return undefined; }
+      },
+      clothingOf: getClothing,
+    });
     body.addChild(rigComposition.root);
     // spriteTop matches the bespoke-path value so ornaments / HP bar /
     // label land at the same offset above the character.
@@ -328,13 +357,67 @@ function createUnitNode(u: Unit): UnitNode {
     selected: false,
     bobPhase: Math.random() * Math.PI * 2,
     rigComposition,
+    lastLoadoutVersion: u.loadoutVersion,
   };
+}
+
+/**
+ * Rebuild a rig-composed unit's overlay tree when its loadout changes
+ * mid-mission. The base rig parts (head / torso / etc.) are preserved;
+ * only armor/clothing overlays + the skin tint are torn down and
+ * recomposed. Cheap: a few sprite swaps, no UnitNode shell touched.
+ *
+ * Called from updateUnitNode when it detects u.loadoutVersion has
+ * advanced past node.lastLoadoutVersion.
+ */
+function rebuildRigOverlays(node: UnitNode, u: Unit): void {
+  if (!node.rigComposition || !u.appearance) return;
+  const rig = rigById(u.appearance.rig);
+  if (!rig) return;
+
+  // Tear down the existing composition's children + overlays, keeping
+  // the UnitNode's body Container + weapon wrap + muzzle flash intact.
+  node.rigComposition.root.destroy({ children: true });
+  // arms-front lives inside the weapon wrap; destroy it too so the new
+  // composition can install a fresh armsFront sprite.
+  if (node.armsSprite) {
+    node.weaponWrap?.removeChild(node.armsSprite);
+    node.armsSprite.destroy();
+  }
+
+  const fresh = buildHumanRigBody(rig, u.appearance, u.loadout, spriteCache, {
+    armorOf: (id) => {
+      try { return getArmor(id); } catch { return undefined; }
+    },
+    clothingOf: getClothing,
+  });
+  node.body.addChild(fresh.root);
+  // Re-install armsFront in the weapon wrap if we have one. Anchor +
+  // scale + position match the createUnitNode initial installation.
+  if (node.weaponWrap) {
+    node.armsSprite = fresh.armsFront;
+    node.armsSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
+    node.armsSprite.scale.set(0.42);
+    node.armsSprite.position.set(0, 0);
+    node.weaponWrap.addChild(node.armsSprite);
+    // The weapon sprite survives the rebuild but we need it back in the
+    // tintTargets list because it used to be in the old composition's.
+    if (node.weaponSprite) fresh.tintTargets.push(node.weaponSprite);
+  }
+  node.rigComposition = fresh;
 }
 
 function updateUnitNode(
   node: UnitNode, u: Unit, selected: boolean,
   onHit?: (pos: Vec2, damage: number) => void,
 ) {
+  // ---- Loadout change: rig-composed units rebuild overlay sprites when
+  // their loadoutVersion advances (currently triggered by tryRefit).
+  if (node.rigComposition && u.loadoutVersion !== node.lastLoadoutVersion) {
+    rebuildRigOverlays(node, u);
+    node.lastLoadoutVersion = u.loadoutVersion;
+  }
+
   // ---- Movement: grid position changed → tween from wherever we're rendered now.
   const target = gridToScreen(u.pos);
   if (target.x !== node.targetScreen.x || target.y !== node.targetScreen.y) {

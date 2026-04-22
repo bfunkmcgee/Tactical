@@ -1,6 +1,6 @@
 import { Container, Sprite, type Texture } from 'pixi.js';
 import type { Rig, RigPartId } from '../../engine/rig';
-import type { HumanAppearance } from '../../types';
+import type { Armor, Clothing, HumanAppearance, Loadout } from '../../types';
 
 /**
  * Rigged body composition — the return value of `buildHumanRigBody`.
@@ -11,94 +11,84 @@ import type { HumanAppearance } from '../../types';
  * path built the unit.
  *
  * The named sub-containers (`headSlot` / `shoulderSlotL` / `shoulderSlotR`
- * / `backSlot`) are empty in Phase 2 — Phase 3 (equipment visuals) will
- * populate them with helmets, shoulder pads, cloaks, and backpacks.
+ * / `backSlot`) are populated by the overlay pass when the unit's
+ * loadout carries armor (`armor.visual.*`) or clothing.
  *
  * `armsFront` is returned separately from `parts` because the caller
  * (createUnitNode) installs it inside the weapon wrap, not under `root`
  * — the front arm must ride with the weapon grip for aim + recoil.
  */
 export interface RigBodyComposition {
-  /** Root Container for body-bound parts (legs/torso/arms-back/head).
-   *  Attached as a child of UnitNode.body at position (0, 0). */
+  /** Root Container for body-bound parts (legs/torso/arms-back/head). */
   root: Container;
-
-  /** Every named part sprite — Phase 4 animation addresses these by id
-   *  to animate legs squash / torso lean / head counter-lean independently. */
+  /** Every named part sprite — Phase 4 animation addresses these by id. */
   parts: Record<RigPartId, Sprite>;
-
   /** The arms-front Sprite, NOT parented into `root`. The caller should
    *  install it inside the weapon wrap so it rides with the grip. */
   armsFront: Sprite;
-
-  /** Named attachment slots for equipment overlays. Populated in Phase 3. */
+  /** Named attachment slots for equipment overlays. */
   headSlot: Container;
   shoulderSlotL: Container;
   shoulderSlotR: Container;
   backSlot: Container;
-
   /** All sprites that should receive the per-frame tint (dirt / hit-flash
-   *  / death). animate.ts walks this list for rig-composed units. Phase 3
-   *  overlays extend this when they attach. */
+   *  / death). animate.ts walks this list for rig-composed units. */
   tintTargets: Sprite[];
+}
+
+/** Lookup callbacks the composition needs — threaded from the store/pack. */
+export interface RigBodyDeps {
+  armorOf: (id: string) => Armor | undefined;
+  clothingOf: (id: string) => Clothing | undefined;
 }
 
 /**
  * Sprite scale shared with the legacy bespoke path. Matches the 96×128
- * viewBox → on-screen conversion that's been used for every existing
- * soldier/enemy sprite — keeping the number in sync means the rig's
- * joint offsets land at the same screen coordinates the old monolithic
- * sprites used.
+ * viewBox → on-screen conversion used for every existing soldier/enemy
+ * sprite — the rig's joint offsets land at the same screen coordinates
+ * the old monolithic sprites used.
  */
 const SPRITE_SCALE = 0.42;
 
 /**
- * Build a rigged body tree for a unit whose template provides an
- * `appearance`. Each rig part is instantiated as a Sprite positioned
- * via the rig's joint anchors, tinted by the appearance palette, and
- * assembled into a flat root container in the rig's draw order.
+ * Build a rigged body tree + composite armor / clothing overlays.
  *
- * Phase 2 applies `appearance.skinTone` as a whole-sprite tint on the
- * head and both arm parts (since the rasterised SVG texture no longer
- * carries class metadata — the Phase 1 authoring spec's `class="skin"`
- * hook is a future refinement, likely via separate skin-overlay SVGs).
- * Torso + legs are left at 0xffffff so cloth authored colour shows
- * through.
+ * Composition order (bottom → top):
+ *   base parts per rig.parts                (legs → torso → arms-back → head)
+ *   + backSlot (between legs and torso)     — clothing.layer='cloak' + 'backpack'
+ *   + torsoOverlay (on torso)               — armor.visual.torsoOverlay
+ *   + tabard clothing (after torsoOverlay)  — clothing.layer='tabard'
+ *   + legsOverlay (on legs)                 — armor.visual.legsOverlay
+ *   + gauntletsBack (on arms-back)          — armor.visual.gauntletsBack
+ *   + shoulderPads (L mirrored, R normal)   — armor.visual.shoulderPads
+ *   + helmet (over head)                    — armor.visual.helmet
+ *   + gauntletsFront (on arms-front)        — armor.visual.gauntletsFront
  *
- * @param rig    — the Rig definition (HUMAN_RIG for now).
- * @param appearance — the unit's palette (skin / hair / eye / outfit).
- * @param cache  — the shared sprite texture cache. Missing textures
- *                 fall through silently; the corresponding Sprite is
- *                 still created (empty) so the caller's layout logic
- *                 doesn't have to handle partial compositions.
+ * Phase 2 applied skinTone as a whole-sprite tint on head + arms. Overlay
+ * SVGs authored by pack content are NOT skin-tinted (they're cloth/metal),
+ * but may carry their own `armor.visual.tint` / `clothing.tint` multiplicative
+ * colour — applied on top of the 0xffffff base.
  */
 export function buildHumanRigBody(
   rig: Rig,
   appearance: HumanAppearance,
+  loadout: Loadout | undefined,
   cache: Map<string, Texture>,
+  deps: RigBodyDeps,
 ): RigBodyComposition {
   const root = new Container();
   const tintTargets: Sprite[] = [];
 
-  // Compute a shared local-origin offset for part sprites. The bespoke
-  // path anchors the monolithic sprite at (0.5, 1) so its feet sit at
-  // the container's origin. The rig uses per-part Sprites anchored at
-  // (0, 0) with positions computed from rig.viewBox → local so the
-  // stacked composition's feet land at the same origin.
-  //
   // Screen origin (0, 0) in UnitNode.body == the ground beneath the
-  // unit. Sprite.position.y is how far DOWN from that origin the part's
-  // top-left lands. For a viewBox h=128 scaled by 0.42 ≈ 54px tall, we
-  // want the foot to be at y=4 (matches the existing sprite.position.y
-  // of the bespoke path) so the rig lines up vertically with shadows
-  // authored for the old sprite.
-  const footOffsetY = 4; // matches bespoke sprite.position.set(0, 4)
+  // unit. Part sprites are anchored at (0, 0) with positions computed
+  // from rig.viewBox → local so the stacked feet land at y=4 (matches
+  // the existing bespoke sprite.position.set(0, 4)).
+  const footOffsetY = 4;
   const scaledH = rig.viewBox.h * SPRITE_SCALE;
   const partTopY = footOffsetY - scaledH;
   const partLeftX = -(rig.viewBox.w * SPRITE_SCALE) / 2;
 
-  // Instantiate each part in the rig's draw order. The rig order IS the
-  // z-order; Pixi draws children in the order they're added.
+  // Instantiate each base part in the rig's draw order.
   const parts: Partial<Record<RigPartId, Sprite>> = {};
   for (const partId of rig.parts) {
     const sprite = new Sprite(cache.get(`rig:${rig.id}:${partId}`));
@@ -107,36 +97,30 @@ export function buildHumanRigBody(
     sprite.position.set(partLeftX, partTopY);
     parts[partId] = sprite;
     tintTargets.push(sprite);
-    // arms-front is returned separately — it's parented into the
-    // weapon wrap by the caller, not under `root`.
     if (partId !== 'arms-front') root.addChild(sprite);
   }
 
-  // Apply skin tint to skin-dominant parts. Phase 1's docstring promised
-  // class="skin" parsing; in Phase 2 we approximate with whole-sprite
-  // tint on head + arms (the two parts whose exposed-skin coverage
-  // dominates). Torso + legs keep 0xffffff so outfit/armor colour shows.
   applyPartTint(parts, 'head', appearance.skinTone);
   applyPartTint(parts, 'arms-back', appearance.skinTone);
   applyPartTint(parts, 'arms-front', appearance.skinTone);
 
-  // Empty attachment slots — populated in Phase 3 when equipment overlays
-  // land. Ordering matters: headSlot sits in front of the head sprite
-  // (so helmets cover the head), shoulder slots sit in front of the
-  // torso (so pads cover the shoulder seams), backSlot sits behind
-  // the torso (so cloaks drape from the shoulders and fall behind the
-  // body outline).
+  // Attachment slots. Positioning follows joint anchors scaled into local
+  // coords; z-order is enforced by insertion order relative to the base
+  // parts.
   const backSlot = new Container();
   const shoulderSlotL = new Container();
   const shoulderSlotR = new Container();
   const headSlot = new Container();
 
-  // Insert backSlot at the appropriate z-level: after legs, before torso,
-  // so cloaks hang behind the body but over the legs.
+  // backSlot between legs and torso so cloaks drape from the neck behind
+  // the body but in front of the legs.
   const legsIndex = root.children.indexOf(parts.legs!);
   root.addChildAt(backSlot, legsIndex + 1);
+  backSlot.position.set(
+    partLeftX + rig.joints['neck'].offset.x * SPRITE_SCALE,
+    partTopY + rig.joints['neck'].offset.y * SPRITE_SCALE,
+  );
 
-  // Shoulder slots: anchored at their joint positions on top of the torso.
   shoulderSlotL.position.set(
     partLeftX + rig.joints['shoulder-l'].offset.x * SPRITE_SCALE,
     partTopY + rig.joints['shoulder-l'].offset.y * SPRITE_SCALE,
@@ -147,13 +131,94 @@ export function buildHumanRigBody(
   );
   root.addChild(shoulderSlotL, shoulderSlotR);
 
-  // Head slot: on top of the head sprite.
   headSlot.position.set(
     partLeftX + rig.joints['head'].offset.x * SPRITE_SCALE,
     partTopY + rig.joints['head'].offset.y * SPRITE_SCALE,
   );
   const headIndex = root.children.indexOf(parts.head!);
   root.addChildAt(headSlot, headIndex + 1);
+
+  // ---- Overlay pass: armor + clothing ----
+  //
+  // Phase 3's first user-visible win. Overlays are authored as part-aligned
+  // SVGs in the same viewBox as the base parts, so positioning is a
+  // straightforward copy of the base-part transform for body-aligned
+  // overlays, or a slot position for anchor-mounted pieces.
+
+  const addBodyAlignedOverlay = (url: string, tint: number | undefined, afterPart: RigPartId) => {
+    const tex = cache.get(`overlay:${url}`);
+    if (!tex) return null;
+    const s = new Sprite(tex);
+    s.anchor.set(0, 0);
+    s.scale.set(SPRITE_SCALE);
+    s.position.set(partLeftX, partTopY);
+    if (tint !== undefined) s.tint = tint;
+    // Insert immediately after the named base part (e.g. torsoOverlay
+    // after torso, legsOverlay after legs).
+    const baseIdx = root.children.indexOf(parts[afterPart]!);
+    if (baseIdx >= 0) root.addChildAt(s, baseIdx + 1);
+    else root.addChild(s);
+    tintTargets.push(s);
+    return s;
+  };
+
+  const addSlotOverlay = (slot: Container, url: string, tint: number | undefined, mirror = false) => {
+    const tex = cache.get(`overlay:${url}`);
+    if (!tex) return null;
+    const s = new Sprite(tex);
+    // Slot-mounted overlays anchor at center so the joint sits at the
+    // slot's origin. Author convention: draw centered on the joint.
+    s.anchor.set(0.5, 0.5);
+    s.scale.set(mirror ? -SPRITE_SCALE : SPRITE_SCALE, SPRITE_SCALE);
+    if (tint !== undefined) s.tint = tint;
+    slot.addChild(s);
+    tintTargets.push(s);
+    return s;
+  };
+
+  if (loadout) {
+    const armor = deps.armorOf(loadout.armorId);
+    const vis = armor?.visual;
+    if (vis) {
+      if (vis.torsoOverlay) addBodyAlignedOverlay(vis.torsoOverlay, vis.tint, 'torso');
+      if (vis.legsOverlay) addBodyAlignedOverlay(vis.legsOverlay, vis.tint, 'legs');
+      if (vis.gauntletsBack) addBodyAlignedOverlay(vis.gauntletsBack, vis.tint, 'arms-back');
+      if (vis.helmet) addSlotOverlay(headSlot, vis.helmet, vis.tint);
+      if (vis.shoulderPads) {
+        addSlotOverlay(shoulderSlotL, vis.shoulderPads, vis.tint);
+        addSlotOverlay(shoulderSlotR, vis.shoulderPads, vis.tint, true);
+      }
+      // gauntletsFront composites onto the arms-front sprite — but
+      // arms-front lives inside the weapon wrap (set up by the caller).
+      // We don't have the weapon wrap here; instead, stash the gauntlet
+      // sprite as a child of arms-front itself via a local position.
+      if (vis.gauntletsFront && parts['arms-front']) {
+        const tex = cache.get(`overlay:${vis.gauntletsFront}`);
+        if (tex) {
+          const s = new Sprite(tex);
+          s.anchor.set(0, 0);
+          s.scale.set(1);
+          s.position.set(0, 0);
+          if (vis.tint !== undefined) s.tint = vis.tint;
+          parts['arms-front'].addChild(s);
+          tintTargets.push(s);
+        }
+      }
+    }
+
+    // Clothing layers, in loadout order. Order matters — a tabard worn
+    // over a cloak sits on top of the cloak because we append sequentially.
+    for (const clothId of loadout.clothingIds ?? []) {
+      const cloth = deps.clothingOf(clothId);
+      if (!cloth) continue;
+      if (cloth.layer === 'cloak' || cloth.layer === 'backpack') {
+        addSlotOverlay(backSlot, cloth.svg, cloth.tint);
+      } else {
+        // Tabard — body-aligned overlay on top of the torso + torsoOverlay.
+        addBodyAlignedOverlay(cloth.svg, cloth.tint, 'torso');
+      }
+    }
+  }
 
   return {
     root,
@@ -170,4 +235,10 @@ export function buildHumanRigBody(
 function applyPartTint(parts: Partial<Record<RigPartId, Sprite>>, id: RigPartId, tint: number): void {
   const s = parts[id];
   if (s) s.tint = tint;
+}
+
+/** URL keys armor + clothing overlays are cached under. Preloader uses
+ *  the same prefix so buildHumanRigBody's cache lookups find them. */
+export function overlayCacheKey(url: string): string {
+  return `overlay:${url}`;
 }

@@ -1,5 +1,6 @@
 import type {
-  Armor, EnemyTemplate, Kit, ModSlot, SoldierTemplate, Utility, Weapon, WeaponClass, WeaponMod,
+  Armor, Clothing, EnemyTemplate, Kit, ModSlot, SoldierTemplate, Utility,
+  Weapon, WeaponClass, WeaponMod,
 } from '../game/types';
 import type { AbilityDef } from '../game/engine/abilities';
 import type { ContentPack } from './types';
@@ -53,6 +54,13 @@ export const getEnemyTemplate = (id: string): EnemyTemplate =>
  *  dispatcher in combatStore can cleanly return false. */
 export const getAbility = (id: string): AbilityDef | undefined => active.abilities[id];
 export const allAbilities = (): AbilityDef[] => Object.values(active.abilities);
+
+/** Clothing lookup — returns undefined for packs without the optional
+ *  clothing catalog, or for an unknown id. Rig-composed units consume
+ *  these at composition time. */
+export const getClothing = (id: string): Clothing | undefined => active.clothing?.[id];
+export const allClothing = (): Clothing[] =>
+  active.clothing ? Object.values(active.clothing) : [];
 
 export const allWeapons = (): Weapon[] => Object.values(active.weapons);
 export const primaryWeapons = (): Weapon[] => allWeapons().filter((w) => w.slot === 'primary');
