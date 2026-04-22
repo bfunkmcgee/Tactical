@@ -1,6 +1,7 @@
 import type {
   Armor, EnemyTemplate, Kit, ModSlot, SoldierTemplate, Utility, Weapon, WeaponClass, WeaponMod,
 } from '../game/types';
+import type { AbilityDef } from '../game/engine/abilities';
 import type { ContentPack } from './types';
 import { pack as eagleCorps } from './packs/eagle-corps';
 import { pack as voidWatch } from './packs/void-watch';
@@ -48,6 +49,10 @@ export const getSoldierTemplate = (id: string): SoldierTemplate =>
   required(active.soldierTemplates, id, 'soldier template');
 export const getEnemyTemplate = (id: string): EnemyTemplate =>
   required(active.enemyTemplates, id, 'enemy template');
+/** Ability lookup — returns undefined when the id is missing so the
+ *  dispatcher in combatStore can cleanly return false. */
+export const getAbility = (id: string): AbilityDef | undefined => active.abilities[id];
+export const allAbilities = (): AbilityDef[] => Object.values(active.abilities);
 
 export const allWeapons = (): Weapon[] => Object.values(active.weapons);
 export const primaryWeapons = (): Weapon[] => allWeapons().filter((w) => w.slot === 'primary');

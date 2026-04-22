@@ -782,3 +782,55 @@ describe('combatStore: utilities', () => {
     expect(after.ap).toBe(shooter.ap - 1);
   });
 });
+
+// Enhancement B — registry-pattern tests. These validate the data-driven
+// dispatch paths rather than specific ability/utility/objective content.
+describe('combatStore: registries (Enhancement B)', () => {
+  it('tryAbility delegates to the content pack and matches the per-class shim', () => {
+    setupSoloDuel();
+    const u = useCombatStore.getState().units.find((x) => x.faction === 'player')!;
+    const t = useCombatStore.getState().units.find((x) => x.faction === 'enemy')!;
+    // The generic dispatcher must produce the same result as the named shim.
+    expect(useCombatStore.getState().tryAbility('ranger-mark', t.id)).toBe(true);
+    const after = useCombatStore.getState().units.find((x) => x.id === t.id)!;
+    const shooter = useCombatStore.getState().units.find((x) => x.id === u.id)!;
+    expect(after.status.marked).toBe(true);
+    expect(shooter.ap).toBe(u.ap - 1);
+  });
+
+  it('tryAbility rejects an unknown ability id without mutating state', () => {
+    setupSoloDuel();
+    const before = useCombatStore.getState().units.map((u) => u.ap);
+    expect(useCombatStore.getState().tryAbility('not-a-real-ability', 0)).toBe(false);
+    const after = useCombatStore.getState().units.map((u) => u.ap);
+    expect(after).toEqual(before);
+  });
+
+  it('tryAbility enforces the class gate declared on the AbilityDef', () => {
+    // Deploy a Warden (not a Ranger) and try to invoke ranger-mark. The
+    // def.classId = 'Ranger' check should reject without consuming AP.
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.....G...']),
+      rosterIds: ['warden_brannock'],
+    });
+    const warden = useCombatStore.getState().units.find((x) => x.faction === 'player')!;
+    const enemy = useCombatStore.getState().units.find((x) => x.faction === 'enemy')!;
+    const apBefore = warden.ap;
+    expect(useCombatStore.getState().tryAbility('ranger-mark', enemy.id)).toBe(false);
+    const after = useCombatStore.getState().units.find((x) => x.id === warden.id)!;
+    expect(after.ap).toBe(apBefore);
+    // And the enemy was not marked.
+    const targetAfter = useCombatStore.getState().units.find((x) => x.id === enemy.id)!;
+    expect(targetAfter.status.marked).toBe(false);
+  });
+
+  it('every ability in the active pack has a unique id matching its registry key', () => {
+    // Structural invariant: the pack's ABILITIES map is keyed by AbilityDef.id,
+    // so a copy-paste duplicate would silently shadow. This guards against
+    // that with a single assertion over the whole registry.
+    const abilities = useContent().abilities;
+    for (const [key, def] of Object.entries(abilities)) {
+      expect(def.id).toBe(key);
+    }
+  });
+});

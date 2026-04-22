@@ -33,6 +33,9 @@ export const pack: ContentPack = {
   utilities: UTILITIES,
   kits: KITS,
   mods: MODS,
+  // Void-Watch's two operatives don't yet have signature abilities; an
+  // empty registry validates the engine handles packs with zero abilities.
+  abilities: {},
 
   spawnLegend: {
     G: 'hollow_wraith',

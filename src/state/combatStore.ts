@@ -6,7 +6,7 @@ import type {
 import { RUINED_MARKET, pickRandomMap } from '../game/maps';
 import {
   useContent, getSoldierTemplate, getEnemyTemplate, getWeapon, getArmor,
-  getKit, resolveSpawn,
+  getKit, resolveSpawn, getAbility,
 } from '../content/registry';
 import { modsFromIds, totalMobilityDeltaFromMods } from '../game/engine/loadout';
 import type { ModSlot } from '../game/types';
@@ -17,11 +17,12 @@ import { previewShot, resolveShot, resolveEnemyAttack } from '../game/engine/com
 import { hasLineOfSight } from '../game/engine/los';
 import { makeRng, type RNG } from '../game/engine/rng';
 import { decide } from '../game/engine/ai';
+import { tryAbility as runAbility } from '../game/engine/abilities';
+import { resolveUtility, resolveBlast } from '../game/engine/utilities';
+import { evaluateObjective } from '../game/engine/objectives';
 
 export type ActionMode = 'idle' | 'move' | 'fire' | 'sidearm' | 'utility' | 'ability';
 
-/** Smoke cloud lifetime (in player rounds) before it dissipates. */
-const SMOKE_DURATION = 2;
 /** Overwatch reaction-fire accuracy penalty. */
 const OVERWATCH_HIT_PENALTY = 15;
 const OVERWATCH_CRIT_PENALTY = 10;
@@ -53,7 +54,7 @@ export type FireEvent = {
   fireClass: WeaponClass;
 };
 
-type CombatState = {
+export type CombatState = {
   map: GridMap;
   units: Unit[];
   /** Smoke cloud cells: tile key → rounds remaining. Blocks LOS for both sides. */
@@ -105,14 +106,17 @@ type CombatState = {
   toggleOverwatch: () => boolean;
   /** Mid-mission Field Refit: swap one mod slot for 1 AP. Pass `null` to clear. */
   tryRefit: (slot: ModSlot, useSidearm: boolean, modId: string | null) => boolean;
-  /** Ranger ability: 1 AP + LOS. Marks an enemy for bonus damage on next hit. */
+  /** Data-driven ability dispatcher. Looks up the AbilityDef in the active
+   *  content pack; target is a UnitId for enemy-target abilities, a Vec2
+   *  for tile-target abilities, or undefined for self-cast. */
+  tryAbility: (abilityId: string, target?: UnitId | Vec2) => boolean;
+  /** Ranger ability — shim that calls `tryAbility('ranger-mark', id)`. */
   tryRangerMark: (targetId: UnitId) => boolean;
-  /** Warden ability (heavy weapons only): 1 AP + 1 primary ammo + LOS + range.
-   *  Suppresses target and any enemies chebyshev-1 from it. No damage. */
+  /** Warden ability — shim that calls `tryAbility('warden-bracing-fire', id)`. */
   tryWardenBracingFire: (targetId: UnitId) => boolean;
-  /** Mystic ability: 1 AP, self-cast. Grants seeThroughSmoke for this turn. */
+  /** Mystic ability — shim that calls `tryAbility('mystic-arcane-sight')`. */
   tryMysticArcaneSight: () => boolean;
-  /** Sapper ability: 1 AP + chebyshev range 3. Downgrade a cover tile. */
+  /** Sapper ability — shim that calls `tryAbility('sapper-demolish', pos)`. */
   trySapperDemolish: (pos: Vec2) => boolean;
   endPlayerTurn: () => void;
   runEnemyTurn: () => Promise<void>;
@@ -358,48 +362,10 @@ function recalcReach(state: CombatState): Map<number, number> {
  *                         lost if it dies before then
  */
 function checkEnd(state: CombatState): Partial<CombatState> | null {
-  const aliveP = state.units.some((u) => u.faction === 'player' && u.alive);
-  if (!aliveP) return { phase: 'lost' };
-  const obj = state.objective;
-  switch (obj.kind) {
-    case 'eliminate_all': {
-      const aliveE = state.units.some((u) => u.faction === 'enemy' && u.alive && !u.role);
-      if (!aliveE) return { phase: 'won' };
-      return null;
-    }
-    case 'eliminate_target': {
-      const targetAlive = state.units.some((u) =>
-        u.faction === 'enemy' && u.alive && u.templateId === obj.templateId);
-      if (!targetAlive) return { phase: 'won' };
-      return null;
-    }
-    case 'reach_tile': {
-      const reached = state.units.some((u) =>
-        u.faction === 'player' && u.alive && u.pos.x === obj.pos.x && u.pos.y === obj.pos.y);
-      if (reached) return { phase: 'won' };
-      if (obj.turnLimit !== undefined && state.round > obj.turnLimit) return { phase: 'lost' };
-      return null;
-    }
-    case 'destroy_objective': {
-      // Won when the objective unit at obj.pos is dead.
-      const target = state.units.find((u) =>
-        u.role === 'objective' && u.pos.x === obj.pos.x && u.pos.y === obj.pos.y);
-      if (!target || !target.alive) return { phase: 'won' };
-      return null;
-    }
-    case 'defend_point': {
-      if (state.defendTurns >= obj.turns) return { phase: 'won' };
-      return null;
-    }
-    case 'extract_vip': {
-      const vip = state.units.find((u) => u.role === 'vip');
-      if (!vip || !vip.alive) return { phase: 'lost' };
-      if (vip.pos.x === obj.extractTile.x && vip.pos.y === obj.extractTile.y) {
-        return { phase: 'won' };
-      }
-      return null;
-    }
-  }
+  const outcome = evaluateObjective(state);
+  if (outcome === 'won') return { phase: 'won' };
+  if (outcome === 'lost') return { phase: 'lost' };
+  return null;
 }
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -652,87 +618,64 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     return true;
   },
 
-  tryRangerMark: (targetId) => {
+  // Single data-driven ability dispatcher. Looks up the AbilityDef in the
+  // active content pack, validates class gate + AP/ammo/target/range/LOS via
+  // the engine helper, then applies the returned patch. AP + overwatch clear
+  // + mode reset are handled uniformly here; individual abilities only emit
+  // their own specific unit/map/log changes.
+  tryAbility: (abilityId, target) => {
     const st = get();
     if (st.phase !== 'player') return false;
-    const u = st.units.find((x) => x.id === st.selectedId);
-    const t = st.units.find((x) => x.id === targetId);
-    if (!u || !u.alive || !t || !t.alive || t.faction === u.faction) return false;
-    if (getSoldierTemplate(u.templateId).class !== 'Ranger') return false;
-    if (u.ap < 1) return false;
-    if (!hasLineOfSight(st.map, u.pos, t.pos, new Set(st.smokeTiles.keys()))) return false;
-    const units = st.units.map((o) =>
-      o.id === u.id ? { ...o, ap: o.ap - 1 }
-      : o.id === t.id ? { ...o, status: { ...o.status, marked: true } }
-      : o);
-    set({ units, mode: 'idle',
-      log: pushLog(st.log, `${u.name} marks ${t.name} — next hit bites deeper.`) });
-    return true;
-  },
-
-  tryWardenBracingFire: (targetId) => {
-    const st = get();
-    if (st.phase !== 'player') return false;
-    const u = st.units.find((x) => x.id === st.selectedId);
-    const t = st.units.find((x) => x.id === targetId);
-    if (!u || !u.alive || !t || !t.alive || t.faction === u.faction) return false;
-    if (getSoldierTemplate(u.templateId).class !== 'Warden') return false;
-    const primary = u.loadout ? getWeapon(u.loadout.primaryId) : null;
-    if (!primary || primary.class !== 'heavy') return false;
-    if (u.ap < 1 || u.ammo <= 0) return false;
-    if (chebyshev(u.pos, t.pos) > primary.rangeLong) return false;
-    if (!hasLineOfSight(st.map, u.pos, t.pos, new Set(st.smokeTiles.keys()))) return false;
-    // Suppress target + any enemy within chebyshev-1 of them.
-    const units = st.units.map((o) => {
-      if (o.id === u.id) {
-        return { ...o, ap: o.ap - 1, ammo: Math.max(0, o.ammo - 1),
-          status: { ...o.status, overwatch: false } };
-      }
-      if (o.alive && o.faction !== u.faction && chebyshev(o.pos, t.pos) <= 1) {
-        return { ...o, status: { ...o.status, suppressed: true } };
-      }
-      return o;
+    const actor = st.units.find((x) => x.id === st.selectedId && x.alive);
+    if (!actor) return false;
+    const def = getAbility(abilityId);
+    if (!def) return false;
+    if (def.classId) {
+      const tmpl = getSoldierTemplate(actor.templateId);
+      if (tmpl.class !== def.classId) return false;
+    }
+    const result = runAbility(st, def, actor.id, target);
+    if (!result) return false;
+    // Apply the ability's patch, then consume AP/ammo + clear overwatch on
+    // the actor. The ability's `units` patch is authoritative for every
+    // unit EXCEPT the actor's AP/ammo, which we manage here.
+    const units = (result.units ?? st.units).map((o) =>
+      o.id === actor.id
+        ? {
+            ...o,
+            ap: o.ap - def.apCost,
+            ammo: def.ammoCost ? Math.max(0, o.ammo - def.ammoCost) : o.ammo,
+            status: { ...o.status, overwatch: false },
+          }
+        : o,
+    );
+    const logs = result.logs ?? [];
+    let newLog = st.log;
+    for (const msg of logs) newLog = pushLog(newLog, msg);
+    set({
+      units,
+      mode: 'idle',
+      ...(result.map ? { map: result.map } : {}),
+      ...(result.fireEvents ? {
+        fireEvents: [
+          ...st.fireEvents,
+          ...result.fireEvents.map((e) => ({ ...e, id: nextFireEventId++ })),
+        ],
+      } : {}),
+      log: newLog,
     });
-    set({ units, mode: 'idle',
-      log: pushLog(st.log, `${u.name} rakes the area with bracing fire — heads down.`) });
+    set((s) => ({ reach: recalcReach(s) }));
+    const end = checkEnd(get());
+    if (end) set(end);
     return true;
   },
 
-  tryMysticArcaneSight: () => {
-    const st = get();
-    if (st.phase !== 'player') return false;
-    const u = st.units.find((x) => x.id === st.selectedId);
-    if (!u || !u.alive) return false;
-    if (getSoldierTemplate(u.templateId).class !== 'Mystic') return false;
-    if (u.ap < 1) return false;
-    const units = st.units.map((o) => o.id === u.id
-      ? { ...o, ap: o.ap - 1, status: { ...o.status, seeThroughSmoke: true } }
-      : o);
-    set({ units, mode: 'idle',
-      log: pushLog(st.log, `${u.name} weaves an Arcane Sight — smoke becomes glass.`) });
-    return true;
-  },
-
-  trySapperDemolish: (pos) => {
-    const st = get();
-    if (st.phase !== 'player') return false;
-    const u = st.units.find((x) => x.id === st.selectedId);
-    if (!u || !u.alive) return false;
-    if (getSoldierTemplate(u.templateId).class !== 'Sapper') return false;
-    if (u.ap < 1) return false;
-    if (chebyshev(u.pos, pos) > 3) return false;
-    const idx = pos.y * st.map.width + pos.x;
-    const tile = st.map.tiles[idx];
-    if (!tile || (tile.kind !== 'cover_full' && tile.kind !== 'cover_half')) return false;
-    const nextKind = tile.kind === 'cover_full' ? 'cover_half' : 'floor';
-    const nextTiles = st.map.tiles.slice();
-    nextTiles[idx] = { ...tile, kind: nextKind };
-    const nextMap = { ...st.map, tiles: nextTiles };
-    const units = st.units.map((o) => o.id === u.id ? { ...o, ap: o.ap - 1 } : o);
-    set({ units, map: nextMap, mode: 'idle',
-      log: pushLog(st.log, `${u.name} demolishes a cover tile — ${tile.kind} → ${nextKind}.`) });
-    return true;
-  },
+  // Thin shims — external callers (handleTap, HUD, tests) keep calling these
+  // by name; they all delegate to the single registry dispatch above.
+  tryRangerMark: (targetId) => get().tryAbility('ranger-mark', targetId),
+  tryWardenBracingFire: (targetId) => get().tryAbility('warden-bracing-fire', targetId),
+  tryMysticArcaneSight: () => get().tryAbility('mystic-arcane-sight', undefined),
+  trySapperDemolish: (pos) => get().tryAbility('sapper-demolish', pos),
 
   toggleOverwatch: () => {
     const st = get();
@@ -934,38 +877,6 @@ export const useCombatStore = create<CombatState>((set, get) => ({
 type Setter = (partial: Partial<CombatState> | ((s: CombatState) => Partial<CombatState>)) => void;
 type Getter = () => CombatState;
 
-/**
- * Degrade every cover tile in a chebyshev radius around `center`:
- * cover_full → cover_half → floor. Walls are unaffected. Produces a new
- * map + tiles array only if something actually changed; callers can
- * reference-equality check to decide whether to re-render.
- */
-function damageCoverInRadius(
-  map: GridMap, center: Vec2, radius: number,
-): { map: GridMap; tilesChanged: number } {
-  let changed = 0;
-  let nextTiles: GridMap['tiles'] | null = null;
-  for (let dy = -radius; dy <= radius; dy++) {
-    for (let dx = -radius; dx <= radius; dx++) {
-      if (Math.max(Math.abs(dx), Math.abs(dy)) > radius) continue;
-      const x = center.x + dx, y = center.y + dy;
-      if (x < 0 || y < 0 || x >= map.width || y >= map.height) continue;
-      const idx = y * map.width + x;
-      const t = map.tiles[idx];
-      if (!t) continue;
-      if (t.kind !== 'cover_full' && t.kind !== 'cover_half') continue;
-      if (!nextTiles) nextTiles = map.tiles.slice();
-      nextTiles[idx] = {
-        ...t,
-        kind: t.kind === 'cover_full' ? 'cover_half' : 'floor',
-      };
-      changed++;
-    }
-  }
-  if (!nextTiles) return { map, tilesChanged: 0 };
-  return { map: { ...map, tiles: nextTiles }, tilesChanged: changed };
-}
-
 /** Shared shot-resolution path used by both primary and sidearm fire. */
 function applyShotResult(
   set: Setter, get: Getter, shooterId: UnitId, targetId: UnitId,
@@ -1079,80 +990,19 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
   if ((u.utilityCharges[idx] ?? 0) <= 0) return;
   if (chebyshev(u.pos, center) > util.range) return;
 
-  let units = [...st.units];
-  let kills = st.kills;
-  let msg = '';
-  const floaters = [...st.floaters];
-  let nextSmoke: Map<number, number> | null = null;
-  // Grenades can downgrade cover tiles in their radius. When tiles
-  // change we produce a new map reference so the renderer picks it up.
-  let nextMap: GridMap | null = null;
+  // Dispatch into the per-kind resolver. The resolver handles the actual
+  // damage/heal/smoke/flashbang math; we wrap the result with AP spend,
+  // charge decrement, log-entry construction, and floater IDs.
+  const result = resolveUtility({
+    actor: u, center, utility: util, state: st, rng: st.rng,
+    armorOf: (o) => (o.faction === 'player' ? unitArmor(o) : 0),
+  });
 
-  if (util.kind === 'grenade' && util.dmgMin !== undefined && util.dmgMax !== undefined) {
-    const dmgMin = util.dmgMin!, dmgMax = util.dmgMax!;
-    const victims: Unit[] = [];
-    for (const other of units) {
-      if (!other.alive) continue;
-      if (chebyshev(other.pos, center) <= util.radius) victims.push(other);
-    }
-    units = units.map((o) => {
-      if (!victims.find((v) => v.id === o.id)) return o;
-      const dr = o.faction === 'player' ? unitArmor(o) : 0;
-      const dmg = Math.max(1, (dmgMin + st.rng.int(dmgMax - dmgMin + 1)) - dr);
-      const newHp = Math.max(0, o.hp - dmg);
-      const died = newHp <= 0;
-      if (died && o.faction === 'enemy') kills += 1;
-      floaters.push(floaterFor(o.pos, `-${dmg}`, 0xff9a3c));
-      return { ...o, hp: newHp, alive: !died };
-    });
-    // Destructible cover: full → half → floor for any cover tile inside
-    // the blast radius. Lights up a tactical option for grenades beyond
-    // just killing things.
-    const demolished = damageCoverInRadius(st.map, center, util.radius);
-    if (demolished.map !== st.map) {
-      nextMap = demolished.map;
-      if (demolished.tilesChanged > 0) {
-        msg = `${u.name} throws ${util.name} — ${victims.length} caught, ${demolished.tilesChanged} cover tile${demolished.tilesChanged === 1 ? '' : 's'} shredded.`;
-      }
-    }
-    if (!msg) msg = `${u.name} throws ${util.name} — ${victims.length} caught in the blast.`;
-  } else if (util.kind === 'flashbang') {
-    units = units.map((o) =>
-      chebyshev(o.pos, center) <= util.radius && o.faction !== u.faction && o.alive
-        ? { ...o, status: { ...o.status, blinded: true } } : o
-    );
-    msg = `${u.name} pops ${util.name}; foes are blinded.`;
-  } else if (util.kind === 'smoke') {
-    // Drop smoke tiles in the radius. Each tile blocks LOS for SMOKE_DURATION rounds.
-    nextSmoke = new Map(st.smokeTiles);
-    let added = 0;
-    for (let dy = -util.radius; dy <= util.radius; dy++) {
-      for (let dx = -util.radius; dx <= util.radius; dx++) {
-        const x = center.x + dx, y = center.y + dy;
-        if (Math.max(Math.abs(dx), Math.abs(dy)) > util.radius) continue;
-        if (x < 0 || y < 0 || x >= st.map.width || y >= st.map.height) continue;
-        const tile = st.map.tiles[y * st.map.width + x];
-        if (!tile || tile.kind === 'wall') continue;
-        nextSmoke.set(keyOf(x, y), SMOKE_DURATION);
-        added++;
-      }
-    }
-    msg = `${u.name} deploys ${util.name}; ${added} tiles of smoke roll out.`;
-  } else if (util.kind === 'medkit' && util.heal) {
-    const heal = util.heal!;
-    units = units.map((o) => {
-      if (!o.alive) return o;
-      if (chebyshev(o.pos, center) > 1) return o;
-      if (o.faction !== 'player') return o;
-      const healed = Math.min(o.hpMax, o.hp + heal);
-      floaters.push(floaterFor(o.pos, `+${healed - o.hp}`, 0x57d18b));
-      return { ...o, hp: healed };
-    });
-    msg = `${u.name} applies ${util.name}.`;
-  }
+  // Append resolver floaters with fresh IDs/TTL.
+  const floaters = [...st.floaters, ...result.floaters.map((f) => floaterFor(f.pos, f.text, f.color))];
 
-  // Decrement THIS slot's charge counter (correct even when the same utility is equipped twice).
-  units = units.map((o) => {
+  // Decrement THIS slot's charge counter + spend AP + clear overwatch on the actor.
+  const units = result.units.map((o) => {
     if (o.id !== u.id) return o;
     const charges = [...o.utilityCharges];
     charges[idx] = Math.max(0, (charges[idx] ?? 0) - 1);
@@ -1160,11 +1010,18 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
       status: { ...o.status, overwatch: false } };
   });
 
-  set({ units, kills, mode: 'idle', selectedUtilityIdx: null, pendingUtility: null,
-    log: pushLog(st.log, msg, util.kind === 'medkit' ? 'heal' : 'info'),
-    shakeFrames: util.kind === 'grenade' ? 10 : 0, floaters,
-    ...(nextSmoke ? { smokeTiles: nextSmoke } : {}),
-    ...(nextMap ? { map: nextMap } : {}) });
+  set({
+    units,
+    kills: st.kills + result.kills,
+    mode: 'idle',
+    selectedUtilityIdx: null,
+    pendingUtility: null,
+    log: pushLog(st.log, result.message, result.logKind ?? 'info'),
+    shakeFrames: result.shakeFrames,
+    floaters,
+    ...(result.smokeTiles ? { smokeTiles: result.smokeTiles } : {}),
+    ...(result.map ? { map: result.map } : {}),
+  });
   set((s) => ({ reach: recalcReach(s) }));
   const end = checkEnd(get());
   if (end) set(end);
@@ -1313,31 +1170,21 @@ function resolveEnemyThrow(
   const actor = st.units.find((u) => u.id === actorId);
   if (!actor || !actor.alive) return;
 
-  const victims: Unit[] = [];
-  for (const other of st.units) {
-    if (!other.alive) continue;
-    if (chebyshev(other.pos, center) <= grenade.radius) victims.push(other);
-  }
-  let units = st.units.map((o) => {
-    if (!victims.find((v) => v.id === o.id)) return o;
-    const dr = o.faction === 'player' ? unitArmor(o) : 0;
-    const dmg = Math.max(1, (grenade.dmgMin + st.rng.int(grenade.dmgMax - grenade.dmgMin + 1)) - dr);
-    const newHp = Math.max(0, o.hp - dmg);
-    const died = newHp <= 0;
-    return { ...o, hp: newHp, alive: !died };
-  });
-  // Spend 1 AP on the throw.
-  units = units.map((o) => o.id === actor.id ? { ...o, ap: o.ap - 1 } : o);
-  // Shred cover inside the blast — same rule as player grenades.
-  const demolished = damageCoverInRadius(st.map, center, grenade.radius);
-  const nextMap = demolished.map !== st.map ? demolished.map : st.map;
+  // Shared blast math with player grenades. Enemies don't benefit from the
+  // kill counter (those are player kills) so we ignore blast.kills here.
+  const blast = resolveBlast(
+    st, center,
+    { dmgMin: grenade.dmgMin, dmgMax: grenade.dmgMax, radius: grenade.radius },
+    (o) => (o.faction === 'player' ? unitArmor(o) : 0),
+    st.rng,
+  );
+  // Spend 1 AP on the throw after the blast rolls.
+  const units = blast.units.map((o) => o.id === actor.id ? { ...o, ap: o.ap - 1 } : o);
 
   const floaters = [...st.floaters];
-  for (const v of victims) {
-    const fresh = units.find((u) => u.id === v.id);
-    if (!fresh) continue;
-    const dmgTaken = v.hp - fresh.hp;
-    if (dmgTaken > 0) floaters.push(floaterFor(v.pos, `-${dmgTaken}`, 0xff9a3c));
+  for (const [unitId, dmg] of blast.damageByUnit) {
+    const v = st.units.find((o) => o.id === unitId);
+    if (v && dmg > 0) floaters.push(floaterFor(v.pos, `-${dmg}`, 0xff9a3c));
   }
   const damageTaken = st.damageTaken + units
     .filter((u) => u.faction === 'player' && !u.alive && st.units.find((o) => o.id === u.id)?.alive)
@@ -1350,9 +1197,11 @@ function resolveEnemyThrow(
     targetPos: center,
     fireClass: 'heavy' as WeaponClass,  // reuses the heavy burst animation for the throw arc + flash
   }];
+  const victimCount = blast.damageByUnit.size;
+  const shredded = blast.tilesChanged;
   set({
-    units, damageTaken, floaters, fireEvents, map: nextMap,
-    log: pushLog(st.log, `${actor.name} lobs a crude grenade — ${victims.length} caught${demolished.tilesChanged > 0 ? `, ${demolished.tilesChanged} cover tile${demolished.tilesChanged === 1 ? '' : 's'} shredded` : ''}.`),
+    units, damageTaken, floaters, fireEvents, map: blast.map,
+    log: pushLog(st.log, `${actor.name} lobs a crude grenade — ${victimCount} caught${shredded > 0 ? `, ${shredded} cover tile${shredded === 1 ? '' : 's'} shredded` : ''}.`),
     shakeFrames: 10,
   });
 }

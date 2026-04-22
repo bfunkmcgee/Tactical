@@ -2,6 +2,7 @@ import type {
   Armor, Consumable, EnemyTemplate, Kit, SoldierTemplate, TileKind, Utility,
   Weapon, WeaponMod, Zone,
 } from '../game/types';
+import type { AbilityDef } from '../game/engine/abilities';
 
 /**
  * A self-contained "world" the engine can play. Swap the active pack and the
@@ -29,6 +30,8 @@ export interface ContentPack {
   utilities: Record<string, Utility>;
   kits: Record<string, Kit>;
   mods: Record<string, WeaponMod>;
+  /** Class abilities (Ranger Mark, Warden Bracing Fire, etc.). */
+  abilities: Record<string, AbilityDef>;
 
   /**
    * Resolves a map's abstract spawn keys to enemy template ids in this pack.

@@ -6,6 +6,7 @@ import { KITS } from './kits';
 import { MODS } from './mods';
 import { SOLDIERS } from './soldiers';
 import { ENEMIES } from './enemies';
+import { ABILITIES } from './abilities';
 import { ZONES, CONSUMABLES, INITIAL_STOCKPILE } from './zones';
 
 /**
@@ -33,6 +34,7 @@ export const pack: ContentPack = {
   utilities: UTILITIES,
   kits: KITS,
   mods: MODS,
+  abilities: ABILITIES,
 
   spawnLegend: {
     G: 'rust_goblin',
