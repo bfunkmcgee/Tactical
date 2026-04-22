@@ -125,12 +125,42 @@ export function tickUnitAnimations(
       applyTint(node, node.dirtTint);
     }
 
-    // ----- Compose body transform. Body is unaffected by fire windup —
-    // only by walk cycle + hit-jitter + recoil push-back (bodyPush*).
-    node.body.scale.set(node.facing, walkScaleY);
-    node.body.rotation = walkLean + bodyPitch;
-    node.body.position.x = jitterX + bodyPushX;
-    node.body.position.y = walkBob + bodyPushY;
+    // ----- Compose body transform. Two paths — rig-composed units get
+    // per-part channels (legs squash, torso lean, head counter-lean,
+    // arms-back damped sway); bespoke-SVG units rotate as one.
+    if (node.rigComposition) {
+      // Rigged path: body holds only facing + hit-jitter. Per-part
+      // transforms land the walk cycle + recoil on the right layers.
+      if (node.deathMs === null) {
+        const p = node.rigComposition.parts;
+        // Legs absorb the squash on foot-plant so the torso doesn't
+        // visibly stretch — reads as weight on the ground.
+        p.legs.scale.y = walkScaleY;
+        // Torso carries the lean + bob + recoil push. Head and arms-back
+        // live next to torso in the root; they rotate independently
+        // rather than inheriting the torso's rotation.
+        p.torso.rotation = walkLean + bodyPitch;
+        p.torso.position.x = bodyPushX;
+        p.torso.position.y = walkBob + bodyPushY;
+        // Head counter-leans a fraction of the torso's rotation — the
+        // eyeline stays closer to level as the body sways. A common 2D
+        // animation trick; feels alive without a full lookAt rig.
+        p.head.rotation = -walkLean * 0.35;
+        // Arms-back rides a damped sway — the off-hand follows body
+        // motion without flapping.
+        p['arms-back'].rotation = walkSway * 0.8;
+      }
+      node.body.scale.set(node.facing, 1);
+      node.body.rotation = 0;
+      node.body.position.x = jitterX;
+      node.body.position.y = 0;
+    } else {
+      // Bespoke-SVG path: body is monolithic; everything rotates as one.
+      node.body.scale.set(node.facing, walkScaleY);
+      node.body.rotation = walkLean + bodyPitch;
+      node.body.position.x = jitterX + bodyPushX;
+      node.body.position.y = walkBob + bodyPushY;
+    }
 
     // ----- Selection ring alpha pulse — drives the "who's active" cue
     // since the character body itself is static in idle.
@@ -165,6 +195,18 @@ export function tickUnitAnimations(
       const t = Math.min(1, node.deathMs / DEATH_DURATION_MS);
       // Fade to 0.5 (corpse), not 0.
       node.container.alpha = 1 - t * 0.5;
+      // For rig-composed units, zero per-part transforms on death so
+      // the body-level tip-over applies to the whole composition as one.
+      // Without this the torso + head + arms-back would keep their
+      // alive-state walk-cycle rotations underneath the tip-over.
+      if (node.rigComposition) {
+        const p = node.rigComposition.parts;
+        p.legs.scale.y = 1;
+        p.torso.rotation = 0;
+        p.torso.position.set(0, 0);
+        p.head.rotation = 0;
+        p['arms-back'].rotation = 0;
+      }
       node.body.position.y = t * 14;              // slump to the ground
       node.body.rotation = node.facing * 0.9 * t; // tip over 50°, feels flatter
       // Weapon drops below the grip as the character collapses.
