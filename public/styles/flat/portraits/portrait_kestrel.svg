@@ -61,10 +61,14 @@
   <path d="M 64 68 L 62 80 L 64 82 L 66 80 Z" fill="#d4a888" opacity="0.6"/>
   <path d="M 62 80 Q 64 81 66 80" stroke="#8a6844" stroke-width="0.5" fill="none"/>
 
-  <!-- Mouth: slightly pressed, focused. -->
-  <path d="M 58 88 Q 64 89 70 88" stroke="#4a2818" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-  <!-- Lip shading. -->
-  <path d="M 58 88 Q 64 86 70 88" stroke="#c48a6a" stroke-width="0.6" fill="none" opacity="0.7"/>
+  <!-- Mouth: subtle confident half-smile. The Q control point sits
+       ABOVE the endpoints so the curve bows upward (in SVG coords,
+       smaller y = higher on screen). -->
+  <path d="M 58 89 Q 64 86 70 89" stroke="#4a2818" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <!-- Lower-lip shading following the same upward curve. -->
+  <path d="M 58 89 Q 64 87 70 89" stroke="#c48a6a" stroke-width="0.6" fill="none" opacity="0.7"/>
+  <!-- Small smile-dimple hint on the left cheek. -->
+  <path d="M 54 86 Q 56 88 55 90" stroke="#8a6844" stroke-width="0.4" fill="none" opacity="0.4"/>
 
   <!-- Cheekbone highlight — subtle for warmth. -->
   <ellipse cx="50" cy="76" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.4"/>

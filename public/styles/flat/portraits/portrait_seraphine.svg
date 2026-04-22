@@ -71,9 +71,14 @@
   <path d="M 64 68 L 63 80 L 64 82 L 65 80 Z" fill="#d4a888" opacity="0.5"/>
   <path d="M 62 80 Q 64 81 66 80" stroke="#8a6844" stroke-width="0.4" fill="none"/>
 
-  <!-- Mouth: soft, slightly curved. -->
-  <path d="M 59 88 Q 64 90 69 88" stroke="#8a4848" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-  <path d="M 59 88 Q 64 86 69 88" stroke="#c8888a" stroke-width="0.6" fill="none" opacity="0.7"/>
+  <!-- Mouth: serene Mona-Lisa smile. Both strokes curve upward (Q
+       control above endpoints) so the mouth reads as gently pleased
+       rather than downturned. -->
+  <path d="M 59 89 Q 64 86 69 89" stroke="#8a4848" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <path d="M 59 89 Q 64 87 69 89" stroke="#c8888a" stroke-width="0.6" fill="none" opacity="0.7"/>
+  <!-- Faint dimple at the right corner — the half of the face nearer
+       the viewer — adds warmth. -->
+  <circle cx="69" cy="89" r="0.6" fill="#8a4848" opacity="0.4"/>
 
   <!-- Cheek highlight. -->
   <ellipse cx="51" cy="74" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.5"/>
