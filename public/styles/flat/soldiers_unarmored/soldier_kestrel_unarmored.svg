@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Kestrel — Ranger, no-armor reference sprite.
+  Appearance: fair skin, black short-crop hair, blue eyes, field fatigues.
+  Athletic build, confident stance. 96×128 viewBox matches the rig frame
+  so this can later be split into head/torso/legs/arms parts without
+  rescaling.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Shadow under feet (kept for standalone rendering; rig composition omits it). -->
+  <ellipse cx="48" cy="125" rx="14" ry="2" fill="#000000" opacity="0.35"/>
+
+  <!-- Legs: green fatigue trousers + dark boots. -->
+  <rect x="38" y="82" width="8" height="38" fill="#4a5a34"/>
+  <rect x="50" y="82" width="8" height="38" fill="#4a5a34"/>
+  <!-- Cargo pocket hint on left thigh. -->
+  <rect x="39" y="94" width="6" height="8" fill="none" stroke="#2a3020" stroke-width="0.5"/>
+  <!-- Boots. -->
+  <rect x="36" y="118" width="12" height="6" fill="#1a1008"/>
+  <rect x="48" y="118" width="12" height="6" fill="#1a1008"/>
+  <!-- Belt at waist. -->
+  <rect x="36" y="80" width="24" height="3" fill="#3a2a1c" stroke="#1a1008" stroke-width="0.3"/>
+  <rect x="47" y="80" width="2" height="3" fill="#c4a468"/>
+
+  <!-- Torso: olive tee under a tan shoulder harness. -->
+  <path d="M 34 50 L 62 50 L 64 82 L 32 82 Z" fill="#6a7a54"/>
+  <!-- Harness straps. -->
+  <rect x="36" y="52" width="3" height="28" fill="#3a2a1c"/>
+  <rect x="57" y="52" width="3" height="28" fill="#3a2a1c"/>
+  <rect x="33" y="66" width="30" height="3" fill="#3a2a1c"/>
+
+  <!-- Arms: olive sleeves + fair-skin hands. -->
+  <path d="M 30 52 L 36 52 L 38 78 L 32 80 Z" fill="#6a7a54"/>
+  <path d="M 60 52 L 66 52 L 64 80 L 58 78 Z" fill="#6a7a54"/>
+  <ellipse cx="34" cy="82" rx="3" ry="3.5" fill="#e8c4a4"/>
+  <ellipse cx="62" cy="82" rx="3" ry="3.5" fill="#e8c4a4"/>
+
+  <!-- Neck + head. Fair skin tone 0xe8c4a4 (matches appearance.skinTone). -->
+  <rect x="44" y="40" width="8" height="10" fill="#e8c4a4"/>
+  <ellipse cx="48" cy="28" rx="10" ry="12" fill="#e8c4a4" stroke="#8a6844" stroke-width="0.4"/>
+
+  <!-- Hair: short crop, black (0x1a1410). Authored as a cap sitting on
+       the upper third of the head + small sideburns. -->
+  <path d="M 38 22 Q 48 14 58 22 L 58 28 Q 53 24 48 24 Q 43 24 38 28 Z" fill="#1a1410"/>
+  <rect x="38" y="26" width="2" height="5" fill="#1a1410"/>
+  <rect x="56" y="26" width="2" height="5" fill="#1a1410"/>
+
+  <!-- Eyes: blue (0x4a6a9a) with darker outline. -->
+  <ellipse cx="44" cy="28" rx="1.8" ry="1.2" fill="#ffffff"/>
+  <circle cx="44" cy="28" r="1" fill="#4a6a9a"/>
+  <ellipse cx="52" cy="28" rx="1.8" ry="1.2" fill="#ffffff"/>
+  <circle cx="52" cy="28" r="1" fill="#4a6a9a"/>
+
+  <!-- Mouth + subtle nose shading. -->
+  <line x1="45" y1="34" x2="51" y2="34" stroke="#4a2818" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="48" y1="30" x2="48" y2="33" stroke="#8a6844" stroke-width="0.4" opacity="0.6"/>
+</svg>

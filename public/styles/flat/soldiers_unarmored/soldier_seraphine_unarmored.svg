@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Seraphine — Mystic, no-armor reference sprite.
+  Appearance: fair skin, white ponytail, grey eyes, violet robes.
+  Slender frame, draped robes instead of separable legs — reads as a
+  caster silhouette. 96×128 viewBox matches the rig.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Shadow. -->
+  <ellipse cx="48" cy="125" rx="14" ry="2.5" fill="#000000" opacity="0.35"/>
+
+  <!-- Robe skirt — single continuous drape from waist to hem, flared. -->
+  <path d="M 30 82 L 66 82 L 72 120 L 24 120 Z" fill="#4a3854" stroke="#2a1a30" stroke-width="0.5"/>
+  <!-- Center seam / drape fold. -->
+  <line x1="48" y1="82" x2="48" y2="120" stroke="#2a1a30" stroke-width="0.4" opacity="0.7"/>
+  <!-- Side-pleat fold lines. -->
+  <line x1="38" y1="88" x2="34" y2="120" stroke="#2a1a30" stroke-width="0.3" opacity="0.5"/>
+  <line x1="58" y1="88" x2="62" y2="120" stroke="#2a1a30" stroke-width="0.3" opacity="0.5"/>
+  <!-- Hem trim — gold embroidery. -->
+  <rect x="24" y="117" width="48" height="1.2" fill="#c4a468" opacity="0.85"/>
+  <!-- A hint of shoe under the hem. -->
+  <rect x="41" y="118" width="6" height="3" fill="#2a1a30"/>
+  <rect x="49" y="118" width="6" height="3" fill="#2a1a30"/>
+
+  <!-- Torso: violet robe, cinched at waist with a gold sash. -->
+  <path d="M 32 50 L 64 50 L 66 82 L 30 82 Z" fill="#4a3854" stroke="#2a1a30" stroke-width="0.4"/>
+  <!-- Sash. -->
+  <rect x="30" y="66" width="36" height="5" fill="#c4a468"/>
+  <rect x="30" y="70" width="36" height="1" fill="#2a1a30" opacity="0.6"/>
+  <!-- Robe collar / neckline — open V. -->
+  <path d="M 40 50 L 48 62 L 56 50 Z" fill="#2a1a30"/>
+  <!-- Undershirt inside the V. -->
+  <path d="M 44 56 L 48 62 L 52 56 Z" fill="#e8c4a4"/>
+
+  <!-- Arms: long sleeves + fair-skin hands. Slender. -->
+  <path d="M 28 52 L 34 52 L 34 80 L 28 80 Z" fill="#4a3854"/>
+  <path d="M 62 52 L 68 52 L 68 80 L 62 80 Z" fill="#4a3854"/>
+  <ellipse cx="31" cy="82" rx="2.8" ry="3" fill="#e8c4a4"/>
+  <ellipse cx="65" cy="82" rx="2.8" ry="3" fill="#e8c4a4"/>
+
+  <!-- Neck + head. Fair skin. -->
+  <rect x="45" y="40" width="6" height="10" fill="#e8c4a4"/>
+  <ellipse cx="48" cy="28" rx="9" ry="12" fill="#e8c4a4" stroke="#8a6844" stroke-width="0.4"/>
+
+  <!-- Hair: ponytail. White (0xe8e4d8). Pulled back from a center part
+       + tail trailing behind. -->
+  <path d="M 39 20 Q 48 12 57 20 L 57 26 Q 52 22 48 22 Q 44 22 39 26 Z" fill="#e8e4d8"/>
+  <!-- Center part. -->
+  <line x1="48" y1="17" x2="48" y2="23" stroke="#b8b0a0" stroke-width="0.5"/>
+  <!-- Ponytail tail down behind head + shoulder. -->
+  <path d="M 55 22 Q 62 26 64 40 L 61 42 Q 58 30 54 26 Z" fill="#e8e4d8"/>
+
+  <!-- Grey eyes (0x6a7078). -->
+  <ellipse cx="44" cy="28" rx="1.7" ry="1.1" fill="#ffffff"/>
+  <circle cx="44" cy="28" r="0.9" fill="#6a7078"/>
+  <ellipse cx="52" cy="28" rx="1.7" ry="1.1" fill="#ffffff"/>
+  <circle cx="52" cy="28" r="0.9" fill="#6a7078"/>
+
+  <!-- Delicate features: small mouth + faint nose. -->
+  <line x1="46" y1="34" x2="50" y2="34" stroke="#8a4848" stroke-width="0.6" stroke-linecap="round"/>
+  <line x1="48" y1="30" x2="48" y2="33" stroke="#8a6844" stroke-width="0.3" opacity="0.5"/>
+
+  <!-- Subtle mystic marking: a tiny rune on the forehead. -->
+  <circle cx="48" cy="22" r="0.8" fill="#c79aff" opacity="0.8"/>
+</svg>

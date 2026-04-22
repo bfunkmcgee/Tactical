@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Brannock — Warden, no-armor reference sprite.
+  Appearance: tan skin, bald (with brown stubble), hazel eyes, utility wear.
+  Heavy build: broader shoulders, thicker limbs. 96×128 viewBox matches the
+  rig so this can later be split into head/torso/legs/arms parts.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Shadow. -->
+  <ellipse cx="48" cy="125" rx="16" ry="2.5" fill="#000000" opacity="0.4"/>
+
+  <!-- Legs: heavy dark-canvas work trousers + heavy boots. Wider stance
+       than Kestrel to sell his heavier frame. -->
+  <rect x="36" y="82" width="10" height="38" fill="#2a2418"/>
+  <rect x="50" y="82" width="10" height="38" fill="#2a2418"/>
+  <!-- Knee patches. -->
+  <rect x="38" y="100" width="6" height="5" fill="#3a3428"/>
+  <rect x="52" y="100" width="6" height="5" fill="#3a3428"/>
+  <!-- Heavy boots. -->
+  <rect x="34" y="117" width="14" height="7" fill="#1a1008"/>
+  <rect x="48" y="117" width="14" height="7" fill="#1a1008"/>
+  <!-- Tool belt + buckle. -->
+  <rect x="34" y="80" width="28" height="4" fill="#5a4028" stroke="#1a1008" stroke-width="0.3"/>
+  <rect x="46" y="80" width="4" height="4" fill="#c4a468"/>
+
+  <!-- Torso: dark undershirt tucked into belt — broader than Kestrel. -->
+  <path d="M 30 50 L 66 50 L 64 82 L 32 82 Z" fill="#4a4230"/>
+  <!-- Stretched tee neckline. -->
+  <path d="M 42 50 Q 48 55 54 50 Z" fill="#3a3428"/>
+  <!-- Chest swells (simple shading lines for bulk). -->
+  <line x1="36" y1="58" x2="36" y2="78" stroke="#3a3428" stroke-width="0.5"/>
+  <line x1="60" y1="58" x2="60" y2="78" stroke="#3a3428" stroke-width="0.5"/>
+
+  <!-- Arms: heavy sleeves + large hands. Tan skin 0x9a6a4a. -->
+  <path d="M 26 52 L 32 52 L 34 78 L 28 80 Z" fill="#4a4230"/>
+  <path d="M 64 52 L 70 52 L 68 80 L 62 78 Z" fill="#4a4230"/>
+  <ellipse cx="30" cy="82" rx="3.5" ry="4" fill="#9a6a4a"/>
+  <ellipse cx="66" cy="82" rx="3.5" ry="4" fill="#9a6a4a"/>
+
+  <!-- Thick neck + head. Tan skin. -->
+  <rect x="42" y="38" width="12" height="12" fill="#9a6a4a"/>
+  <ellipse cx="48" cy="26" rx="11" ry="13" fill="#9a6a4a" stroke="#5a3020" stroke-width="0.4"/>
+
+  <!-- Bald head with dark brown stubble suggested as a faint cap. -->
+  <path d="M 38 20 Q 48 14 58 20 L 58 22 Q 48 20 38 22 Z" fill="#4a3020" opacity="0.6"/>
+
+  <!-- Heavy brow + hazel eyes (0x6a4a28). -->
+  <path d="M 40 23 L 46 22 M 50 22 L 56 23" stroke="#3a2014" stroke-width="0.8" fill="none"/>
+  <ellipse cx="44" cy="26" rx="1.7" ry="1" fill="#ffffff"/>
+  <circle cx="44" cy="26" r="0.9" fill="#6a4a28"/>
+  <ellipse cx="52" cy="26" rx="1.7" ry="1" fill="#ffffff"/>
+  <circle cx="52" cy="26" r="0.9" fill="#6a4a28"/>
+
+  <!-- Wide nose + set jaw mouth. -->
+  <path d="M 46 30 L 48 33 L 50 30" fill="none" stroke="#5a3020" stroke-width="0.5"/>
+  <line x1="44" y1="35" x2="52" y2="35" stroke="#3a2014" stroke-width="1" stroke-linecap="round"/>
+  <!-- Jaw stubble shading. -->
+  <ellipse cx="48" cy="37" rx="6" ry="1.2" fill="#4a3020" opacity="0.5"/>
+</svg>
