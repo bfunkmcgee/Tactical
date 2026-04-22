@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER outfit: utility wear torso — engineer's vest. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Undershirt. -->
+  <path d="M 36 50 L 60 50 L 62 82 L 34 82 Z" fill="#6a5a4a"/>
+  <!-- Vest over top with utility pouches. -->
+  <path d="M 32 52 L 40 50 L 40 82 L 32 82 Z" fill="#3a2a1e" stroke="#1a1008" stroke-width="0.5"/>
+  <path d="M 56 50 L 64 52 L 64 82 L 56 82 Z" fill="#3a2a1e" stroke="#1a1008" stroke-width="0.5"/>
+  <!-- Pouch hints. -->
+  <rect x="33" y="64" width="6" height="6" fill="#5a4030"/>
+  <rect x="57" y="64" width="6" height="6" fill="#5a4030"/>
+</svg>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER outfit: utility wear legs — work trousers with tool belt. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Work trousers over base legs. -->
+  <rect x="35" y="82" width="12" height="38" fill="#3a2a1e"/>
+  <rect x="49" y="82" width="12" height="38" fill="#3a2a1e"/>
+  <!-- Tool belt at waist. -->
+  <rect x="33" y="82" width="30" height="4" fill="#5a4030" stroke="#1a1008" stroke-width="0.3"/>
+  <!-- Buckle. -->
+  <rect x="46" y="82" width="4" height="4" fill="#c4a468"/>
+</svg>

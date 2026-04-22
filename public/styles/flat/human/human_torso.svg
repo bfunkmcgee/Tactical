@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER: human rig base torso (chest). Head has its own part SVG. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Chest silhouette from shoulders (~y=52) down to waist (~y=82). -->
+  <path d="M 34 50 L 62 50 L 64 82 L 32 82 Z" fill="#7a6a54"/>
+  <!-- Neck stub. -->
+  <rect x="44" y="40" width="8" height="12" fill="#7a6a54"/>
+</svg>

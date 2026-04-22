@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER outfit: robes legs — single continuous skirt. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Flared robe skirt from waist (~y=82) wider to the feet (~y=120). -->
+  <path d="M 30 82 L 66 82 L 72 120 L 24 120 Z" fill="#4a3854" stroke="#2a1a30" stroke-width="0.5"/>
+</svg>

@@ -153,4 +153,47 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     const tabardSprite = comp.tintTargets.find((s) => s.tint === 0xc85a3a);
     expect(tabardSprite).toBeDefined();
   });
+
+  it('baseOutfit adds torso + legs overlays, and hair attaches to headSlot with hairColor tint', () => {
+    // Phase 5c: non-equipment appearance content (outfit + hair) composites
+    // before the armor/clothing pass, so an un-armored rig still has
+    // clothing + hair.
+    const cache = new Map<string, Texture>();
+    const dummyTex = {} as unknown as Texture;
+    cache.set('overlay:/fake/fatigues_torso.svg', dummyTex);
+    cache.set('overlay:/fake/fatigues_legs.svg', dummyTex);
+    cache.set('overlay:/fake/short_crop.svg', dummyTex);
+
+    const appearance: HumanAppearance = {
+      rig: 'human',
+      skinTone: 0xc48a6a,
+      hairStyle: 'short_crop',
+      hairColor: 0x4a3020,
+      eyeColor: 0x3a2a1c,
+      baseOutfit: 'fatigues',
+    };
+    const comp = buildHumanRigBody(
+      HUMAN_RIG,
+      appearance,
+      undefined,
+      cache,
+      {
+        armorOf: () => undefined,
+        clothingOf: () => undefined,
+        hairStyleOf: (id) => (id === 'short_crop'
+          ? { svg: '/fake/short_crop.svg' } : undefined),
+        baseOutfitOf: (id) => (id === 'fatigues' ? {
+          torsoSvg: '/fake/fatigues_torso.svg',
+          legsSvg: '/fake/fatigues_legs.svg',
+        } : undefined),
+      },
+    );
+    // Hair lands in headSlot.
+    expect(comp.headSlot.children.length).toBe(1);
+    // Outfit adds 2 overlays (torso + legs). 5 base + 2 outfit + 1 hair = 8.
+    expect(comp.tintTargets.length).toBe(8);
+    // Hair carries the appearance.hairColor tint.
+    const hairSprite = comp.headSlot.children[0] as { tint: number };
+    expect(hairSprite.tint).toBe(0x4a3020);
+  });
 });

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER hair: bob. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Frames the head from crown to jaw — wider than short crop. -->
+  <path d="M 4 14 Q 16 2 28 14 L 28 24 L 22 24 L 22 18 L 10 18 L 10 24 L 4 24 Z" fill="#ffffff"/>
+</svg>

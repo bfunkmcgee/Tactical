@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER hair: bald — intentionally empty SVG so the head shows
+     through without an opaque hair layer. Kept as a file (rather than a
+     null entry) so the hairStyles catalog stays uniformly {id, name, svg}. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"/>

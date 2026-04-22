@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER: human rig front arm (grip hand). Rides inside the weapon wrap
+     and pivots around GRIP_ANCHOR (48, 72 at natural scale). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Arm from the right shoulder (~60, 52) extended toward the grip (~48, 72). -->
+  <path d="M 62 52 L 56 54 L 50 72 L 54 74 L 64 56 Z" fill="#ffffff" stroke="#1a1008" stroke-width="0.5"/>
+  <!-- Hand at the grip. -->
+  <circle cx="51" cy="72" r="3" fill="#ffffff" stroke="#1a1008" stroke-width="0.5"/>
+</svg>

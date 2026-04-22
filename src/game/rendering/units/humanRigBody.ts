@@ -40,6 +40,12 @@ export interface RigBodyComposition {
 export interface RigBodyDeps {
   armorOf: (id: string) => Armor | undefined;
   clothingOf: (id: string) => Clothing | undefined;
+  /** Hair-style catalog entry by id. Returns undefined for packs without
+   *  hair catalogs or for an unknown style id. */
+  hairStyleOf?: (id: string) => { svg: string } | undefined;
+  /** Base-outfit catalog entry by id. Drives the torso/legs look when no
+   *  armor overlay covers them. */
+  baseOutfitOf?: (id: string) => { torsoSvg: string; legsSvg: string } | undefined;
 }
 
 /**
@@ -175,6 +181,38 @@ export function buildHumanRigBody(
     tintTargets.push(s);
     return s;
   };
+
+  // ---- Base outfit pass: civvies on top of the base torso + legs,
+  // underneath any armor. Drawn even when no loadout is set so a rig
+  // preview (e.g. character creation UI with no equipment picked yet)
+  // still has clothing. Un-tinted — the outfit SVG carries its own
+  // authored colors.
+  const baseOutfit = appearance.baseOutfit
+    ? deps.baseOutfitOf?.(appearance.baseOutfit)
+    : undefined;
+  if (baseOutfit) {
+    addBodyAlignedOverlay(baseOutfit.torsoSvg, undefined, 'torso');
+    addBodyAlignedOverlay(baseOutfit.legsSvg, undefined, 'legs');
+  }
+
+  // ---- Hair pass: slot-mounted in headSlot at the head joint. Helmets
+  // (if any) land later in the armor pass and cover hair. Tint applies
+  // appearance.hairColor so one hair-style SVG recolours across the
+  // HAIR_COLORS palette.
+  const hairStyle = appearance.hairStyle
+    ? deps.hairStyleOf?.(appearance.hairStyle)
+    : undefined;
+  if (hairStyle) {
+    const hairTex = cache.get(`overlay:${hairStyle.svg}`);
+    if (hairTex) {
+      const h = new Sprite(hairTex);
+      h.anchor.set(0.5, 0.5);
+      h.scale.set(SPRITE_SCALE);
+      h.tint = appearance.hairColor;
+      headSlot.addChild(h);
+      tintTargets.push(h);
+    }
+  }
 
   if (loadout) {
     const armor = deps.armorOf(loadout.armorId);

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER outfit: field fatigues torso. Body-aligned overlay. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Jacket over the base torso, shoulders (~y=50) to waist (~y=82). -->
+  <path d="M 34 50 L 62 50 L 64 82 L 32 82 Z" fill="#5a6a4a" stroke="#2a3020" stroke-width="0.5"/>
+  <!-- Buttoned center seam. -->
+  <line x1="48" y1="52" x2="48" y2="80" stroke="#2a3020" stroke-width="0.5"/>
+  <circle cx="48" cy="58" r="0.8" fill="#2a3020"/>
+  <circle cx="48" cy="68" r="0.8" fill="#2a3020"/>
+  <circle cx="48" cy="78" r="0.8" fill="#2a3020"/>
+</svg>

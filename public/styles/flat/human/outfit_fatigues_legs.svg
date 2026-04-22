@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER outfit: field fatigues legs. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Combat trousers over the base legs. -->
+  <rect x="35" y="82" width="12" height="38" fill="#5a6a4a"/>
+  <rect x="49" y="82" width="12" height="38" fill="#5a6a4a"/>
+  <!-- Cargo pocket hints. -->
+  <rect x="37" y="94" width="6" height="8" fill="none" stroke="#2a3020" stroke-width="0.5"/>
+  <rect x="53" y="94" width="6" height="8" fill="none" stroke="#2a3020" stroke-width="0.5"/>
+</svg>

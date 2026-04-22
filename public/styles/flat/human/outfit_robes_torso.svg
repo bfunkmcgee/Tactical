@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER outfit: robes torso. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Wide draped robe from shoulders down. -->
+  <path d="M 28 48 L 68 48 L 72 82 L 24 82 Z" fill="#4a3854" stroke="#2a1a30" stroke-width="0.5"/>
+  <!-- Sash across the chest. -->
+  <path d="M 32 60 L 64 60 L 66 64 L 30 64 Z" fill="#c4a468"/>
+</svg>

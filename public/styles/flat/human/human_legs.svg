@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER: human rig base legs (hips-down). Replace with authored art; URL stays. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Two trouser rectangles down from the waist anchor (~y=82) to the foot anchors (~y=120). -->
+  <rect x="36" y="82" width="10" height="40" fill="#4a3a2a"/>
+  <rect x="50" y="82" width="10" height="40" fill="#4a3a2a"/>
+  <!-- Boot caps at the foot joints. -->
+  <rect x="34" y="118" width="14" height="6" fill="#1a1008"/>
+  <rect x="48" y="118" width="14" height="6" fill="#1a1008"/>
+</svg>

@@ -50,6 +50,33 @@ export const pack: ContentPack = {
   consumables: CONSUMABLES,
   initialStockpile: INITIAL_STOCKPILE,
 
+  // Rig appearance catalogs — placeholder hair + outfit SVGs under
+  // /styles/flat/human/. Drop-in replacement for the final art without
+  // code change: the artist authors over these files with the same URLs.
+  hairStyles: {
+    short_crop: { id: 'short_crop', name: 'Short Crop', svg: '/styles/flat/human/hair_short_crop.svg' },
+    bob:        { id: 'bob',        name: 'Bob',        svg: '/styles/flat/human/hair_bob.svg' },
+    ponytail:   { id: 'ponytail',   name: 'Ponytail',   svg: '/styles/flat/human/hair_ponytail.svg' },
+    bald:       { id: 'bald',       name: 'Bald',       svg: '/styles/flat/human/hair_bald.svg' },
+  },
+  baseOutfits: {
+    fatigues: {
+      id: 'fatigues', name: 'Field Fatigues',
+      torsoSvg: '/styles/flat/human/outfit_fatigues_torso.svg',
+      legsSvg:  '/styles/flat/human/outfit_fatigues_legs.svg',
+    },
+    robes: {
+      id: 'robes', name: 'Robes',
+      torsoSvg: '/styles/flat/human/outfit_robes_torso.svg',
+      legsSvg:  '/styles/flat/human/outfit_robes_legs.svg',
+    },
+    utility: {
+      id: 'utility', name: 'Utility Wear',
+      torsoSvg: '/styles/flat/human/outfit_utility_torso.svg',
+      legsSvg:  '/styles/flat/human/outfit_utility_legs.svg',
+    },
+  },
+
   theme: {
     /** Torso-only SVG (head + chest + legs; no arms). */
     spritePath: (templateId) => TORSOS[templateId],

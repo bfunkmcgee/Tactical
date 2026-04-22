@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER hair: ponytail. Short top + a tail trailing back. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <path d="M 6 14 Q 16 4 26 14 L 26 19 L 6 19 Z" fill="#ffffff"/>
+  <!-- Tail behind the head, drooping. -->
+  <path d="M 26 14 L 30 18 L 30 26 L 28 26 L 26 19 Z" fill="#ffffff"/>
+</svg>

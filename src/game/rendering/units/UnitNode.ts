@@ -1,6 +1,6 @@
 import { Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { useCombatStore } from '../../../state/combatStore';
-import { getArmor, getClothing, type useContent } from '../../../content/registry';
+import { getArmor, getClothing, useContent } from '../../../content/registry';
 import type { Unit, UnitId, Vec2 } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
@@ -143,6 +143,20 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
       pushLoad(overlayCacheKey(c.svg), c.svg);
     }
   }
+  // Rig appearance catalogs — hair styles + base outfits. Preloaded
+  // under the same `overlay:${url}` key shape so buildHumanRigBody's
+  // lookup works without branching on asset kind.
+  if (pack.hairStyles) {
+    for (const h of Object.values(pack.hairStyles)) {
+      pushLoad(overlayCacheKey(h.svg), h.svg);
+    }
+  }
+  if (pack.baseOutfits) {
+    for (const o of Object.values(pack.baseOutfits)) {
+      pushLoad(overlayCacheKey(o.torsoSvg), o.torsoSvg);
+      pushLoad(overlayCacheKey(o.legsSvg), o.legsSvg);
+    }
+  }
   await Promise.all(loads);
 }
 
@@ -228,6 +242,8 @@ function createUnitNode(u: Unit): UnitNode {
         try { return getArmor(id); } catch { return undefined; }
       },
       clothingOf: getClothing,
+      hairStyleOf: (id) => useContent().hairStyles?.[id],
+      baseOutfitOf: (id) => useContent().baseOutfits?.[id],
     });
     body.addChild(rigComposition.root);
     // spriteTop matches the bespoke-path value so ornaments / HP bar /

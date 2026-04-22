@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PLACEHOLDER: human rig head. Whole-sprite tinted by appearance.skinTone. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Head oval centered on joint 'head' at (48, 22). -->
+  <ellipse cx="48" cy="22" rx="10" ry="13" fill="#ffffff"/>
+  <!-- Simple eyes — authored as darker marks so they read as facial features
+       even when whole-sprite skinTone tint is applied. -->
+  <circle cx="44" cy="20" r="1.2" fill="#1a1008"/>
+  <circle cx="52" cy="20" r="1.2" fill="#1a1008"/>
+  <!-- Mouth line. -->
+  <line x1="45" y1="27" x2="51" y2="27" stroke="#1a1008" stroke-width="1" stroke-linecap="round"/>
+</svg>

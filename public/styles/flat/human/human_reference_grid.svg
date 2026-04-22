@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- REFERENCE GRID for HUMAN_RIG authors. Crosshairs at every joint anchor
+     declared in src/content/rigs/human.ts. Not loaded by the runtime; this
+     file lives alongside the part SVGs as an artist reference. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <rect x="0" y="0" width="96" height="128" fill="none" stroke="#888" stroke-dasharray="2 2" stroke-width="0.5"/>
+  <g fill="none" stroke="#c84040" stroke-width="1">
+    <!-- head (48, 22) -->
+    <line x1="43" y1="22" x2="53" y2="22"/>
+    <line x1="48" y1="17" x2="48" y2="27"/>
+    <!-- neck (48, 42) -->
+    <line x1="43" y1="42" x2="53" y2="42"/>
+    <line x1="48" y1="37" x2="48" y2="47"/>
+    <!-- shoulder-l (36, 52) -->
+    <line x1="31" y1="52" x2="41" y2="52"/>
+    <line x1="36" y1="47" x2="36" y2="57"/>
+    <!-- shoulder-r (60, 52) -->
+    <line x1="55" y1="52" x2="65" y2="52"/>
+    <line x1="60" y1="47" x2="60" y2="57"/>
+    <!-- waist (48, 82) -->
+    <line x1="43" y1="82" x2="53" y2="82"/>
+    <line x1="48" y1="77" x2="48" y2="87"/>
+    <!-- grip (48, 72) -->
+    <line x1="43" y1="72" x2="53" y2="72"/>
+    <line x1="48" y1="67" x2="48" y2="77"/>
+    <!-- foot-l (40, 120) -->
+    <line x1="35" y1="120" x2="45" y2="120"/>
+    <line x1="40" y1="115" x2="40" y2="125"/>
+    <!-- foot-r (56, 120) -->
+    <line x1="51" y1="120" x2="61" y2="120"/>
+    <line x1="56" y1="115" x2="56" y2="125"/>
+  </g>
+  <g font-family="sans-serif" font-size="6" fill="#c84040">
+    <text x="54" y="24">head</text>
+    <text x="54" y="44">neck</text>
+    <text x="18" y="54">shL</text>
+    <text x="68" y="54">shR</text>
+    <text x="54" y="84">waist</text>
+    <text x="54" y="70">grip</text>
+    <text x="14" y="122">ftL</text>
+    <text x="64" y="122">ftR</text>
+  </g>
+</svg>
