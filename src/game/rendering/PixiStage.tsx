@@ -550,6 +550,12 @@ function drawMap(layer: Container, map: GridMap) {
   const refinery = map.tileset === 'desert-refinery';
   const g = new Graphics();
 
+  // Edge feathering — a ring of biome-appropriate silhouette
+  // peeking out past the wall boundary so the map doesn't hard-stop
+  // in the middle of a void. Drawn FIRST so the diamond tiles layer
+  // cleanly on top.
+  drawMapEdges(g, map, pal);
+
   // Pre-compute cover connectivity so each block knows which grid-
   // neighbours are also cover. Used by drawConnectedCover to extend
   // the silhouette into adjacent tiles instead of rendering as an
@@ -634,6 +640,12 @@ function drawMap(layer: Container, map: GridMap) {
       }
     }
   }
+  // Floor decals — tiny painted marks (footprints, scorches, shell
+  // casings) scattered more densely than props and biased along the
+  // combat lanes between player spawns and their nearest enemy. Runs
+  // before props so a drum or cairn sitting on a scorched tile
+  // occludes the decal rather than the other way round.
+  drawFloorDecals(g, map);
   // Environmental prop scatter — adds a layer of lived-in detail
   // (bones, drums, crates) between the painted ground and the
   // character silhouettes so they stop looking pasted-on.
@@ -749,6 +761,112 @@ function drawBrokenCoverShape(
 }
 
 /**
+ * Edge feathering — draws a ring of biome-appropriate silhouette
+ * outside the map's tile grid so the battlefield stops hard-stopping
+ * in space. Desert biomes feather into dune crests; the refinery
+ * biome feathers into a jagged sheet-metal ruin line. Deterministic
+ * from (x, y) so the outline is stable across redraws.
+ *
+ * The effect is drawn in a narrow band that extends ~2 iso tiles
+ * past the wall-ring, fading with alpha toward the outer edge.
+ */
+function drawMapEdges(g: Graphics, map: GridMap, pal: TilePalette) {
+  // Outer silhouette tint: slightly darker + warmer than the floor
+  // palette so the ring reads as "background fill" not "more map."
+  const base = shiftBrightness(pal.floor[2], -35);
+  const outline = pal.floorStroke;
+
+  // Iso-space band definitions. Iso bounds of the tile grid are:
+  //   xIso(x,y) = (x - y) * TILE_W / 2
+  //   yIso(x,y) = (x + y) * TILE_H / 2
+  // The grid's bounding diamond corners in iso-space:
+  const W = map.width, H = map.height;
+  const half = TILE_W / 2, halfH = TILE_H / 2;
+  const north = { x: (0 - 0) * half, y: (0 + 0) * halfH };
+  const east  = { x: (W - 0) * half, y: (W + 0) * halfH };
+  const south = { x: (W - H) * half, y: (W + H) * halfH };
+  const west  = { x: (0 - H) * half, y: (0 + H) * halfH };
+
+  // Draw the "beyond" fill as an expanded diamond with a feathered
+  // dark ring. Two concentric fills — faint outer, stronger inner.
+  const outerPad = 64, innerPad = 24;
+  const expand = (p: { x: number; y: number }, pad: number,
+                  dir: { x: number; y: number }) =>
+    ({ x: p.x + dir.x * pad, y: p.y + dir.y * pad });
+  const outerRing = [
+    expand(north, outerPad, { x: 0, y: -1 }),
+    expand(east,  outerPad, { x: 1,  y: 0 }),
+    expand(south, outerPad, { x: 0,  y: 1 }),
+    expand(west,  outerPad, { x: -1, y: 0 }),
+  ];
+  const innerRing = [
+    expand(north, innerPad, { x: 0, y: -1 }),
+    expand(east,  innerPad, { x: 1,  y: 0 }),
+    expand(south, innerPad, { x: 0,  y: 1 }),
+    expand(west,  innerPad, { x: -1, y: 0 }),
+  ];
+  // Outer darkening fill — a big diamond that surrounds the play area.
+  g.poly([
+    outerRing[0].x, outerRing[0].y,
+    outerRing[1].x, outerRing[1].y,
+    outerRing[2].x, outerRing[2].y,
+    outerRing[3].x, outerRing[3].y,
+  ]).fill({ color: base, alpha: 0.55 });
+  // Inner brighter ring so the transition reads as a dusty halo.
+  g.poly([
+    innerRing[0].x, innerRing[0].y,
+    innerRing[1].x, innerRing[1].y,
+    innerRing[2].x, innerRing[2].y,
+    innerRing[3].x, innerRing[3].y,
+  ]).fill({ color: base, alpha: 0.9 });
+
+  // Biome-specific silhouette bumps along each of the four iso
+  // edges: dunes for desert, jagged scrap for refinery, low rubble
+  // for urban. Bumps sit on the outer ring so they silhouette
+  // against the space beyond the play field.
+  const biome = map.tileset;
+  const bumps: PropDraw[] = biome === 'desert' ? EDGE_DUNES
+    : biome === 'desert-refinery' ? EDGE_REFINERY_SCRAP
+    : EDGE_URBAN_RUBBLE;
+  if (bumps.length > 0) {
+    // Place ~14 bumps evenly along the 4 diamond edges. Seed from
+    // (W, H) so identical maps get identical bump layouts.
+    const seed = (W * 73856093 ^ H * 19349663) >>> 0;
+    const rand = (salt: number) => ((seed + salt * 2654435761) >>> 0) / 0xffffffff;
+    const edges: Array<[typeof north, typeof north]> = [
+      [west, north], [north, east], [east, south], [south, west],
+    ];
+    let i = 0;
+    for (const [a, b] of edges) {
+      for (let k = 1; k < 4; k++, i++) {
+        const t = k / 4 + (rand(i) * 0.2 - 0.1);
+        // Offset outward from the diamond edge by ~28px perpendicular.
+        const ex = a.x + (b.x - a.x) * t;
+        const ey = a.y + (b.y - a.y) * t;
+        // Outward normal: perpendicular to (b-a), pointing away from centre.
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = dy / len, ny = -dx / len;
+        // Ensure outward direction (away from map centre).
+        const cx = (east.x + west.x) / 2, cy = (north.y + south.y) / 2;
+        const sign = (ex - cx) * nx + (ey - cy) * ny > 0 ? 1 : -1;
+        const ox = ex + nx * sign * 28, oy = ey + ny * sign * 28;
+        const pick = bumps[(seed >>> (i * 2)) % bumps.length];
+        pick(g, ox, oy);
+      }
+    }
+  }
+  // A gentle outline along the inner ring — same stroke colour as
+  // the tile diamonds — so the play field feels deliberately bounded.
+  g.moveTo(innerRing[0].x, innerRing[0].y);
+  g.lineTo(innerRing[1].x, innerRing[1].y);
+  g.lineTo(innerRing[2].x, innerRing[2].y);
+  g.lineTo(innerRing[3].x, innerRing[3].y);
+  g.closePath();
+  g.stroke({ color: outline, width: 1.5, alpha: 0.45 });
+}
+
+/**
  * Scatter biome-appropriate props across ~8% of plain-floor tiles.
  * Deterministic by tile hash so the layout holds still across
  * redraws. Spawn tiles (both factions) stay empty so nothing hides
@@ -773,8 +891,35 @@ function drawEnvProps(g: Graphics, map: GridMap) {
       }
     }
   };
-  for (const p of map.playerSpawns) addBuffer(p.x, p.y);
-  for (const e of map.enemySpawns) addBuffer(e.pos.x, e.pos.y);
+  const allSpawns: Vec2[] = [
+    ...map.playerSpawns,
+    ...map.enemySpawns.map((e) => e.pos),
+  ];
+  for (const p of allSpawns) addBuffer(p.x, p.y);
+
+  // Visual density gradient: sparse near spawns / clean near the
+  // edges, denser in the contested mid-map. Produces a visual
+  // rhythm where the eye finds dense focal zones and clean
+  // movement lanes.
+  const cx = map.width / 2, cy = map.height / 2;
+  const maxDistToCentre = Math.hypot(cx, cy);
+  function densityAt(x: number, y: number): number {
+    // Distance to nearest spawn (low near spawns → low density).
+    let nearest = Infinity;
+    for (const s of allSpawns) {
+      const d = Math.max(Math.abs(s.x - x), Math.abs(s.y - y));
+      if (d < nearest) nearest = d;
+    }
+    const spawnFactor = Math.min(1, nearest / 6);
+    // Distance from centre normalised (high at centre → high density).
+    const centreDist = Math.hypot(x - cx, y - cy);
+    const centreFactor = 1 - Math.min(1, centreDist / maxDistToCentre);
+    // Blend: 20% base everywhere, 0–20% more when near-centre, 0–15%
+    // more when far from spawns. Caps at 25% to avoid noise.
+    const base = 4;
+    const pct = base + spawnFactor * 15 + centreFactor * 6;
+    return Math.min(25, pct);
+  }
 
   for (let y = 0; y < map.height; y++) {
     for (let x = 0; x < map.width; x++) {
@@ -782,9 +927,8 @@ function drawEnvProps(g: Graphics, map: GridMap) {
       if (!t || t.kind !== 'floor') continue;
       if (bufferKeys.has(y * 4096 + x)) continue;
       const h = (x * 73856093 ^ y * 19349663) >>> 0;
-      // Bump density: sparse 8% read as "abandoned"; 15% reads as
-      // "lived-in." Tile-hash still drives placement so it's stable.
-      if ((h % 100) >= 15) continue;
+      const threshold = densityAt(x, y);
+      if ((h % 100) >= threshold) continue;
       const pickIdx = ((h >>> 8) % props.length) | 0;
       // Wider jitter (±5 x, ±3 y) so adjacent props don't look
       // grid-aligned on a screenshot.
@@ -792,6 +936,92 @@ function drawEnvProps(g: Graphics, map: GridMap) {
       const jy = ((h >>> 17) % 7) - 3;
       const p = gridToScreen({ x, y });
       props[pickIdx](g, p.x + jx, p.y + jy);
+    }
+  }
+}
+
+/**
+ * Floor-decal second pass — smaller, denser marks than env props. The
+ * density bias is strongest along "combat lanes" (straight line from
+ * each player spawn to its nearest enemy spawn) so the battlefield
+ * reads as a path of struggle rather than a uniform-random splatter.
+ *
+ * Decals render on floor tiles only, and still skip a chebyshev-1
+ * buffer around every spawn so mission-start screenshots stay clean.
+ */
+function drawFloorDecals(g: Graphics, map: GridMap) {
+  const biome = map.tileset;
+  const decals = biome === 'desert' ? DESERT_DECALS
+    : biome === 'desert-refinery' ? REFINERY_DECALS
+    : URBAN_DECALS;
+  if (decals.length === 0) return;
+
+  const bufferKeys = new Set<number>();
+  const addBuffer = (px: number, py: number) => {
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        bufferKeys.add((py + dy) * 4096 + (px + dx));
+      }
+    }
+  };
+  const players = map.playerSpawns;
+  const enemies = map.enemySpawns.map((e) => e.pos);
+  for (const p of players) addBuffer(p.x, p.y);
+  for (const p of enemies) addBuffer(p.x, p.y);
+
+  // Combat lanes: each player spawn → its nearest enemy spawn.
+  const lanes: Array<[Vec2, Vec2]> = [];
+  for (const p of players) {
+    if (enemies.length === 0) break;
+    let best = enemies[0], bestD = Infinity;
+    for (const e of enemies) {
+      const d = (e.x - p.x) ** 2 + (e.y - p.y) ** 2;
+      if (d < bestD) { bestD = d; best = e; }
+    }
+    lanes.push([p, best]);
+  }
+
+  // Point-to-segment distance in grid units. Returns Infinity when
+  // there are no lanes (e.g. a test map with no enemies).
+  function laneDist(x: number, y: number): number {
+    let best = Infinity;
+    for (const [a, b] of lanes) {
+      const vx = b.x - a.x, vy = b.y - a.y;
+      const wx = x - a.x,  wy = y - a.y;
+      const vv = vx * vx + vy * vy;
+      let px = a.x, py = a.y;
+      if (vv > 0) {
+        let t = (wx * vx + wy * vy) / vv;
+        if (t < 0) t = 0; else if (t > 1) t = 1;
+        px = a.x + t * vx;
+        py = a.y + t * vy;
+      }
+      const d = Math.hypot(x - px, y - py);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+
+  for (let y = 0; y < map.height; y++) {
+    for (let x = 0; x < map.width; x++) {
+      const t = tileAt(map, x, y);
+      if (!t || t.kind !== 'floor') continue;
+      if (bufferKeys.has(y * 4096 + x)) continue;
+      // Different hash constants from drawEnvProps so decals and props
+      // don't share a position grid.
+      const h = ((x * 2654435761) ^ (y * 40503)) >>> 0;
+      const ld = laneDist(x, y);
+      // 1.0 at the lane centreline, 0.0 at ≥3 tiles away, linear between.
+      const laneFactor = Math.max(0, 1 - ld / 3);
+      // Base 8% everywhere + up to 22% more along the lane. Capped at
+      // 35% so even the hottest tiles still show some clean floor.
+      const pct = Math.min(35, 8 + laneFactor * 22);
+      if ((h % 100) >= pct) continue;
+      const pickIdx = ((h >>> 5) % decals.length) | 0;
+      const jx = ((h >>> 9) % 17) - 8;
+      const jy = ((h >>> 14) % 9) - 4;
+      const p = gridToScreen({ x, y });
+      decals[pickIdx](g, p.x + jx, p.y + jy);
     }
   }
 }
@@ -883,8 +1113,78 @@ const drawDesertGrass: PropDraw = (g, cx, cy) => {
   g.stroke({ color: 0xe8c488, width: 0.9, alpha: 0.85 });
 };
 
+/** Stacked-stone cairn — 3 rocks leaning into a pile. Trail marker flavour. */
+const drawDesertCairn: PropDraw = (g, cx, cy) => {
+  const dark = 0x3a2a1c, stone = 0x7a6a4c, hi = 0xc8b488;
+  g.ellipse(cx, cy + 3, 8, 2).fill({ color: dark, alpha: 0.55 });
+  g.poly([cx - 6, cy + 3, cx - 7, cy, cx - 2, cy - 2, cx + 2, cy + 2])
+    .fill({ color: stone }).stroke({ color: dark, width: 0.6 });
+  g.poly([cx - 2, cy - 1, cx - 3, cy - 5, cx + 3, cy - 6, cx + 4, cy - 2])
+    .fill({ color: stone }).stroke({ color: dark, width: 0.6 });
+  g.poly([cx, cy - 5, cx - 1, cy - 9, cx + 3, cy - 9, cx + 3, cy - 5])
+    .fill({ color: stone }).stroke({ color: dark, width: 0.6 });
+  // Sun-hit highlight on the top stone.
+  g.moveTo(cx - 1, cy - 9); g.lineTo(cx + 3, cy - 9);
+  g.stroke({ color: hi, width: 0.8, alpha: 0.75 });
+};
+
+/** Low thorny shrub — ring of splaying dry branches, distinct from the cactus. */
+const drawDesertBrush: PropDraw = (g, cx, cy) => {
+  const twig = 0x5a3a18, dark = 0x2a1a08;
+  // Dark root pool.
+  g.ellipse(cx, cy + 3, 8, 2).fill({ color: dark, alpha: 0.5 });
+  // Six twigs radiating outward from the base.
+  for (const [dx, dy] of [[-6, -4], [-4, -7], [-1, -8], [2, -7], [5, -5], [7, -1]] as const) {
+    g.moveTo(cx, cy + 2);
+    g.lineTo(cx + dx, cy + dy);
+    g.stroke({ color: twig, width: 1.2 });
+    // Fork at the tip.
+    g.moveTo(cx + dx, cy + dy);
+    g.lineTo(cx + dx + (dx > 0 ? 2 : -2), cy + dy - 2);
+    g.stroke({ color: twig, width: 0.7 });
+  }
+};
+
+/** Bleached skull silhouette — bigger + more iconic than the bones scatter. */
+const drawDesertSkull: PropDraw = (g, cx, cy) => {
+  const bone = 0xe4d8b0, dark = 0x3a2a1c;
+  g.ellipse(cx, cy + 3, 7, 2).fill({ color: dark, alpha: 0.55 });
+  // Cranium.
+  g.ellipse(cx, cy - 2, 6, 5).fill({ color: bone }).stroke({ color: dark, width: 0.8 });
+  // Jaw.
+  g.poly([cx - 3, cy + 1, cx + 3, cy + 1, cx + 2, cy + 4, cx - 2, cy + 4])
+    .fill({ color: bone }).stroke({ color: dark, width: 0.7 });
+  // Eye sockets.
+  g.circle(cx - 2, cy - 2, 1.2).fill({ color: dark });
+  g.circle(cx + 2, cy - 2, 1.2).fill({ color: dark });
+  // Nasal triangle.
+  g.poly([cx - 0.6, cy, cx + 0.6, cy, cx, cy + 1.2])
+    .fill({ color: dark });
+};
+
+/** Choir prayer stake — a banner-topped pole stuck into the sand. */
+const drawDesertPrayerStake: PropDraw = (g, cx, cy) => {
+  const wood = 0x4a2818, cloth = 0xc87030, dark = 0x2a1408, rim = 0xe8c488;
+  g.ellipse(cx, cy + 4, 5, 1.6).fill({ color: dark, alpha: 0.55 });
+  // Tall pole.
+  g.rect(cx - 0.6, cy - 14, 1.4, 18).fill({ color: wood });
+  // Banner — orange cloth with dark edge + gold rim.
+  g.poly([cx + 0.8, cy - 13, cx + 8, cy - 12, cx + 8, cy - 5, cx + 0.8, cy - 6])
+    .fill({ color: cloth }).stroke({ color: dark, width: 0.6 });
+  g.moveTo(cx + 0.8, cy - 13); g.lineTo(cx + 8, cy - 12);
+  g.stroke({ color: rim, width: 0.8, alpha: 0.75 });
+  // Ragged lower edge on the banner.
+  g.moveTo(cx + 0.8, cy - 6);
+  g.lineTo(cx + 3, cy - 5.5);
+  g.lineTo(cx + 4.5, cy - 7);
+  g.lineTo(cx + 6, cy - 5);
+  g.lineTo(cx + 8, cy - 5);
+  g.stroke({ color: dark, width: 0.5 });
+};
+
 const DESERT_PROPS: PropDraw[] = [
   drawDesertBones, drawDesertSignpost, drawDesertCactus, drawDesertRag, drawDesertGrass,
+  drawDesertCairn, drawDesertBrush, drawDesertSkull, drawDesertPrayerStake,
 ];
 
 // --- REFINERY props -------------------------------------------------
@@ -932,8 +1232,76 @@ const drawRefineryHose: PropDraw = (g, cx, cy) => {
   g.circle(cx - 3, cy, 3.4).stroke({ color: shine, width: 0.5, alpha: 0.6 });
 };
 
+/** Tangled cable bundle — loops of wire spilling across the floor. */
+const drawRefineryCables: PropDraw = (g, cx, cy) => {
+  const black = 0x1a1010, copper = 0x8a4828, rust = 0x5a2818;
+  g.ellipse(cx, cy + 3, 12, 2).fill({ color: black, alpha: 0.55 });
+  // Three overlapping curves of thick cable.
+  g.moveTo(cx - 8, cy + 2); g.quadraticCurveTo(cx - 2, cy - 5, cx + 6, cy + 1);
+  g.stroke({ color: black, width: 2.4 });
+  g.moveTo(cx - 7, cy + 3); g.quadraticCurveTo(cx + 1, cy - 3, cx + 8, cy + 2);
+  g.stroke({ color: rust, width: 1.6 });
+  // Copper core glints where the insulation cracked.
+  g.moveTo(cx + 2, cy - 2); g.lineTo(cx + 4, cy - 2.2);
+  g.stroke({ color: copper, width: 1.1 });
+};
+
+/** Floor vent / heat-grate — a square plate with horizontal slats. */
+const drawRefineryVent: PropDraw = (g, cx, cy) => {
+  const steel = 0x7a6a5a, dark = 0x1a0e08, shine = 0xc8b498, warning = 0xe8c488;
+  // Base plate.
+  g.rect(cx - 7, cy - 4, 14, 8).fill({ color: steel })
+    .stroke({ color: dark, width: 0.8 });
+  // Horizontal slats (dark recesses).
+  for (const sy of [-2, 0, 2]) {
+    g.rect(cx - 6, cy + sy, 12, 1).fill({ color: dark, alpha: 0.85 });
+  }
+  // Four corner rivets.
+  for (const [rx, ry] of [[-6, -3], [6, -3], [-6, 3], [6, 3]] as const) {
+    g.circle(cx + rx, cy + ry, 0.7).fill({ color: shine });
+    g.circle(cx + rx, cy + ry, 0.35).fill({ color: dark });
+  }
+  // Warning stripe along one edge.
+  g.rect(cx - 7, cy + 4, 14, 0.8).fill({ color: warning, alpha: 0.85 });
+};
+
+/** Spreading sludge puddle — dark irregular oil slick with a rainbow sheen. */
+const drawRefinerySludge: PropDraw = (g, cx, cy) => {
+  const black = 0x0a0408, green = 0x385028, purple = 0x4a2a5a, hi = 0x5a7040;
+  // Outer dark pool.
+  g.poly([
+    cx - 9, cy + 1,
+    cx - 6, cy - 4,
+    cx, cy - 5,
+    cx + 6, cy - 3,
+    cx + 9, cy + 1,
+    cx + 7, cy + 4,
+    cx - 1, cy + 5,
+    cx - 7, cy + 4,
+  ]).fill({ color: black, alpha: 0.85 });
+  // Inner sheen — greenish-purple iridescence.
+  g.ellipse(cx - 2, cy - 1, 4, 1.6).fill({ color: green, alpha: 0.5 });
+  g.ellipse(cx + 3, cy, 3, 1.4).fill({ color: purple, alpha: 0.45 });
+  g.ellipse(cx + 1, cy - 2, 1.5, 0.8).fill({ color: hi, alpha: 0.7 });
+};
+
+/** Warning cone — striped traffic-cone silhouette. */
+const drawRefineryCone: PropDraw = (g, cx, cy) => {
+  const orange = 0xd8602a, dark = 0x1a0a04, white = 0xd8c898;
+  g.ellipse(cx, cy + 4, 5, 1.4).fill({ color: dark, alpha: 0.55 });
+  // Cone body — tall triangle.
+  g.poly([cx - 3.5, cy + 4, cx + 3.5, cy + 4, cx + 1, cy - 10, cx - 1, cy - 10])
+    .fill({ color: orange }).stroke({ color: dark, width: 0.7 });
+  // Reflective stripe around the middle.
+  g.poly([cx - 2.4, cy - 2, cx + 2.4, cy - 2, cx + 1.9, cy - 5, cx - 1.9, cy - 5])
+    .fill({ color: white, alpha: 0.9 });
+  // Tip cap.
+  g.rect(cx - 1, cy - 11, 2, 1).fill({ color: dark });
+};
+
 const REFINERY_PROPS: PropDraw[] = [
   drawRefineryDrum, drawRefineryValve, drawRefineryToolbox, drawRefineryHose,
+  drawRefineryCables, drawRefineryVent, drawRefinerySludge, drawRefineryCone,
 ];
 
 // --- URBAN props (kept for the urban tileset — no shipping maps use
@@ -961,6 +1329,303 @@ const drawUrbanPaper: PropDraw = (g, cx, cy) => {
 };
 
 const URBAN_PROPS: PropDraw[] = [drawUrbanCrate, drawUrbanTrash, drawUrbanPaper];
+
+// --- Floor decals ----------------------------------------------------
+// Tiny painted marks (≤ 8 px) that read as evidence of prior action.
+// Rendered second-pass at higher density than props and biased along
+// the combat lanes.
+
+// --- DESERT decals ---
+
+const drawDesertFootprint: PropDraw = (g, cx, cy) => {
+  const dark = 0x2a1a0a;
+  g.ellipse(cx - 2, cy,     1.6, 2.6).fill({ color: dark, alpha: 0.55 });
+  g.ellipse(cx + 2, cy + 3, 1.6, 2.6).fill({ color: dark, alpha: 0.55 });
+};
+
+const drawDesertScorch: PropDraw = (g, cx, cy) => {
+  g.ellipse(cx, cy, 5, 3).fill({ color: 0x120a06, alpha: 0.55 });
+  g.ellipse(cx, cy, 2.5, 1.5).fill({ color: 0x050302, alpha: 0.75 });
+};
+
+const drawDesertCasings: PropDraw = (g, cx, cy) => {
+  const brass = 0xd8a048;
+  g.rect(cx - 2, cy,     1.6, 0.8).fill({ color: brass });
+  g.rect(cx + 1, cy - 1, 1.6, 0.8).fill({ color: brass });
+  g.rect(cx,     cy + 2, 1.6, 0.8).fill({ color: brass });
+};
+
+const drawDesertDragMark: PropDraw = (g, cx, cy) => {
+  const dark = 0x3a2414;
+  g.moveTo(cx - 5, cy - 1); g.lineTo(cx + 5, cy + 1);
+  g.stroke({ color: dark, width: 0.8, alpha: 0.7 });
+  g.moveTo(cx - 5, cy + 1); g.lineTo(cx + 5, cy + 3);
+  g.stroke({ color: dark, width: 0.8, alpha: 0.7 });
+};
+
+const drawDesertCrack: PropDraw = (g, cx, cy) => {
+  const dark = 0x1a0e06;
+  g.moveTo(cx - 4, cy - 1);
+  g.lineTo(cx - 1, cy);
+  g.lineTo(cx + 1, cy - 2);
+  g.lineTo(cx + 4, cy + 1);
+  g.stroke({ color: dark, width: 0.7, alpha: 0.7 });
+};
+
+const drawDesertBlood: PropDraw = (g, cx, cy) => {
+  const rust = 0x6a1810;
+  g.ellipse(cx, cy, 2.8, 1.8).fill({ color: rust, alpha: 0.75 });
+  g.circle(cx + 3, cy - 1, 0.6).fill({ color: rust, alpha: 0.7 });
+  g.circle(cx - 3, cy + 1, 0.5).fill({ color: rust, alpha: 0.65 });
+};
+
+const drawDesertPaw: PropDraw = (g, cx, cy) => {
+  const dark = 0x2a1a0a;
+  g.ellipse(cx, cy + 1, 1.6, 2).fill({ color: dark, alpha: 0.6 });
+  g.circle(cx - 1.8, cy - 1, 0.6).fill({ color: dark, alpha: 0.6 });
+  g.circle(cx,       cy - 2, 0.6).fill({ color: dark, alpha: 0.6 });
+  g.circle(cx + 1.8, cy - 1, 0.6).fill({ color: dark, alpha: 0.6 });
+};
+
+const drawDesertBoneShard: PropDraw = (g, cx, cy) => {
+  const bone = 0xd8c8a0;
+  g.rect(cx - 2, cy, 4, 1).fill({ color: bone, alpha: 0.85 });
+  g.circle(cx - 2, cy + 0.5, 0.7).fill({ color: bone, alpha: 0.85 });
+  g.circle(cx + 2, cy + 0.5, 0.7).fill({ color: bone, alpha: 0.85 });
+};
+
+const DESERT_DECALS: PropDraw[] = [
+  drawDesertFootprint, drawDesertScorch, drawDesertCasings, drawDesertDragMark,
+  drawDesertCrack, drawDesertBlood, drawDesertPaw, drawDesertBoneShard,
+];
+
+// --- REFINERY decals ---
+
+const drawRefineryOilDrip: PropDraw = (g, cx, cy) => {
+  g.ellipse(cx, cy, 3.2, 1.6).fill({ color: 0x050302, alpha: 0.8 });
+  g.ellipse(cx - 0.5, cy - 0.2, 1, 0.5).fill({ color: 0x3a4228, alpha: 0.55 });
+};
+
+const drawRefineryScorch: PropDraw = (g, cx, cy) => {
+  g.ellipse(cx, cy, 5, 3).fill({ color: 0x0a0604, alpha: 0.65 });
+  g.ellipse(cx + 1, cy - 0.5, 1.6, 0.8).fill({ color: 0x5a2a10, alpha: 0.55 });
+};
+
+const drawRefineryCasings: PropDraw = (g, cx, cy) => {
+  const brass = 0xe4b858;
+  for (const [dx, dy] of [[-3, 0], [0, 2], [2, -1], [3, 1]] as const) {
+    g.rect(cx + dx, cy + dy, 1.6, 0.7).fill({ color: brass });
+  }
+};
+
+const drawRefineryChalkArrow: PropDraw = (g, cx, cy) => {
+  const chalk = 0xe8d498;
+  g.moveTo(cx - 3, cy); g.lineTo(cx + 3, cy);
+  g.stroke({ color: chalk, width: 0.8, alpha: 0.8 });
+  g.moveTo(cx + 3, cy); g.lineTo(cx + 1, cy - 2);
+  g.stroke({ color: chalk, width: 0.8, alpha: 0.8 });
+  g.moveTo(cx + 3, cy); g.lineTo(cx + 1, cy + 2);
+  g.stroke({ color: chalk, width: 0.8, alpha: 0.8 });
+};
+
+const drawRefineryRustSpots: PropDraw = (g, cx, cy) => {
+  const rust = 0x8a4020;
+  g.circle(cx - 2, cy - 1, 0.9).fill({ color: rust, alpha: 0.8 });
+  g.circle(cx + 1, cy,     1.1).fill({ color: rust, alpha: 0.85 });
+  g.circle(cx + 3, cy + 2, 0.8).fill({ color: rust, alpha: 0.75 });
+  g.circle(cx - 1, cy + 2, 0.7).fill({ color: rust, alpha: 0.7 });
+};
+
+const drawRefineryBolt: PropDraw = (g, cx, cy) => {
+  const steel = 0x8a8878, dark = 0x1a0e08;
+  for (const [dx, dy] of [[-2, 0], [1, -1], [2, 2]] as const) {
+    g.rect(cx + dx - 0.8, cy + dy - 0.8, 1.6, 1.6).fill({ color: steel })
+      .stroke({ color: dark, width: 0.3 });
+  }
+};
+
+const drawRefineryBloodStreak: PropDraw = (g, cx, cy) => {
+  const blood = 0x4a1408;
+  g.moveTo(cx - 4, cy); g.quadraticCurveTo(cx, cy - 1, cx + 4, cy + 1);
+  g.stroke({ color: blood, width: 1.4, alpha: 0.7 });
+  g.circle(cx + 4, cy + 1, 1).fill({ color: blood, alpha: 0.75 });
+};
+
+const drawRefinerySparkMark: PropDraw = (g, cx, cy) => {
+  const dark = 0x0a0604, spark = 0xe8c880;
+  g.ellipse(cx, cy, 3.5, 1.8).fill({ color: dark, alpha: 0.6 });
+  g.circle(cx - 1, cy - 0.5, 0.7).fill({ color: spark, alpha: 0.9 });
+  g.circle(cx + 1, cy + 0.5, 0.6).fill({ color: spark, alpha: 0.85 });
+  g.moveTo(cx - 2, cy - 2); g.lineTo(cx + 2, cy + 2);
+  g.stroke({ color: spark, width: 0.4, alpha: 0.65 });
+};
+
+const REFINERY_DECALS: PropDraw[] = [
+  drawRefineryOilDrip, drawRefineryScorch, drawRefineryCasings, drawRefineryChalkArrow,
+  drawRefineryRustSpots, drawRefineryBolt, drawRefineryBloodStreak, drawRefinerySparkMark,
+];
+
+// --- URBAN decals ---
+
+const drawUrbanFootprint: PropDraw = (g, cx, cy) => {
+  const dark = 0x0e0e14;
+  g.ellipse(cx - 2, cy,     1.4, 2.4).fill({ color: dark, alpha: 0.55 });
+  g.ellipse(cx + 2, cy + 3, 1.4, 2.4).fill({ color: dark, alpha: 0.55 });
+};
+
+const drawUrbanScorch: PropDraw = (g, cx, cy) => {
+  g.ellipse(cx, cy, 5, 3).fill({ color: 0x050508, alpha: 0.65 });
+  g.ellipse(cx, cy, 2.2, 1.2).fill({ color: 0x000000, alpha: 0.8 });
+};
+
+const drawUrbanGraffiti: PropDraw = (g, cx, cy) => {
+  const paint = 0xc8384a;
+  g.moveTo(cx - 3, cy); g.lineTo(cx + 3, cy);
+  g.stroke({ color: paint, width: 0.9, alpha: 0.8 });
+  g.moveTo(cx - 2, cy - 2); g.lineTo(cx + 2, cy + 2);
+  g.stroke({ color: paint, width: 0.9, alpha: 0.8 });
+};
+
+const drawUrbanCrack: PropDraw = (g, cx, cy) => {
+  const dark = 0x0a0a10;
+  g.moveTo(cx - 4, cy);
+  g.lineTo(cx - 1, cy + 1);
+  g.lineTo(cx + 1, cy - 1);
+  g.lineTo(cx + 4, cy);
+  g.stroke({ color: dark, width: 0.7, alpha: 0.7 });
+};
+
+const drawUrbanCasings: PropDraw = (g, cx, cy) => {
+  const brass = 0xd8a048;
+  g.rect(cx - 2, cy,     1.6, 0.8).fill({ color: brass });
+  g.rect(cx + 1, cy - 1, 1.6, 0.8).fill({ color: brass });
+  g.rect(cx,     cy + 2, 1.6, 0.8).fill({ color: brass });
+};
+
+const drawUrbanCigarette: PropDraw = (g, cx, cy) => {
+  const paper = 0xe8e0c0, tip = 0x8a4020;
+  g.rect(cx - 2, cy, 3.5, 0.8).fill({ color: paper, alpha: 0.9 });
+  g.rect(cx + 1.5, cy, 0.8, 0.8).fill({ color: tip });
+};
+
+const drawUrbanGum: PropDraw = (g, cx, cy) => {
+  g.circle(cx, cy, 1.1).fill({ color: 0x2a2018, alpha: 0.8 });
+  g.circle(cx - 2, cy + 1, 0.5).fill({ color: 0x2a2018, alpha: 0.6 });
+};
+
+const drawUrbanDragMark: PropDraw = (g, cx, cy) => {
+  const dark = 0x1a1a22;
+  g.moveTo(cx - 5, cy - 1); g.lineTo(cx + 5, cy + 1);
+  g.stroke({ color: dark, width: 0.8, alpha: 0.7 });
+  g.moveTo(cx - 5, cy + 1); g.lineTo(cx + 5, cy + 3);
+  g.stroke({ color: dark, width: 0.8, alpha: 0.7 });
+};
+
+const URBAN_DECALS: PropDraw[] = [
+  drawUrbanFootprint, drawUrbanScorch, drawUrbanGraffiti, drawUrbanCrack,
+  drawUrbanCasings, drawUrbanCigarette, drawUrbanGum, drawUrbanDragMark,
+];
+
+// --- EDGE bumps ------------------------------------------------------
+// Silhouette shapes drawn in the band outside the play field. Keep
+// them large + low-contrast; they exist to suggest the world
+// continues, not to compete with combat-plane detail.
+
+const drawEdgeDune: PropDraw = (g, cx, cy) => {
+  // Low dune crest — a shallow hump with a darker shadow pool.
+  g.ellipse(cx, cy + 8, 34, 7).fill({ color: 0x3a2a1c, alpha: 0.5 });
+  g.poly([
+    cx - 30, cy + 10,
+    cx - 20, cy - 4,
+    cx - 8,  cy - 9,
+    cx + 6,  cy - 10,
+    cx + 18, cy - 6,
+    cx + 30, cy + 8,
+  ]).fill({ color: 0xb08658, alpha: 0.95 });
+  // A golden sun-lit ridge on the SW facing slope.
+  g.moveTo(cx - 30, cy + 10); g.lineTo(cx - 20, cy - 4); g.lineTo(cx - 8, cy - 9);
+  g.stroke({ color: 0xe0c089, width: 1.2, alpha: 0.7 });
+};
+
+const drawEdgeRock: PropDraw = (g, cx, cy) => {
+  // A clustered rock spire — two shapes leaning into each other.
+  g.poly([cx - 10, cy + 6, cx - 6, cy - 12, cx, cy - 10, cx + 4, cy + 2])
+    .fill({ color: 0x6a4828 }).stroke({ color: 0x2a1a0a, width: 0.8 });
+  g.poly([cx + 2, cy + 6, cx + 8, cy - 8, cx + 14, cy - 4, cx + 14, cy + 6])
+    .fill({ color: 0x5a3820 }).stroke({ color: 0x2a1a0a, width: 0.8 });
+  // Base shadow.
+  g.ellipse(cx, cy + 7, 18, 3).fill({ color: 0x1a0a04, alpha: 0.6 });
+};
+
+const drawEdgeBoneCairn: PropDraw = (g, cx, cy) => {
+  // Stacked stones with a bleached bone leaning on them — desert edge.
+  g.ellipse(cx, cy + 4, 9, 3).fill({ color: 0x1a0a04, alpha: 0.55 });
+  g.rect(cx - 5, cy - 2, 10, 5).fill({ color: 0x6a5a3a }).stroke({ color: 0x2a1a0a, width: 0.6 });
+  g.rect(cx - 4, cy - 7, 8, 5).fill({ color: 0x7a6a46 }).stroke({ color: 0x2a1a0a, width: 0.6 });
+  g.rect(cx - 3, cy - 11, 6, 4).fill({ color: 0x8a7a50 }).stroke({ color: 0x2a1a0a, width: 0.6 });
+  // Diagonal bone.
+  g.moveTo(cx - 8, cy); g.lineTo(cx + 8, cy - 16);
+  g.stroke({ color: 0xe4d8b0, width: 1.6 });
+};
+
+const EDGE_DUNES: PropDraw[] = [drawEdgeDune, drawEdgeRock, drawEdgeBoneCairn];
+
+const drawEdgePipeStack: PropDraw = (g, cx, cy) => {
+  // Stacked horizontal pipes silhouette.
+  g.ellipse(cx, cy + 4, 18, 2.5).fill({ color: 0x1a0a04, alpha: 0.6 });
+  for (let i = 0; i < 3; i++) {
+    const py = cy + 2 - i * 5;
+    g.ellipse(cx, py, 16, 2.2).fill({ color: 0x5a3820 });
+    g.rect(cx - 16, py - 2, 32, 4).fill({ color: 0x7a5830 }).stroke({ color: 0x2a1a0a, width: 0.7 });
+    g.rect(cx - 16, py - 2, 32, 0.8).fill({ color: 0xa87248, alpha: 0.5 });
+  }
+};
+
+const drawEdgeScrapHeap: PropDraw = (g, cx, cy) => {
+  // Tangled rust-steel junk — jagged silhouette.
+  g.ellipse(cx, cy + 5, 20, 3).fill({ color: 0x1a0a04, alpha: 0.6 });
+  g.poly([
+    cx - 18, cy + 5,
+    cx - 14, cy - 3,
+    cx - 6,  cy - 8,
+    cx - 2,  cy - 14,
+    cx + 4,  cy - 10,
+    cx + 10, cy - 6,
+    cx + 16, cy - 2,
+    cx + 20, cy + 5,
+  ]).fill({ color: 0x6a3818 }).stroke({ color: 0x1a0a04, width: 0.9 });
+  // Shards.
+  g.moveTo(cx + 2, cy - 14); g.lineTo(cx + 6, cy - 18);
+  g.stroke({ color: 0x8a5828, width: 1 });
+  g.moveTo(cx - 6, cy - 8); g.lineTo(cx - 10, cy - 12);
+  g.stroke({ color: 0x8a5828, width: 0.8 });
+};
+
+const drawEdgeSmokestack: PropDraw = (g, cx, cy) => {
+  // A squat chimney hinting at distant industry.
+  g.ellipse(cx, cy + 4, 10, 2.5).fill({ color: 0x1a0a04, alpha: 0.55 });
+  g.rect(cx - 4, cy - 18, 8, 22).fill({ color: 0x4a2a1c }).stroke({ color: 0x1a0a04, width: 0.8 });
+  g.rect(cx - 5, cy - 20, 10, 3).fill({ color: 0x6a3820 }).stroke({ color: 0x1a0a04, width: 0.8 });
+  // Rust streak + thin smoke wisp.
+  g.rect(cx - 1, cy - 14, 0.8, 10).fill({ color: 0x8a4828, alpha: 0.7 });
+  g.moveTo(cx, cy - 20); g.quadraticCurveTo(cx + 3, cy - 28, cx - 1, cy - 34);
+  g.stroke({ color: 0x8a7868, width: 1.2, alpha: 0.45 });
+};
+
+const EDGE_REFINERY_SCRAP: PropDraw[] = [
+  drawEdgePipeStack, drawEdgeScrapHeap, drawEdgeSmokestack,
+];
+
+const drawEdgeRubble: PropDraw = (g, cx, cy) => {
+  // A pile of broken masonry / concrete chunks.
+  g.ellipse(cx, cy + 4, 14, 2.5).fill({ color: 0x050709, alpha: 0.6 });
+  g.poly([cx - 12, cy + 4, cx - 8, cy - 3, cx - 2, cy - 4, cx + 2, cy + 4])
+    .fill({ color: 0x3c5673 }).stroke({ color: 0x0b0f14, width: 0.8 });
+  g.poly([cx - 1, cy + 4, cx + 3, cy - 6, cx + 9, cy - 5, cx + 12, cy + 4])
+    .fill({ color: 0x2e445c }).stroke({ color: 0x0b0f14, width: 0.8 });
+};
+
+const EDGE_URBAN_RUBBLE: PropDraw[] = [drawEdgeRubble];
 
 /**
  * Per-tile desert floor / wall detail. Deterministic by (x, y) so the map
