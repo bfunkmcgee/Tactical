@@ -29,6 +29,7 @@ function mkMap(rows: string[]): GridMap {
         if (ch === 'P') playerSpawns.push({ x, y });
         else if (ch === 'G') enemySpawns.push({ pos: { x, y }, spawnKey: 'G' });
         else if (ch === 'O') enemySpawns.push({ pos: { x, y }, spawnKey: 'O' });
+        else if (ch === 'T') enemySpawns.push({ pos: { x, y }, spawnKey: 'T' });
       }
     });
   });
@@ -353,6 +354,67 @@ describe('combatStore: snapshotSquadCarry', () => {
     const snap = useCombatStore.getState().snapshotSquadCarry();
     expect(snap[0].alive).toBe(false);
     expect(snap[0].hp).toBe(0);
+  });
+});
+
+describe('combatStore: mission objectives', () => {
+  it('eliminate_all: victory when last enemy dies (default objective)', () => {
+    setupSoloDuel();
+    const t = useCombatStore.getState().units.find((u) => u.faction === 'enemy')!;
+    useCombatStore.setState({
+      units: useCombatStore.getState().units.map((u) =>
+        u.id === t.id ? { ...u, hp: 1 } : u),
+    });
+    forceRng('hit');
+    useCombatStore.getState().queueShot(t.id);
+    useCombatStore.getState().confirmPending();
+    expect(useCombatStore.getState().phase).toBe('won');
+  });
+
+  it('eliminate_target: victory when the tagged templateId is dead, even with other enemies alive', () => {
+    // Two enemies; only the T (rust_troll) counts. Init manually with an
+    // objective override.
+    useCombatStore.getState().initMission({
+      map: mkMap(['P....GT...']),
+      rosterIds: ['ranger_kestrel'],
+      objective: { kind: 'eliminate_target', templateId: 'rust_troll' },
+    });
+    const troll = useCombatStore.getState().units.find((u) => u.templateId === 'rust_troll')!;
+    useCombatStore.setState({
+      units: useCombatStore.getState().units.map((u) =>
+        u.id === troll.id ? { ...u, hp: 1 } : u),
+      rng: makeRng(0xC0FFEE),
+    });
+    forceRng('hit');
+    useCombatStore.getState().queueShot(troll.id);
+    useCombatStore.getState().confirmPending();
+    expect(useCombatStore.getState().phase).toBe('won');
+    // Goblin is still alive but the mission is over.
+    expect(useCombatStore.getState().units.some((u) => u.templateId === 'rust_goblin' && u.alive)).toBe(true);
+  });
+
+  it('reach_tile: victory when a player walks onto the goal', () => {
+    // Player at (1,0), goal at (4,0).
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.....G...']),
+      rosterIds: ['ranger_kestrel'],
+      objective: { kind: 'reach_tile', pos: { x: 4, y: 0 } },
+    });
+    // Need to spend AP to move; the reach flood lets Kestrel (mobility 4)
+    // reach x=4 in 1 AP worth of steps on this open row.
+    const ok = useCombatStore.getState().tryMove({ x: 4, y: 0 });
+    expect(ok).toBe(true);
+    expect(useCombatStore.getState().phase).toBe('won');
+  });
+
+  it('reach_tile: no victory when the mover stops short of the goal', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.....G...']),
+      rosterIds: ['ranger_kestrel'],
+      objective: { kind: 'reach_tile', pos: { x: 5, y: 0 } },
+    });
+    useCombatStore.getState().tryMove({ x: 2, y: 0 });
+    expect(useCombatStore.getState().phase).toBe('player');
   });
 });
 

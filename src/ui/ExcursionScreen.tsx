@@ -61,6 +61,7 @@ export default function ExcursionScreen() {
       rosterIds: aliveSquad.map((s) => s.soldierId),
       carries,
       briefing: `${mission.name}: ${mission.briefing}`,
+      objective: mission.objective,
     });
     setScreen('combat');
   }

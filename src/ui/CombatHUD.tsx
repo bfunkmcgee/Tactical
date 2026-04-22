@@ -11,6 +11,7 @@ export default function CombatHUD() {
   const phase = useCombatStore((s) => s.phase);
   const round = useCombatStore((s) => s.round);
   const units = useCombatStore((s) => s.units);
+  const objective = useCombatStore((s) => s.objective);
   const selectedId = useCombatStore((s) => s.selectedId);
   const mode = useCombatStore((s) => s.mode);
   const selectedUtilityIdx = useCombatStore((s) => s.selectedUtilityIdx);
@@ -55,8 +56,13 @@ export default function CombatHUD() {
     <>
       {/* Top status */}
       <div style={{ position: 'fixed', top: 'calc(var(--safe-top) + var(--s-2))', left: 'var(--s-2)', right: 'var(--s-2)', display: 'flex', gap: 'var(--s-2)', pointerEvents: 'none', zIndex: 10 }}>
-        <div className="panel" style={{ padding: '6px 10px', fontSize: 13, pointerEvents: 'auto' }}>
-          <strong>Round {round}</strong> · {phase === 'player' ? 'Your turn' : phase === 'enemy' ? 'Enemy turn' : phase === 'won' ? 'Victory' : 'Defeat'}
+        <div className="panel stack" style={{ padding: '6px 10px', fontSize: 13, pointerEvents: 'auto', gap: 2 }}>
+          <div>
+            <strong>Round {round}</strong> · {phase === 'player' ? 'Your turn' : phase === 'enemy' ? 'Enemy turn' : phase === 'won' ? 'Victory' : 'Defeat'}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--fg-2)', textTransform: 'uppercase', letterSpacing: 0.6 }}>
+            {objectiveLabel(objective)}
+          </div>
         </div>
         <div className="panel scroll-x" style={{ padding: 6, flex: 1, display: 'flex', gap: 6, pointerEvents: 'auto' }}>
           {playerUnits.map((u) => (
@@ -355,4 +361,19 @@ function coverColor(c: string) {
   if (c === 'full') return 'var(--accent)';
   if (c === 'half') return 'var(--warn)';
   return 'var(--danger)';
+}
+
+/** One-line objective summary for the top-of-screen HUD chip. */
+function objectiveLabel(o: import('../game/types').MissionObjective): string {
+  switch (o.kind) {
+    case 'eliminate_all':    return 'Objective: eliminate all hostiles';
+    case 'eliminate_target': return `Objective: eliminate target`;
+    case 'reach_tile':
+      return o.turnLimit
+        ? `Objective: reach the extraction (${o.turnLimit} rounds)`
+        : 'Objective: reach the extraction';
+    case 'destroy_objective': return 'Objective: destroy the target';
+    case 'defend_point':      return `Objective: hold the point (${o.turns} rounds)`;
+    case 'extract_vip':       return 'Objective: extract the VIP';
+  }
 }

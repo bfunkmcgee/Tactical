@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import type { GridMap, LogEntry, TurnPhase, Unit, UnitId, Utility, Vec2, ShotPreview, Weapon, WeaponClass } from '../game/types';
+import type {
+  GridMap, LogEntry, MissionObjective, TurnPhase, Unit, UnitId, Utility,
+  Vec2, ShotPreview, Weapon, WeaponClass,
+} from '../game/types';
 import { RUINED_MARKET, pickRandomMap } from '../game/maps';
 import {
   useContent, getSoldierTemplate, getEnemyTemplate, getWeapon, getArmor,
@@ -73,6 +76,8 @@ type CombatState = {
    * skirmish and the next real mission plot point).
    */
   isSkirmish: boolean;
+  /** Mission victory condition evaluated by checkEnd. Defaults to eliminate_all. */
+  objective: MissionObjective;
   // pending confirm
   pendingShotTargetId: UnitId | null;
   /** When set, the pending shot uses the soldier's sidearm instead of primary. */
@@ -122,6 +127,8 @@ type CombatState = {
     briefing?: string;
     /** Mark as a skirmish so post-combat routing skips Field Camp. */
     isSkirmish?: boolean;
+    /** Mission victory condition; defaults to eliminate_all. */
+    objective?: MissionObjective;
   }) => void;
 
   /** Snapshot player-unit state for the excursion's squad-carry record. */
@@ -277,12 +284,49 @@ function recalcReach(state: CombatState): Map<number, number> {
   return reachable(state.map, sel.pos, steps, blocked);
 }
 
+/**
+ * Evaluate the mission's victory + defeat conditions against current state.
+ * Shared loss rule across every objective: a player wipe is always a loss.
+ * Victory dispatches on objective.kind:
+ *   - eliminate_all     → no enemies left
+ *   - eliminate_target  → every unit with the given templateId is dead
+ *   - reach_tile        → any alive player stands on pos (turnLimit
+ *                         exceeded is a loss if set)
+ *   - destroy_objective / defend_point / extract_vip → stubbed to
+ *                         eliminate_all for now; hook the entity model
+ *                         once those kinds are authored.
+ */
 function checkEnd(state: CombatState): Partial<CombatState> | null {
   const aliveP = state.units.some((u) => u.faction === 'player' && u.alive);
-  const aliveE = state.units.some((u) => u.faction === 'enemy' && u.alive);
-  if (!aliveE) return { phase: 'won' };
   if (!aliveP) return { phase: 'lost' };
-  return null;
+  const obj = state.objective;
+  switch (obj.kind) {
+    case 'eliminate_all': {
+      const aliveE = state.units.some((u) => u.faction === 'enemy' && u.alive);
+      if (!aliveE) return { phase: 'won' };
+      return null;
+    }
+    case 'eliminate_target': {
+      const targetAlive = state.units.some((u) =>
+        u.faction === 'enemy' && u.alive && u.templateId === obj.templateId);
+      if (!targetAlive) return { phase: 'won' };
+      return null;
+    }
+    case 'reach_tile': {
+      const reached = state.units.some((u) =>
+        u.faction === 'player' && u.alive && u.pos.x === obj.pos.x && u.pos.y === obj.pos.y);
+      if (reached) return { phase: 'won' };
+      if (obj.turnLimit !== undefined && state.round > obj.turnLimit) return { phase: 'lost' };
+      return null;
+    }
+    default: {
+      // Unimplemented objectives fall back to eliminate_all semantics so
+      // the mission is still winnable.
+      const aliveE = state.units.some((u) => u.faction === 'enemy' && u.alive);
+      if (!aliveE) return { phase: 'won' };
+      return null;
+    }
+  }
 }
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -302,6 +346,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   kills: 0,
   damageTaken: 0,
   isSkirmish: false,
+  objective: { kind: 'eliminate_all' },
   pendingShotTargetId: null,
   pendingShotUsesSidearm: false,
   pendingUtility: null,
@@ -362,6 +407,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       kills: 0, damageTaken: 0, floaters: [], fireEvents: [],
       shakeFrames: 0,
       isSkirmish: opts?.isSkirmish ?? false,
+      objective: opts?.objective ?? { kind: 'eliminate_all' },
     });
     set((st) => ({ reach: recalcReach(st) }));
   },
@@ -396,6 +442,9 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       : o);
     set({ units: next, mode: 'idle' });
     set((s) => ({ reach: recalcReach(s), log: pushLog(s.log, `${u.name} moves.`) }));
+    // reach_tile missions end when a player foot lands on the goal.
+    const end = checkEnd(get());
+    if (end) set(end);
     return true;
   },
 
