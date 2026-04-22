@@ -218,7 +218,16 @@ export function buildHumanRigBody(
     const armor = deps.armorOf(loadout.armorId);
     const vis = armor?.visual;
     if (vis) {
-      if (vis.torsoOverlay) addBodyAlignedOverlay(vis.torsoOverlay, vis.tint, 'torso');
+      // torsoOverlay inserts AFTER 'head' rather than after 'torso' so the
+      // overlay draws on top of the base torso + base head. This matters
+      // because rig part SVGs (especially placeholder art) render a face
+      // on the head part — inserting after 'torso' would leave that face
+      // painted on top of the armor. Real torso-only armor SVGs can carry
+      // transparent pixels at the head region; authored-correctly art
+      // still shows the rig head underneath. Full-body armor overlays
+      // (like the current bespoke-reuse in 5b) are opaque at the head
+      // region and fully occlude the placeholder face.
+      if (vis.torsoOverlay) addBodyAlignedOverlay(vis.torsoOverlay, vis.tint, 'head');
       if (vis.legsOverlay) addBodyAlignedOverlay(vis.legsOverlay, vis.tint, 'legs');
       if (vis.gauntletsBack) addBodyAlignedOverlay(vis.gauntletsBack, vis.tint, 'arms-back');
       if (vis.helmet) addSlotOverlay(headSlot, vis.helmet, vis.tint);
