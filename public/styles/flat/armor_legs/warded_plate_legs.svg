@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- warded_plate (Brannock) legs overlay: heavy plated greaves w/
+     ceramic slabs bound by warding runes. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Heavy plated trouser legs — wide stance. -->
+  <rect x="34" y="82" width="13" height="38" fill="#1a1a20"/>
+  <rect x="49" y="82" width="13" height="38" fill="#1a1a20"/>
+  <!-- Ceramic thigh plates. -->
+  <rect x="35" y="86" width="11" height="14" fill="#3a3a44" stroke="#0a0a0c" stroke-width="0.4"/>
+  <rect x="50" y="86" width="11" height="14" fill="#3a3a44" stroke="#0a0a0c" stroke-width="0.4"/>
+  <!-- Warding rune on each plate. -->
+  <circle cx="40" cy="93" r="1.5" fill="none" stroke="#c4a468" stroke-width="0.5"/>
+  <circle cx="55" cy="93" r="1.5" fill="none" stroke="#c4a468" stroke-width="0.5"/>
+  <!-- Knee plates (articulated). -->
+  <rect x="34" y="100" width="13" height="5" fill="#4a4a54" stroke="#0a0a0c" stroke-width="0.4"/>
+  <rect x="49" y="100" width="13" height="5" fill="#4a4a54" stroke="#0a0a0c" stroke-width="0.4"/>
+  <!-- Shin greaves (segmented). -->
+  <rect x="35" y="107" width="11" height="3" fill="#3a3a44" stroke="#0a0a0c" stroke-width="0.3"/>
+  <rect x="50" y="107" width="11" height="3" fill="#3a3a44" stroke="#0a0a0c" stroke-width="0.3"/>
+  <rect x="35" y="111" width="11" height="3" fill="#3a3a44" stroke="#0a0a0c" stroke-width="0.3"/>
+  <rect x="50" y="111" width="11" height="3" fill="#3a3a44" stroke="#0a0a0c" stroke-width="0.3"/>
+  <!-- Armored boots. -->
+  <rect x="33" y="117" width="15" height="7" fill="#0a0a0c"/>
+  <rect x="48" y="117" width="15" height="7" fill="#0a0a0c"/>
+</svg>

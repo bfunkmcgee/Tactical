@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- mithril_vest (Kestrel) legs overlay: reinforced combat trousers w/
+     mithril mesh panels. Covers the per-part civilian legs when the
+     armor is equipped. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Reinforced trouser legs — slightly wider than civilian, darker. -->
+  <rect x="37" y="82" width="10" height="38" fill="#2a3428"/>
+  <rect x="49" y="82" width="10" height="38" fill="#2a3428"/>
+  <!-- Mithril mesh panel at thigh (a brighter vertical strip). -->
+  <rect x="39" y="86" width="2" height="18" fill="#8ab0b4" opacity="0.8"/>
+  <rect x="55" y="86" width="2" height="18" fill="#8ab0b4" opacity="0.8"/>
+  <!-- Reinforced knee plates. -->
+  <rect x="37" y="102" width="10" height="4" fill="#4a5a50" stroke="#1a1a20" stroke-width="0.3"/>
+  <rect x="49" y="102" width="10" height="4" fill="#4a5a50" stroke="#1a1a20" stroke-width="0.3"/>
+  <!-- Heavy combat boots. -->
+  <rect x="35" y="118" width="13" height="6" fill="#0a0a10" stroke="#1a1a20" stroke-width="0.3"/>
+  <rect x="48" y="118" width="13" height="6" fill="#0a0a10" stroke="#1a1a20" stroke-width="0.3"/>
+</svg>

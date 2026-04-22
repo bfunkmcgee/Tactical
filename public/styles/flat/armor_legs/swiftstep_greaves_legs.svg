@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- swiftstep_greaves (Seraphine) legs overlay: elvenstep-charm leg armor
+     over a robed silhouette — keeps the mystic's flowing profile but
+     with gold greaves showing at the shins. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Flared robe skirt preserved (violet w/ gold trim), but shorter to
+       expose the greaves. -->
+  <path d="M 30 82 L 66 82 L 68 108 L 28 108 Z" fill="#4a3854" stroke="#2a1a30" stroke-width="0.5"/>
+  <!-- Gold embroidery hem where the robe meets the greaves. -->
+  <rect x="28" y="106" width="40" height="1.5" fill="#c4a468"/>
+  <!-- Slender form-fitting greaves, elven gold-and-pale-silver. -->
+  <rect x="38" y="108" width="8" height="12" fill="#b8b098" stroke="#6a6050" stroke-width="0.3"/>
+  <rect x="50" y="108" width="8" height="12" fill="#b8b098" stroke="#6a6050" stroke-width="0.3"/>
+  <!-- Gold charm band on each greave. -->
+  <rect x="38" y="113" width="8" height="1.2" fill="#c4a468"/>
+  <rect x="50" y="113" width="8" height="1.2" fill="#c4a468"/>
+  <!-- Light shoes / sandals. -->
+  <rect x="37" y="118" width="10" height="4" fill="#2a1a30"/>
+  <rect x="49" y="118" width="10" height="4" fill="#2a1a30"/>
+</svg>

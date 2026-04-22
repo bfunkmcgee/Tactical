@@ -22,6 +22,7 @@ export const ARMOR: Record<string, Armor> = {
     visual: {
       torsoOverlay: '/styles/flat/soldier_warden_torso.svg',
       gauntletsFront: '/styles/flat/soldier_warden_arms.svg',
+      legsOverlay: '/styles/flat/armor_legs/warded_plate_legs.svg',
     },
   },
   mithril_vest: {
@@ -34,6 +35,7 @@ export const ARMOR: Record<string, Armor> = {
       // Base Ranger (Kestrel) torso = the original monolithic soldier.svg silhouette.
       torsoOverlay: '/styles/flat/soldier_torso.svg',
       gauntletsFront: '/styles/flat/soldier_arms.svg',
+      legsOverlay: '/styles/flat/armor_legs/mithril_vest_legs.svg',
     },
   },
   swiftstep_greaves: {
@@ -45,6 +47,7 @@ export const ARMOR: Record<string, Armor> = {
     visual: {
       torsoOverlay: '/styles/flat/soldier_mystic_torso.svg',
       gauntletsFront: '/styles/flat/soldier_mystic_arms.svg',
+      legsOverlay: '/styles/flat/armor_legs/swiftstep_greaves_legs.svg',
     },
   },
   oakheart_helm: {
@@ -56,6 +59,7 @@ export const ARMOR: Record<string, Armor> = {
     visual: {
       torsoOverlay: '/styles/flat/soldier_sapper_torso.svg',
       gauntletsFront: '/styles/flat/soldier_sapper_arms.svg',
+      legsOverlay: '/styles/flat/armor_legs/oakheart_helm_legs.svg',
     },
   },
 };
