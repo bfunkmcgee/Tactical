@@ -46,8 +46,26 @@ export const getArmor = (id: string): Armor => required(active.armor, id, 'armor
 export const getUtility = (id: string): Utility => required(active.utilities, id, 'utility');
 export const getKit = (id: string): Kit => required(active.kits, id, 'kit');
 export const getMod = (id: string): WeaponMod => required(active.mods, id, 'mod');
-export const getSoldierTemplate = (id: string): SoldierTemplate =>
-  required(active.soldierTemplates, id, 'soldier template');
+
+/**
+ * Hook for the game store to contribute player-authored ("custom")
+ * soldier templates to the lookup path. gameStore registers its
+ * customSoldiers accessor at module init; getSoldierTemplate consults
+ * it before falling back to the active pack's catalog.
+ *
+ * Late-bound via registration so registry.ts doesn't import gameStore
+ * (which already imports registry — would create a module cycle).
+ */
+let customSoldierLookup: ((id: string) => SoldierTemplate | undefined) | null = null;
+export function registerCustomSoldierLookup(fn: (id: string) => SoldierTemplate | undefined): void {
+  customSoldierLookup = fn;
+}
+
+export const getSoldierTemplate = (id: string): SoldierTemplate => {
+  const custom = customSoldierLookup?.(id);
+  if (custom) return custom;
+  return required(active.soldierTemplates, id, 'soldier template');
+};
 export const getEnemyTemplate = (id: string): EnemyTemplate =>
   required(active.enemyTemplates, id, 'enemy template');
 /** Ability lookup — returns undefined when the id is missing so the

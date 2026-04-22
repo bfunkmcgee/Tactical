@@ -4,9 +4,10 @@ import {
   useContent, getSoldierTemplate, getWeapon, getArmor, getMod,
   allArmor, allUtilities, allKits, primaryWeapons, sidearms,
 } from '../content/registry';
-import type { Loadout, ModSlot, WeaponClass } from '../game/types';
+import type { Loadout, ModSlot, SoldierTemplate, WeaponClass } from '../game/types';
 import { SIDEARM_MOD_SLOTS } from '../game/types';
 import ModPicker from './components/ModPicker';
+import CharacterCreationScreen from './CharacterCreationScreen';
 
 const MAX_UTILITIES = 2;
 const PRIMARY_SLOTS: ModSlot[] = ['optic', 'magazine', 'muzzle', 'stock'];
@@ -17,9 +18,21 @@ export default function LoadoutScreen() {
   const roster = useGameStore((s) => s.roster);
   const loadouts = useGameStore((s) => s.loadouts);
   const setLoadout = useGameStore((s) => s.setLoadout);
+  const setRosterSlot = useGameStore((s) => s.setRosterSlot);
+  const addCustomSoldier = useGameStore((s) => s.addCustomSoldier);
   const [idx, setIdx] = useState(0);
   const [tab, setTab] = useState<Tab>('weapons');
   const [picker, setPicker] = useState<{ slot: ModSlot; sidearm: boolean } | null>(null);
+  /** When true, the CharacterCreationScreen modal is open. Confirming
+   *  drops the new custom soldier into the currently-viewed roster slot
+   *  so the player can immediately loadout + deploy them. */
+  const [creating, setCreating] = useState<boolean>(false);
+
+  function handleCreateSoldier(tpl: SoldierTemplate): void {
+    addCustomSoldier(tpl);
+    setRosterSlot(idx, tpl.id);
+    setCreating(false);
+  }
 
   const soldierId = roster[idx];
   const soldier = getSoldierTemplate(soldierId);
@@ -66,8 +79,19 @@ export default function LoadoutScreen() {
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <button onClick={() => setScreen('menu')}>Back</button>
         <h2>Loadout</h2>
-        <button className="primary" onClick={() => setScreen('combat')}>Deploy</button>
+        <div className="row" style={{ gap: 'var(--s-2)' }}>
+          <button onClick={() => setCreating(true)} title="Replace current slot with a custom soldier">
+            + Create Soldier
+          </button>
+          <button className="primary" onClick={() => setScreen('combat')}>Deploy</button>
+        </div>
       </div>
+      {creating && (
+        <CharacterCreationScreen
+          onCreate={handleCreateSoldier}
+          onCancel={() => setCreating(false)}
+        />
+      )}
 
       <div className="row scroll-x" style={{ gap: 'var(--s-2)', paddingBottom: 4 }}>
         {roster.map((sid, i) => {
