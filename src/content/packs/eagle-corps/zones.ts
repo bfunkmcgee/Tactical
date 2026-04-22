@@ -112,6 +112,17 @@ export const ZONES: Zone[] = [
         objective: { kind: 'eliminate_all' },
         weight: 1,
       },
+      {
+        id: 'rr-berserker-charge',
+        name: 'Berserker Charge',
+        flavor: 'A pack of rage-painted berserkers breaks from cover and sprints at the squad.',
+        mapId: 'dry_well',
+        // Remap the oasis's G/O/T spawns to berserkers so this skirmish
+        // is a sprint-in-melee fight without a new authored map.
+        spawnsOverride: { G: 'rust_berserker', O: 'rust_berserker', T: 'rust_berserker' },
+        objective: { kind: 'eliminate_all' },
+        weight: 1,
+      },
     ],
   },
 ];

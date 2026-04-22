@@ -62,6 +62,7 @@ export default function ExcursionScreen() {
       carries,
       briefing: `${mission.name}: ${mission.briefing}`,
       objective: mission.objective,
+      spawnsOverride: mission.spawnsOverride,
     });
     setScreen('combat');
   }

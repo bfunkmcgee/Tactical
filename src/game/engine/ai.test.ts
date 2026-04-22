@@ -90,35 +90,54 @@ describe('AI decide()', () => {
   });
 
   it('holds position when low HP and adjacent to shield tiles', () => {
-    // Enemy at (1,1); wall tile above at (1,0). No visible player in LOS.
+    // Enemy at (1,1); wall tile above at (1,0). Player out of range so the
+    // attack branch doesn't fire, forcing the wounded-hold check.
     const m = mkMap([
-      '.#....',
-      '......',
-      '......',
+      '.#........',
+      '..........',
+      '..........',
     ]);
     const enemy = mkEnemy({
       pos: { x: 1, y: 1 },
       hp: 3, hpMax: 10,        // 30% HP — below the 40% wounded threshold
-      rangeLong: 1,             // very short range so the player isn't shootable
+      rangeLong: 3,             // ranged, but player is 6 tiles away
     });
-    const player = mkPlayer({ pos: { x: 5, y: 2 } });
+    const player = mkPlayer({ pos: { x: 9, y: 2 } });
     expect(decide(m, enemy, [enemy, player])).toEqual({ kind: 'wait' });
   });
 
   it('does NOT hold when low HP but has no adjacent shield', () => {
     const m = mkMap([
-      '......',
-      '......',
-      '......',
+      '..........',
+      '..........',
+      '..........',
     ]);
     const enemy = mkEnemy({
       pos: { x: 1, y: 1 },
       hp: 3, hpMax: 10,
-      rangeLong: 1,
+      rangeLong: 3,
     });
-    const player = mkPlayer({ pos: { x: 5, y: 2 } });
+    const player = mkPlayer({ pos: { x: 9, y: 2 } });
     const intent = decide(m, enemy, [enemy, player]);
     // Either attacks (if in range — it isn't) or advances. Must not wait.
+    expect(intent.kind).toBe('move');
+  });
+
+  it('melee-range enemies (rangeLong=1) ignore the wounded-hold branch and keep charging', () => {
+    // Berserker semantics: even at low HP, a melee unit should close on
+    // the player rather than freeze behind cover.
+    const m = mkMap([
+      '.#........',
+      '..........',
+      '..........',
+    ]);
+    const berserker = mkEnemy({
+      pos: { x: 1, y: 1 },
+      hp: 3, hpMax: 10,         // low HP — would trigger the hold check for a ranged enemy
+      rangeLong: 1,              // melee — bypasses the hold check
+    });
+    const player = mkPlayer({ pos: { x: 9, y: 2 } });
+    const intent = decide(m, berserker, [berserker, player]);
     expect(intent.kind).toBe('move');
   });
 

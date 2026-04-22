@@ -38,6 +38,7 @@ export const pack: ContentPack = {
     G: 'rust_goblin',
     O: 'rust_orc',
     T: 'rust_troll',
+    B: 'rust_berserker',
   },
 
   playerFaction: { id: 'eagle-corps', name: 'Eagle Corps', sigilColor: '#e8c488' }, // gold
@@ -65,6 +66,9 @@ const TORSOS: Record<string, string> = {
   rust_goblin:       '/styles/flat/enemy_goblin_torso.svg',
   rust_orc:          '/styles/flat/enemy_orc_torso.svg',
   rust_troll:        '/styles/flat/enemy_troll_torso.svg',
+  // Berserker uses the goblin silhouette — keeps scope tight; colour
+  // tint sets him apart.
+  rust_berserker:    '/styles/flat/enemy_goblin_torso.svg',
 };
 
 const ARMS_SVG: Record<string, string> = {
@@ -75,6 +79,7 @@ const ARMS_SVG: Record<string, string> = {
   rust_goblin:       '/styles/flat/enemy_goblin_arms.svg',
   rust_orc:          '/styles/flat/enemy_orc_arms.svg',
   rust_troll:        '/styles/flat/enemy_troll_arms.svg',
+  rust_berserker:    '/styles/flat/enemy_goblin_arms.svg',
 };
 
 const WEAPONS_SVG: Record<string, string> = {
@@ -85,4 +90,5 @@ const WEAPONS_SVG: Record<string, string> = {
   rust_goblin:       '/styles/flat/enemy_goblin_weapon.svg',
   rust_orc:          '/styles/flat/enemy_orc_weapon.svg',
   rust_troll:        '/styles/flat/enemy_troll_weapon.svg',
+  rust_berserker:    '/styles/flat/enemy_goblin_weapon.svg',
 };

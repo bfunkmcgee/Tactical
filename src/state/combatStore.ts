@@ -129,6 +129,14 @@ type CombatState = {
     isSkirmish?: boolean;
     /** Mission victory condition; defaults to eliminate_all. */
     objective?: MissionObjective;
+    /**
+     * Per-mission spawn-legend override. Keys in this map take
+     * precedence over the active pack's spawnLegend, so a mission or
+     * skirmish can remap a map's G/O/T to different enemy templates
+     * (e.g. turning a goblin ambush into a berserker charge) without
+     * authoring a new map.
+     */
+    spawnsOverride?: Record<string, string>;
   }) => void;
 
   /** Snapshot player-unit state for the excursion's squad-carry record. */
@@ -378,10 +386,13 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     });
     // Kept for interop with the legacy init path; excursion-mode re-enters here.
     void opts?.briefing;
-    // continue — same logic, but resolves enemy spawn keys via the active pack.
-    // (existing code below handles enemy spawning + state seeding)
+    // Resolve each spawn key: mission-specific override takes precedence
+    // over the pack's default spawnLegend. Lets skirmishes / missions
+    // re-skin a map's spawns (goblins → berserkers, for example)
+    // without authoring a separate map.
+    const spawnOverride = opts?.spawnsOverride ?? {};
     for (const es of map.enemySpawns) {
-      const enemyId = resolveSpawn(es.spawnKey);
+      const enemyId = spawnOverride[es.spawnKey] ?? resolveSpawn(es.spawnKey);
       if (!enemyId) {
         console.warn(`[combat] no spawn legend entry for key '${es.spawnKey}'`);
         continue;

@@ -72,6 +72,7 @@ export default function FieldCampScreen() {
       briefing: `Ambush! ${skirmish.flavor}`,
       isSkirmish: true,
       objective: skirmish.objective,
+      spawnsOverride: skirmish.spawnsOverride,
     });
     useCampaignStore.getState().beginSkirmish(skirmish.id);
     setScreen('combat');

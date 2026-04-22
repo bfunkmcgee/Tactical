@@ -43,4 +43,16 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     fireClass: 'heavy',
     burstShots: 4, // scrap MG rips a 4-round burst; each round rolled separately.
   },
+  rust_berserker: {
+    id: 'rust_berserker',
+    name: 'Rust Berserker',
+    hpMax: 9,
+    aim: 70,           // melee — very reliable at point-blank.
+    mobility: 5,       // fast charger closes distance in one turn across most maps.
+    dmgMin: 6, dmgMax: 10,
+    rangeShort: 1, rangeLong: 1,  // adjacent strike only.
+    kind: 'melee',
+    color: '#a03818',  // burnt-orange rage paint.
+    fireClass: 'pistol',   // short single-swing animation; no burst.
+  },
 };

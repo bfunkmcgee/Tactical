@@ -50,8 +50,12 @@ export function decide(
   }
 
   // 2) Low-HP and already in cover? Hold position rather than break from it.
+  // Melee attackers (berserkers) skip this — their whole identity is
+  // closing to range 1, so we don't want them freezing at half-cover
+  // when wounded.
+  const isMelee = actor.rangeLong <= 1;
   const woundedThreshold = actor.hpMax * 0.4;
-  if (actor.hp <= woundedThreshold) {
+  if (!isMelee && actor.hp <= woundedThreshold) {
     // "Cover" here just means at least one adjacent wall or cover tile — enough
     // to give us a directional shield against the average player.
     const shield = ['wall', 'cover_full', 'cover_half'] as const;
