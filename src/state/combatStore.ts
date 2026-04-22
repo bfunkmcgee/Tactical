@@ -13,15 +13,14 @@ import type { ModSlot } from '../game/types';
 import { useGameStore } from './gameStore';
 import { reachable, findPath } from '../game/engine/pathing';
 import { chebyshev, keyOf } from '../game/engine/grid';
-import { previewShot, resolveEnemyAttack } from '../game/engine/combat';
+import { previewShot } from '../game/engine/combat';
 import { hasLineOfSight } from '../game/engine/los';
 import { makeRng, type RNG } from '../game/engine/rng';
-import { decide } from '../game/engine/ai';
 import { tryAbility as runAbility } from '../game/engine/abilities';
-import { resolveUtility, resolveBlast } from '../game/engine/utilities';
+import { resolveUtility } from '../game/engine/utilities';
 import { evaluateObjective } from '../game/engine/objectives';
 import {
-  nextUnitId, nextLogId, nextFloaterId, nextFireEventId,
+  nextUnitId, nextFloaterId, nextFireEventId,
 } from '../game/engine/runtimeIds';
 import { pushLog } from '../game/engine/log';
 import {
@@ -29,11 +28,12 @@ import {
   type ShotPipelineDeps,
 } from '../game/engine/shotPipeline';
 import {
-  triggerPlayerOverwatch, triggerEnemyOverwatch as runEnemyOverwatch,
+  triggerEnemyOverwatch as runEnemyOverwatch,
   type OverwatchDeps,
 } from '../game/engine/overwatch';
 import { buildInitialCombatState, type InitMissionDeps } from '../game/engine/mission';
 import { advanceDefendCounter, finalizeEnemyTurn } from '../game/engine/turn';
+import { runEnemyTurn as runStepObjectEnemyTurn } from '../game/engine/enemyTurn/runner';
 
 export type ActionMode = 'idle' | 'move' | 'fire' | 'sidearm' | 'utility' | 'ability';
 
@@ -663,116 +663,26 @@ export const useCombatStore = create<CombatState>((set, get) => ({
 
   runEnemyTurn: async () => {
     const isTest = typeof window === 'undefined';
-    const delay = isTest ? 0 : 220;
-    const smokeSet = () => new Set(get().smokeTiles.keys());
-    const enemies = get().units.filter((u) => u.faction === 'enemy' && u.alive);
-    for (const eSnap of enemies) {
-      let actor = get().units.find((u) => u.id === eSnap.id);
-      while (actor && actor.alive && actor.ap > 0) {
-        const actorTmpl = useContent().enemyTemplates[actor.templateId];
-        const intent = decide(get().map, actor, get().units, smokeSet(), actorTmpl?.grenade);
-        if (intent.kind === 'wait') break;
-        if (intent.kind === 'overwatch') {
-          // Zero AP + set the flag. Player moves on the next turn
-          // trigger reactive fire via triggerEnemyOverwatch below.
-          set({
-            units: get().units.map((o) => o.id === actor!.id
-              ? { ...o, ap: 0, status: { ...o.status, overwatch: true } }
-              : o),
-            log: pushLog(get().log, `${actor.name} sets overwatch.`),
-          });
-          break;
-        }
-        if (intent.kind === 'throw' && actorTmpl?.grenade) {
-          resolveEnemyThrow(set, get, actor.id, intent.center, actorTmpl.grenade);
-          if (delay) await sleep(delay);
-          const end = checkEnd(get());
-          if (end) { set(end); return; }
-          actor = get().units.find((u) => u.id === eSnap.id);
-          continue;
-        }
-        if (intent.kind === 'move') {
-          const steps = Math.min(intent.path.length - 1, actor.mobility * actor.ap);
-          if (steps <= 0) break;
-          const apCost = Math.max(1, Math.ceil(steps / actor.mobility));
-          // Step through the path to allow overwatch reactions.
-          let stopped = false;
-          for (let i = 1; i <= steps; i++) {
-            const tile = intent.path[i];
-            set({ units: get().units.map((o) => o.id === actor!.id ? { ...o, pos: tile } : o) });
-            if (delay) await sleep(Math.floor(delay / 2));
-            // Overwatch: first overwatching player unit with LOS gets a reactive shot.
-            const triggered = triggerOverwatch(set, get, actor!.id);
-            if (triggered) {
-              if (delay) await sleep(delay);
-              const a2 = get().units.find((u) => u.id === eSnap.id);
-              if (!a2 || !a2.alive) { stopped = true; break; }
-              actor = a2;
-            }
-          }
-          // Deduct AP for the move (one-time; overwatch reactions don't refund).
-          if (!stopped) {
-            set({
-              units: get().units.map((o) => o.id === eSnap.id ? { ...o, ap: o.ap - apCost } : o),
-              log: pushLog(get().log, `${eSnap.name} advances.`),
-            });
-          }
-        } else if (intent.kind === 'attack') {
-          const target = get().units.find((u) => u.id === intent.target.id);
-          if (!target || !target.alive) break;
-          const armorDr = target.faction === 'player' ? unitArmor(target) : 0;
-          const enemyTmpl = useContent().enemyTemplates[actor.templateId];
-          const result = resolveEnemyAttack(
-            get().map, actor, target, armorDr, get().rng, smokeSet(),
-            enemyTmpl?.burstShots,
-          );
-          let units = get().units.map((o) => o.id === actor!.id ? { ...o, ap: o.ap - 1 } : o);
-          let damageTaken = get().damageTaken;
-          let entry: LogEntry;
-          const floaters = [...get().floaters];
-          const fireEvents = [...get().fireEvents, {
-            id: nextFireEventId(),
-            shooterId: actor.id,
-            shooterPos: actor.pos,
-            targetPos: target.pos,
-            fireClass: fireClassFor(actor, null),
-          }];
-          if (result.kind === 'miss') {
-            const burstMiss = result.burstRounds ? ` — 0/${result.burstRounds} rounds hit` : '';
-            entry = {
-              id: nextLogId(),
-              text: `${actor.name} misses ${target.name} (${result.preview.hitChance}%)${burstMiss}.`,
-              kind: 'miss',
-            };
-            floaters.push(floaterFor(target.pos, 'MISS', 0x6b7689));
-          } else {
-            const newHp = Math.max(0, target.hp - result.damage);
-            const died = newHp <= 0;
-            // Enemy heavy weapons (scrap MG) suppress their target too.
-            const suppresses = !died && enemyTmpl?.fireClass === 'heavy';
-            units = units.map((o) => o.id === target.id
-              ? { ...o, hp: newHp, alive: !died,
-                  status: suppresses ? { ...o.status, suppressed: true } : o.status }
-              : o);
-            if (target.faction === 'player') damageTaken += result.damage;
-            const burstTag = result.hits && result.burstRounds
-              ? ` — ${result.hits}/${result.burstRounds} rounds hit`
-              : '';
-            entry = {
-              id: nextLogId(),
-              text: `${actor.name} ${result.critical ? 'critically ' : ''}hits ${target.name} for ${result.damage}${burstTag}${died ? ' — down!' : ''}.`,
-              kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
-            };
-            floaters.push(floaterFor(target.pos, `-${result.damage}`, result.critical ? 0xff9a3c : 0xff5a6a));
-          }
-          set({ units, damageTaken, log: [...get().log, entry].slice(-60), shakeFrames: result.kind === 'hit' ? 8 : 0, floaters, fireEvents });
-          if (delay) await sleep(delay);
-          const end = checkEnd(get());
-          if (end) { set(end); return; }
-        }
-        actor = get().units.find((u) => u.id === eSnap.id);
-      }
-    }
+    // Tests short-circuit animation delays so 144+ tests finish in <1s.
+    // Production honours the delays `resolveStep` returns so the renderer
+    // sees intermediate frames (per-tile movement, post-action breaths).
+    const sleepFn = isTest
+      ? async () => {}
+      : async (ms: number) => { await sleep(ms); };
+    const { ended } = await runStepObjectEnemyTurn({
+      getState: get,
+      applyPatch: (p) => set(p),
+      sleep: sleepFn,
+      grenadeForTemplate: (tid) => useContent().enemyTemplates[tid]?.grenade,
+      stepDeps: {
+        overwatch: overwatchDeps,
+        armorOf: unitArmor,
+        floaterFor,
+        fireClassFor,
+        burstShotsForTemplate: (tid) => useContent().enemyTemplates[tid]?.burstShots,
+      },
+    });
+    if (ended) return;
     // Reset AP + 1-round statuses + tick smoke. The log line the helper
     // emits includes the round-start cue + optional "smoke dissipates".
     set(finalizeEnemyTurn(get()));
@@ -919,18 +829,11 @@ const overwatchDeps: OverwatchDeps = {
   burstShotsForTemplate: (tid) => useContent().enemyTemplates[tid]?.burstShots,
 };
 
-/** Thin store wrappers — apply the patch the engine returns. */
-function triggerOverwatch(set: Setter, get: Getter, enemyId: UnitId): boolean {
-  const patch = triggerPlayerOverwatch(get(), enemyId, overwatchDeps);
-  if (!patch.triggered) return false;
-  set({
-    units: patch.units, kills: patch.kills, damageTaken: patch.damageTaken,
-    floaters: patch.floaters, fireEvents: patch.fireEvents, log: patch.log,
-    shakeFrames: patch.shakeFrames,
-  });
-  return true;
-}
-
+/**
+ * Thin store wrapper for enemy overwatch — the player-move path reads
+ * this when a player steps into an overwatching enemy's LOS. The enemy-
+ * move path uses triggerPlayerOverwatch directly via the step runner.
+ */
 function triggerEnemyOverwatch(set: Setter, get: Getter, playerId: UnitId): boolean {
   const patch = runEnemyOverwatch(get(), playerId, overwatchDeps);
   if (!patch.triggered) return false;
@@ -942,52 +845,5 @@ function triggerEnemyOverwatch(set: Setter, get: Getter, playerId: UnitId): bool
   return true;
 }
 
-/**
- * Enemy grenade throw. Mirrors the grenade branch of
- * resolvePlayerUtility — same damage math, same cover-degrade pass.
- * Pushes a FireEvent with fireClass 'heavy' so the renderer plays
- * a throw-appropriate animation.
- */
-function resolveEnemyThrow(
-  set: Setter, get: Getter, actorId: UnitId, center: Vec2,
-  grenade: { dmgMin: number; dmgMax: number; radius: number; range: number },
-) {
-  const st = get();
-  const actor = st.units.find((u) => u.id === actorId);
-  if (!actor || !actor.alive) return;
-
-  // Shared blast math with player grenades. Enemies don't benefit from the
-  // kill counter (those are player kills) so we ignore blast.kills here.
-  const blast = resolveBlast(
-    st, center,
-    { dmgMin: grenade.dmgMin, dmgMax: grenade.dmgMax, radius: grenade.radius },
-    (o) => (o.faction === 'player' ? unitArmor(o) : 0),
-    st.rng,
-  );
-  // Spend 1 AP on the throw after the blast rolls.
-  const units = blast.units.map((o) => o.id === actor.id ? { ...o, ap: o.ap - 1 } : o);
-
-  const floaters = [...st.floaters];
-  for (const [unitId, dmg] of blast.damageByUnit) {
-    const v = st.units.find((o) => o.id === unitId);
-    if (v && dmg > 0) floaters.push(floaterFor(v.pos, `-${dmg}`, 0xff9a3c));
-  }
-  const damageTaken = st.damageTaken + units
-    .filter((u) => u.faction === 'player' && !u.alive && st.units.find((o) => o.id === u.id)?.alive)
-    .reduce((s, u) => s + (st.units.find((o) => o.id === u.id)?.hp ?? 0), 0);
-
-  const fireEvents = [...st.fireEvents, {
-    id: nextFireEventId(),
-    shooterId: actor.id,
-    shooterPos: actor.pos,
-    targetPos: center,
-    fireClass: 'heavy' as WeaponClass,  // reuses the heavy burst animation for the throw arc + flash
-  }];
-  const victimCount = blast.damageByUnit.size;
-  const shredded = blast.tilesChanged;
-  set({
-    units, damageTaken, floaters, fireEvents, map: blast.map,
-    log: pushLog(st.log, `${actor.name} lobs a crude grenade — ${victimCount} caught${shredded > 0 ? `, ${shredded} cover tile${shredded === 1 ? '' : 's'} shredded` : ''}.`),
-    shakeFrames: 10,
-  });
-}
+// Enemy grenade throw logic now lives in engine/enemyTurn/steps.ts
+// (resolveThrow) — called from the step runner via resolveStep.
