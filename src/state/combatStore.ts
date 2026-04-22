@@ -13,19 +13,31 @@ import type { ModSlot } from '../game/types';
 import { useGameStore } from './gameStore';
 import { reachable, findPath } from '../game/engine/pathing';
 import { chebyshev, keyOf } from '../game/engine/grid';
-import { previewShot, resolveShot, resolveEnemyAttack } from '../game/engine/combat';
+import { previewShot, resolveEnemyAttack } from '../game/engine/combat';
 import { hasLineOfSight } from '../game/engine/los';
 import { makeRng, type RNG } from '../game/engine/rng';
 import { decide } from '../game/engine/ai';
 import { tryAbility as runAbility } from '../game/engine/abilities';
 import { resolveUtility, resolveBlast } from '../game/engine/utilities';
 import { evaluateObjective } from '../game/engine/objectives';
+import {
+  nextUnitId, nextLogId, nextFloaterId, nextFireEventId,
+} from '../game/engine/runtimeIds';
+import { pushLog } from '../game/engine/log';
+import {
+  applyShotResult as runShotPipeline,
+  type ShotPipelineDeps,
+} from '../game/engine/shotPipeline';
+import {
+  triggerPlayerOverwatch, triggerEnemyOverwatch as runEnemyOverwatch,
+  type OverwatchDeps,
+} from '../game/engine/overwatch';
+import { buildInitialCombatState, type InitMissionDeps } from '../game/engine/mission';
+import { advanceDefendCounter, finalizeEnemyTurn } from '../game/engine/turn';
 
 export type ActionMode = 'idle' | 'move' | 'fire' | 'sidearm' | 'utility' | 'ability';
 
-/** Overwatch reaction-fire accuracy penalty. */
-const OVERWATCH_HIT_PENALTY = 15;
-const OVERWATCH_CRIT_PENALTY = 10;
+// Overwatch accuracy penalties now live in engine/overwatch.ts.
 
 export type Floater = {
   id: number;
@@ -157,10 +169,8 @@ export type CombatState = {
   }>;
 };
 
-let nextUnitId = 1;
-let nextLogId = 1;
-let nextFloaterId = 1;
-let nextFireEventId = 1;
+// Runtime id counters now live in engine/runtimeIds.ts (module-scoped,
+// per-mission reset via resetMissionIds() inside buildInitialCombatState).
 
 function fireClassFor(u: Unit, weapon: Weapon | null): WeaponClass {
   if (weapon) return weapon.class;
@@ -209,7 +219,7 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
   const primaryCap = primary.ammo + (k.extraAmmoPrimary ?? 0);
   const sidearmCap = sidearm.ammo + (k.extraAmmoSidearm ?? 0);
   return {
-    id: nextUnitId++,
+    id: nextUnitId(),
     faction: 'player',
     templateId,
     name: t.name,
@@ -235,7 +245,7 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
 function mkEnemyUnit(templateId: string): Unit {
   const t = getEnemyTemplate(templateId);
   return {
-    id: nextUnitId++,
+    id: nextUnitId(),
     faction: 'enemy',
     templateId,
     name: t.name,
@@ -266,7 +276,7 @@ function mkEnemyUnit(templateId: string): Unit {
  */
 function mkObjectiveUnit(pos: Vec2, hp: number): Unit {
   return {
-    id: nextUnitId++,
+    id: nextUnitId(),
     faction: 'enemy',
     templateId: '__objective__',
     name: 'Objective',
@@ -289,7 +299,7 @@ function mkObjectiveUnit(pos: Vec2, hp: number): Unit {
  */
 function mkVipUnit(pos: Vec2): Unit {
   return {
-    id: nextUnitId++,
+    id: nextUnitId(),
     faction: 'player',
     templateId: '__vip__',
     name: 'VIP',
@@ -330,12 +340,10 @@ function unitMods(u: Unit, useSidearm: boolean) {
   return modsFromIds(useSidearm ? u.loadout.sidearmMods : u.loadout.primaryMods);
 }
 
-function pushLog(log: LogEntry[], text: string, kind: LogEntry['kind'] = 'info'): LogEntry[] {
-  return [...log, { id: nextLogId++, text, kind }].slice(-60);
-}
+// `pushLog` lives in engine/log.ts — imported at the top of this file.
 
 function floaterFor(pos: Vec2, text: string, color: number): Floater {
-  return { id: nextFloaterId++, pos, text, color, ttl: 50 };
+  return { id: nextFloaterId(), pos, text, color, ttl: 50 };
 }
 
 function recalcReach(state: CombatState): Map<number, number> {
@@ -399,70 +407,19 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   },
 
   initMission: (opts) => {
-    nextUnitId = 1; nextLogId = 1; nextFloaterId = 1;
-    const sourceMap = opts?.map ?? pickRandomMap();
-    // Clone the map + tiles so any in-mission mutations (destructible
-    // cover via grenades, demolish ability) don't bleed back into the
-    // engine-owned map singleton between missions.
-    const map: GridMap = {
-      ...sourceMap,
-      tiles: sourceMap.tiles.map((t) => ({ ...t })),
+    // Delegate to engine/mission.ts. The store wires in pack-aware factories
+    // + registry lookups; buildInitialCombatState does the orchestration.
+    const deps: InitMissionDeps = {
+      pickRandomMap,
+      defaultRoster: () => useGameStore.getState().roster,
+      mkSoldierUnit,
+      mkEnemyUnit,
+      mkObjectiveUnit,
+      mkVipUnit,
+      resolveSpawn,
+      makeRng,
     };
-    const roster = opts?.rosterIds ?? useGameStore.getState().roster;
-    const carries = opts?.carries ?? {};
-    const units: Unit[] = [];
-    roster.forEach((id, i) => {
-      const u = mkSoldierUnit(id, carries[id]);
-      u.pos = map.playerSpawns[i % map.playerSpawns.length];
-      units.push(u);
-    });
-    // Kept for interop with the legacy init path; excursion-mode re-enters here.
-    void opts?.briefing;
-    // Resolve each spawn key: mission-specific override takes precedence
-    // over the pack's default spawnLegend. Lets skirmishes / missions
-    // re-skin a map's spawns (goblins → berserkers, for example)
-    // without authoring a separate map.
-    const spawnOverride = opts?.spawnsOverride ?? {};
-    for (const es of map.enemySpawns) {
-      const enemyId = spawnOverride[es.spawnKey] ?? resolveSpawn(es.spawnKey);
-      if (!enemyId) {
-        console.warn(`[combat] no spawn legend entry for key '${es.spawnKey}'`);
-        continue;
-      }
-      const e = mkEnemyUnit(enemyId);
-      e.pos = es.pos;
-      units.push(e);
-    }
-    // Spawn role-driven special units for the non-eliminate objective
-    // kinds — they share the Unit shape so the existing combat math
-    // (previewShot / applyShotResult / tryMove) handles them without
-    // a parallel code path.
-    const obj = opts?.objective ?? { kind: 'eliminate_all' };
-    if (obj.kind === 'destroy_objective') {
-      units.push(mkObjectiveUnit(obj.pos, obj.hp));
-    } else if (obj.kind === 'extract_vip') {
-      units.push(mkVipUnit(obj.vipSpawn));
-    }
-    set({
-      map,
-      units,
-      smokeTiles: new Map(),
-      selectedId: units[0]?.id ?? null,
-      phase: 'player',
-      round: 1,
-      mode: 'idle',
-      selectedUtilityIdx: null,
-      pendingShotTargetId: null,
-      pendingShotUsesSidearm: false,
-      pendingUtility: null,
-      log: [{ id: nextLogId++, text: opts?.briefing ?? `Mission: ${map.name}. Neutralize all hostiles.`, kind: 'info' }],
-      rng: makeRng(Date.now() & 0xffffffff),
-      kills: 0, damageTaken: 0, floaters: [], fireEvents: [],
-      shakeFrames: 0,
-      isSkirmish: opts?.isSkirmish ?? false,
-      objective: obj,
-      defendTurns: 0,
-    });
+    set(buildInitialCombatState(opts ?? {}, deps));
     set((st) => ({ reach: recalcReach(st) }));
   },
 
@@ -659,7 +616,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       ...(result.fireEvents ? {
         fireEvents: [
           ...st.fireEvents,
-          ...result.fireEvents.map((e) => ({ ...e, id: nextFireEventId++ })),
+          ...result.fireEvents.map((e) => ({ ...e, id: nextFireEventId() })),
         ],
       } : {}),
       log: newLog,
@@ -695,19 +652,9 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   endPlayerTurn: () => {
     const st = get();
     if (st.phase !== 'player') return;
-    // defend_point: tick a turn if any live player unit (NOT the VIP)
-    // occupies the defend tile at end of player turn.
-    let defendTurns = st.defendTurns;
-    if (st.objective.kind === 'defend_point') {
-      const { pos } = st.objective;
-      const holding = st.units.some((u) =>
-        u.faction === 'player' && u.alive && !u.role
-        && u.pos.x === pos.x && u.pos.y === pos.y);
-      if (holding) defendTurns += 1;
-    }
     set({ phase: 'enemy', mode: 'idle', selectedUtilityIdx: null,
       pendingShotTargetId: null, pendingShotUsesSidearm: false, pendingUtility: null,
-      defendTurns });
+      defendTurns: advanceDefendCounter(st) });
     // If the hold counter just completed the objective, short-circuit.
     const end = checkEnd(get());
     if (end) { set(end); return; }
@@ -784,7 +731,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
           let entry: LogEntry;
           const floaters = [...get().floaters];
           const fireEvents = [...get().fireEvents, {
-            id: nextFireEventId++,
+            id: nextFireEventId(),
             shooterId: actor.id,
             shooterPos: actor.pos,
             targetPos: target.pos,
@@ -793,7 +740,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
           if (result.kind === 'miss') {
             const burstMiss = result.burstRounds ? ` — 0/${result.burstRounds} rounds hit` : '';
             entry = {
-              id: nextLogId++,
+              id: nextLogId(),
               text: `${actor.name} misses ${target.name} (${result.preview.hitChance}%)${burstMiss}.`,
               kind: 'miss',
             };
@@ -812,7 +759,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
               ? ` — ${result.hits}/${result.burstRounds} rounds hit`
               : '';
             entry = {
-              id: nextLogId++,
+              id: nextLogId(),
               text: `${actor.name} ${result.critical ? 'critically ' : ''}hits ${target.name} for ${result.damage}${burstTag}${died ? ' — down!' : ''}.`,
               kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
             };
@@ -826,23 +773,10 @@ export const useCombatStore = create<CombatState>((set, get) => ({
         actor = get().units.find((u) => u.id === eSnap.id);
       }
     }
-    // Reset AP, clear short-lived statuses, and tick smoke clouds down.
-    // marked + seeThroughSmoke also clear here: both are 1-round buffs.
-    const units = get().units.map((u) => u.alive
-      ? { ...u, ap: u.apMax, status: { ...u.status,
-          blinded: false, suppressed: false, marked: false, seeThroughSmoke: false } }
-      : u);
-    const nextSmoke = new Map<number, number>();
-    let dissipated = 0;
-    for (const [k, rounds] of get().smokeTiles) {
-      if (rounds > 1) nextSmoke.set(k, rounds - 1);
-      else dissipated++;
-    }
-    set({ units, phase: 'player', round: get().round + 1, smokeTiles: nextSmoke });
-    set((s) => ({ reach: recalcReach(s),
-      log: pushLog(s.log, dissipated > 0
-        ? `Round ${s.round} — smoke dissipates. Your turn.`
-        : `Round ${s.round} — your turn.`) }));
+    // Reset AP + 1-round statuses + tick smoke. The log line the helper
+    // emits includes the round-start cue + optional "smoke dissipates".
+    set(finalizeEnemyTurn(get()));
+    set((s) => ({ reach: recalcReach(s) }));
     const end = checkEnd(get());
     if (end) set(end);
   },
@@ -877,88 +811,32 @@ export const useCombatStore = create<CombatState>((set, get) => ({
 type Setter = (partial: Partial<CombatState> | ((s: CombatState) => Partial<CombatState>)) => void;
 type Getter = () => CombatState;
 
+/** Deps threaded into the engine shot pipeline. Pack lookups live here. */
+const shotDeps: ShotPipelineDeps = {
+  armorOf: unitArmor,
+  modsOf: unitMods,
+  fireClassFor,
+  floaterFor,
+};
+
 /** Shared shot-resolution path used by both primary and sidearm fire. */
 function applyShotResult(
   set: Setter, get: Getter, shooterId: UnitId, targetId: UnitId,
-  weapon: Weapon, useSidearm: boolean
+  weapon: Weapon, useSidearm: boolean,
 ) {
-  const st = get();
-  const u = st.units.find((x) => x.id === shooterId);
-  const t = st.units.find((x) => x.id === targetId);
-  if (!u || !t || !u.alive || !t.alive) return;
-  const ammoField = useSidearm ? 'sidearmAmmo' : 'ammo';
-  if (u.ap < weapon.apCost || u[ammoField] <= 0) return;
-
-  const mods = unitMods(u, useSidearm);
-  const thermalSkipsSmoke = mods.some((m) => m.effects.flags?.includes('thermal'));
-  const smokeSet = new Set(st.smokeTiles.keys());
-  const losBlockers = thermalSkipsSmoke ? undefined : smokeSet;
-  if (!hasLineOfSight(st.map, u.pos, t.pos, losBlockers)) return;
-
-  const preview = previewShot(st.map, u, t, weapon, unitArmor(t),
-    thermalSkipsSmoke ? undefined : smokeSet, mods);
-  const result = resolveShot(preview, weapon, null, st.rng, mods);
-  // Sidearms never end the turn even if the primary's flag is set.
-  const apSpent = (!useSidearm && weapon.endsTurn) ? u.ap : weapon.apCost;
-  // Reactive Grip refunds the round on a crit — track for HUD log too.
-  const ammoRefund = result.kind === 'hit' && result.ammoRefund;
-  let units = st.units.map((o) =>
-    o.id === u.id
-      ? { ...o, ap: o.ap - apSpent, [ammoField]: o[ammoField] - (ammoRefund ? 0 : 1),
-          status: { ...o.status, overwatch: false } }
-      : o
-  );
-  let kills = st.kills;
-  const floaters = [...st.floaters];
-  const fireEvents = [...st.fireEvents, {
-    id: nextFireEventId++,
-    shooterId: u.id,
-    shooterPos: u.pos,
-    targetPos: t.pos,
-    fireClass: fireClassFor(u, weapon),
-  }];
-  let entry: LogEntry;
-  const verb = useSidearm ? `draws ${weapon.name} and ` : '';
-  if (result.kind === 'miss') {
-    const burstMissTag = result.burstRounds ? ` — 0/${result.burstRounds} rounds hit` : '';
-    entry = {
-      id: nextLogId++,
-      text: `${u.name} ${verb}misses ${t.name} (${preview.hitChance}%)${burstMissTag}.`,
-      kind: 'miss',
-    };
-    floaters.push(floaterFor(t.pos, 'MISS', 0x6b7689));
-  } else {
-    // Ranger's Mark adds +3 damage to the first incoming hit, then the
-    // mark clears. Applied BEFORE HP clamp so the bonus is real and the
-    // "rounds hit" log stays honest about the weapon roll.
-    const markBonus = t.status.marked ? 3 : 0;
-    const effDamage = result.damage + markBonus;
-    const newHp = Math.max(0, t.hp - effDamage);
-    const died = newHp <= 0;
-    // Heavy weapons suppress their target on hit — hosing the target
-    // with a burst puts their head down. Cleared at end of enemy turn.
-    const suppresses = !died && weapon.class === 'heavy';
-    units = units.map((o) => o.id === t.id
-      ? { ...o, hp: newHp, alive: !died,
-          status: { ...o.status, marked: false,
-            suppressed: suppresses ? true : o.status.suppressed } }
-      : o);
-    if (died) kills += 1;
-    const refundTag = ammoRefund ? ' (round salvaged)' : '';
-    const burstTag = result.hits && result.burstRounds
-      ? ` — ${result.hits}/${result.burstRounds} rounds hit`
-      : '';
-    const markTag = markBonus > 0 ? ' (marked +3)' : '';
-    entry = {
-      id: nextLogId++,
-      text: `${u.name} ${verb}${result.critical ? 'critically ' : ''}hits ${t.name} for ${effDamage}${markTag}${burstTag}${refundTag}${died ? ' — eliminated!' : ''}.`,
-      kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
-    };
-    floaters.push(floaterFor(t.pos, `-${effDamage}`, result.critical ? 0xff9a3c : 0x57d18b));
-  }
-  set({ units, kills, log: [...st.log, entry].slice(-60),
-    mode: 'idle', pendingShotTargetId: null, pendingShotUsesSidearm: false,
-    shakeFrames: result.kind === 'hit' ? 8 : 0, floaters, fireEvents });
+  const patch = runShotPipeline(get(), shooterId, targetId, weapon, useSidearm, shotDeps);
+  if (!patch.applied) return;
+  set({
+    units: patch.units,
+    kills: patch.kills,
+    log: patch.log,
+    floaters: patch.floaters,
+    fireEvents: patch.fireEvents,
+    mode: 'idle',
+    pendingShotTargetId: null,
+    pendingShotUsesSidearm: false,
+    shakeFrames: patch.shakeFrames,
+  });
   set((s) => ({ reach: recalcReach(s) }));
   const end = checkEnd(get());
   if (end) set(end);
@@ -1031,128 +909,36 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
  * If any overwatching player unit can see `enemyId` and has AP + ammo, fire one
  * reactive shot at a penalized accuracy. Consumes overwatch regardless of hit.
  */
+/** Shared deps for both overwatch paths. */
+const overwatchDeps: OverwatchDeps = {
+  armorOf: unitArmor,
+  modsOf: unitMods,
+  primaryOf: unitPrimary,
+  fireClassFor,
+  floaterFor,
+  burstShotsForTemplate: (tid) => useContent().enemyTemplates[tid]?.burstShots,
+};
+
+/** Thin store wrappers — apply the patch the engine returns. */
 function triggerOverwatch(set: Setter, get: Getter, enemyId: UnitId): boolean {
-  const st = get();
-  const enemy = st.units.find((u) => u.id === enemyId);
-  if (!enemy || !enemy.alive) return false;
-  const smokeSet = new Set(st.smokeTiles.keys());
-  // Find the first overwatching player who can see through smoke (thermal mod
-  // bypasses smoke for that watcher).
-  const watcher = st.units.find((u) => {
-    if (u.faction !== 'player' || !u.alive || !u.status.overwatch || u.ammo <= 0) return false;
-    const mods = unitMods(u, false);
-    const blockers = mods.some((m) => m.effects.flags?.includes('thermal'))
-      ? undefined : smokeSet;
-    return hasLineOfSight(st.map, u.pos, enemy.pos, blockers);
+  const patch = triggerPlayerOverwatch(get(), enemyId, overwatchDeps);
+  if (!patch.triggered) return false;
+  set({
+    units: patch.units, kills: patch.kills, damageTaken: patch.damageTaken,
+    floaters: patch.floaters, fireEvents: patch.fireEvents, log: patch.log,
+    shakeFrames: patch.shakeFrames,
   });
-  if (!watcher) return false;
-  const weapon = unitPrimary(watcher);
-  if (!weapon) return false;
-  const watcherMods = unitMods(watcher, false);
-  const watcherSmoke = watcherMods.some((m) => m.effects.flags?.includes('thermal'))
-    ? undefined : smokeSet;
-  const base = previewShot(st.map, watcher, enemy, weapon, 0, watcherSmoke, watcherMods);
-  const preview: ShotPreview = { ...base,
-    hitChance: Math.max(1, base.hitChance - OVERWATCH_HIT_PENALTY),
-    critChance: Math.max(0, base.critChance - OVERWATCH_CRIT_PENALTY) };
-  const result = resolveShot(preview, weapon, null, st.rng, watcherMods);
-  let units = st.units.map((o) => o.id === watcher.id
-    ? { ...o, ammo: o.ammo - 1, status: { ...o.status, overwatch: false } } : o);
-  const floaters = [...st.floaters];
-  let entry: LogEntry;
-  let kills = st.kills;
-  if (result.kind === 'miss') {
-    const burstMiss = result.burstRounds ? ` — 0/${result.burstRounds} rounds hit` : '';
-    entry = {
-      id: nextLogId++,
-      text: `${watcher.name} reacts — misses ${enemy.name}${burstMiss}.`,
-      kind: 'miss',
-    };
-    floaters.push(floaterFor(enemy.pos, 'MISS', 0xf5c55a));
-  } else {
-    const newHp = Math.max(0, enemy.hp - result.damage);
-    const died = newHp <= 0;
-    units = units.map((o) => o.id === enemy.id ? { ...o, hp: newHp, alive: !died } : o);
-    if (died) kills += 1;
-    const burstTag = result.hits && result.burstRounds
-      ? ` — ${result.hits}/${result.burstRounds} rounds hit`
-      : '';
-    entry = {
-      id: nextLogId++,
-      text: `${watcher.name} reacts — ${result.critical ? 'crits ' : 'hits '}${enemy.name} for ${result.damage}${burstTag}${died ? ' — eliminated!' : ''}.`,
-      kind: died ? 'kill' : result.critical ? 'crit' : 'hit',
-    };
-    floaters.push(floaterFor(enemy.pos, `-${result.damage}`, 0xf5c55a));
-  }
-  const fireEvents = [...st.fireEvents, {
-    id: nextFireEventId++,
-    shooterId: watcher.id,
-    shooterPos: watcher.pos,
-    targetPos: enemy.pos,
-    fireClass: fireClassFor(watcher, weapon),
-  }];
-  set({ units, kills, floaters, fireEvents, log: [...st.log, entry].slice(-60), shakeFrames: result.kind === 'hit' ? 8 : 0 });
   return true;
 }
 
-/**
- * Mirror of triggerOverwatch for the enemy side. When a player moves
- * and steps into LOS of an overwatching enemy, that enemy takes a
- * reactive shot at penalised accuracy. Consumes overwatch regardless
- * of hit.
- */
 function triggerEnemyOverwatch(set: Setter, get: Getter, playerId: UnitId): boolean {
-  const st = get();
-  const player = st.units.find((u) => u.id === playerId);
-  if (!player || !player.alive) return false;
-  const smokeSet = new Set(st.smokeTiles.keys());
-  const watcher = st.units.find((u) => {
-    if (u.faction !== 'enemy' || !u.alive || !u.status.overwatch) return false;
-    return hasLineOfSight(st.map, u.pos, player.pos, smokeSet);
+  const patch = runEnemyOverwatch(get(), playerId, overwatchDeps);
+  if (!patch.triggered) return false;
+  set({
+    units: patch.units, kills: patch.kills, damageTaken: patch.damageTaken,
+    floaters: patch.floaters, fireEvents: patch.fireEvents, log: patch.log,
+    shakeFrames: patch.shakeFrames,
   });
-  if (!watcher) return false;
-  const armorDr = unitArmor(player);
-  const watcherTmpl = useContent().enemyTemplates[watcher.templateId];
-  const base = resolveEnemyAttack(
-    st.map, watcher, player, armorDr, st.rng, smokeSet, watcherTmpl?.burstShots,
-  );
-  // Apply the overwatch accuracy penalty retroactively: if the base
-  // hit rolled "just barely", we convert it to a miss. This keeps the
-  // existing resolveEnemyAttack path (with its burst / crit math)
-  // intact without duplicating the whole function.
-  const result = base.preview.hitChance < OVERWATCH_HIT_PENALTY + 15
-    ? { ...base, kind: 'miss' as const } // dismiss low-odds overwatch hits
-    : base;
-
-  let units = st.units.map((o) => o.id === watcher.id
-    ? { ...o, ap: 0, status: { ...o.status, overwatch: false } } : o);
-  let damageTaken = st.damageTaken;
-  const floaters = [...st.floaters];
-  let entry: LogEntry;
-  if (result.kind === 'miss') {
-    entry = { id: nextLogId++, text: `${watcher.name} reacts — misses ${player.name}.`, kind: 'miss' };
-    floaters.push(floaterFor(player.pos, 'MISS', 0xff9a3c));
-  } else {
-    const newHp = Math.max(0, player.hp - result.damage);
-    const died = newHp <= 0;
-    units = units.map((o) => o.id === player.id ? { ...o, hp: newHp, alive: !died } : o);
-    damageTaken += result.damage;
-    entry = {
-      id: nextLogId++,
-      text: `${watcher.name} reacts — hits ${player.name} for ${result.damage}${died ? ' — down!' : ''}.`,
-      kind: died ? 'kill' : 'hit',
-    };
-    floaters.push(floaterFor(player.pos, `-${result.damage}`, 0xff5a6a));
-  }
-  const fireEvents = [...st.fireEvents, {
-    id: nextFireEventId++,
-    shooterId: watcher.id,
-    shooterPos: watcher.pos,
-    targetPos: player.pos,
-    fireClass: fireClassFor(watcher, null),
-  }];
-  set({ units, damageTaken, floaters, fireEvents, log: [...st.log, entry].slice(-60),
-    shakeFrames: result.kind === 'hit' ? 8 : 0 });
   return true;
 }
 
@@ -1191,7 +977,7 @@ function resolveEnemyThrow(
     .reduce((s, u) => s + (st.units.find((o) => o.id === u.id)?.hp ?? 0), 0);
 
   const fireEvents = [...st.fireEvents, {
-    id: nextFireEventId++,
+    id: nextFireEventId(),
     shooterId: actor.id,
     shooterPos: actor.pos,
     targetPos: center,
