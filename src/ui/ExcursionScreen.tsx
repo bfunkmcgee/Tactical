@@ -309,7 +309,7 @@ function PlotPoint({ mission, index, pos, state, onBegin }:
           ? '0 0 0 4px rgba(232, 196, 136, 0.35), 0 2px 6px rgba(0,0,0,0.5)'
           : '0 2px 4px rgba(0,0,0,0.45)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: state === 'locked' ? 'var(--fg-2)' : '#0b0f14',
+        color: state === 'locked' ? 'var(--fg-2)' : '#0e1a20',
         fontSize: 14, fontWeight: 700,
         animation: state === 'current' ? 'pulse 1.6s ease-in-out infinite' : 'none',
       }}>

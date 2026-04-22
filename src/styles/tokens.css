@@ -1,16 +1,19 @@
 :root {
-  /* Palette */
-  --bg-0: #0b0f14;
-  --bg-1: #121822;
-  --bg-2: #1b2331;
-  --bg-3: #26324a;
-  --fg-0: #e6eef8;
-  --fg-1: #aab4c4;
-  --fg-2: #6b7689;
-  --accent: #7cc4ff;    /* runic blue */
-  --accent-2: #ff9a3c;  /* draconic orange */
-  --accent-3: #9cd6a6;  /* alchemical green */
-  --accent-4: #c79aff;  /* fae violet */
+  /* Palette — "warm desert dusk" pillar. The primary accent is the
+   * Eagle-Corps gold; the cool blue survives as a weapon-tag colour
+   * on runic items and in the 1-AP movement reach preview. */
+  --bg-0: #0e1a20;          /* deep navy-teal (warmer than pure black) */
+  --bg-1: #141f28;
+  --bg-2: #1d2a38;
+  --bg-3: #2a3a4e;
+  --fg-0: #f1ead6;          /* warm cream — anchors against gold accent */
+  --fg-1: #b8ac8f;
+  --fg-2: #7a7360;
+  --accent:      #e8c488;   /* gold — primary UI accent (was runic blue) */
+  --accent-cool: #7cc4ff;   /* runic blue — now a weapon tag + move preview only */
+  --accent-2:    #ff9a3c;   /* draconic orange */
+  --accent-3:    #9cd6a6;   /* alchemical green */
+  --accent-4:    #c79aff;   /* fae violet */
   --danger: #ff5a6a;
   --success: #57d18b;
   --warn: #f5c55a;

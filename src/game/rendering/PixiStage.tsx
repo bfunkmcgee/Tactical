@@ -123,7 +123,7 @@ export default function PixiStage() {
     (async () => {
       await app.init({
         resizeTo: host,
-        background: '#0b0f14',
+        background: '#0e1a20',
         antialias: true,
         resolution: Math.min(window.devicePixelRatio, 2),
         autoDensity: true,
@@ -431,7 +431,10 @@ function diamond(g: Graphics, cx: number, cy: number, fill: number, alpha: numbe
   g.lineTo(cx - TILE_W / 2, cy);
   g.closePath();
   g.fill({ color: fill, alpha });
-  if (stroke !== undefined) g.stroke({ color: stroke, width: 1, alpha: 0.5 });
+  // Stronger tile outline (alpha 0.75) lets diamonds carry the same
+  // mark-making weight as the sprite silhouettes above them, so tiles
+  // and units feel drawn with the same brush.
+  if (stroke !== undefined) g.stroke({ color: stroke, width: 1, alpha: 0.75 });
 }
 
 /**
@@ -549,8 +552,174 @@ function drawMap(layer: Container, map: GridMap) {
       }
     }
   }
+  // Environmental prop scatter — adds a layer of lived-in detail
+  // (bones, drums, crates) between the painted ground and the
+  // character silhouettes so they stop looking pasted-on.
+  drawEnvProps(g, map);
   layer.addChild(g);
 }
+
+/**
+ * Scatter biome-appropriate props across ~8% of plain-floor tiles.
+ * Deterministic by tile hash so the layout holds still across
+ * redraws. Spawn tiles (both factions) stay empty so nothing hides
+ * under a unit at mission start; cover tiles skip too — the prop
+ * would clash with the raised cover silhouette.
+ */
+function drawEnvProps(g: Graphics, map: GridMap) {
+  const biome = map.tileset;
+  const props = biome === 'desert' ? DESERT_PROPS
+    : biome === 'desert-refinery' ? REFINERY_PROPS
+    : URBAN_PROPS;
+  if (props.length === 0) return;
+  const spawnKeys = new Set<number>();
+  for (const p of map.playerSpawns) spawnKeys.add(p.y * 4096 + p.x);
+  for (const e of map.enemySpawns) spawnKeys.add(e.pos.y * 4096 + e.pos.x);
+
+  for (let y = 0; y < map.height; y++) {
+    for (let x = 0; x < map.width; x++) {
+      const t = tileAt(map, x, y);
+      if (!t || t.kind !== 'floor') continue;
+      if (spawnKeys.has(y * 4096 + x)) continue;
+      const h = (x * 73856093 ^ y * 19349663) >>> 0;
+      if ((h % 100) >= 8) continue; // ~8% density
+      const pickIdx = ((h >>> 8) % props.length) | 0;
+      const jx = ((h >>> 12) % 7) - 3;
+      const jy = ((h >>> 17) % 5) - 2;
+      const p = gridToScreen({ x, y });
+      props[pickIdx](g, p.x + jx, p.y + jy);
+    }
+  }
+}
+
+type PropDraw = (g: Graphics, cx: number, cy: number) => void;
+
+// --- DESERT props ---------------------------------------------------
+
+const drawDesertBones: PropDraw = (g, cx, cy) => {
+  const bone = 0xe4d8b0, dark = 0x3a2a1c;
+  // Main femur at a tilt.
+  g.moveTo(cx - 5, cy + 1); g.lineTo(cx + 5, cy - 2);
+  g.stroke({ color: bone, width: 1.6 });
+  // Two crossed ribs.
+  g.moveTo(cx - 3, cy - 2); g.lineTo(cx + 2, cy + 2);
+  g.stroke({ color: bone, width: 1.1 });
+  // Tiny socket dot at the femur tip.
+  g.circle(cx + 5, cy - 2, 0.9).fill({ color: dark, alpha: 0.9 });
+};
+
+const drawDesertSignpost: PropDraw = (g, cx, cy) => {
+  const wood = 0x6a4828, dark = 0x2a1a0a, gold = 0xe8c488;
+  // Vertical post.
+  g.rect(cx - 0.5, cy - 8, 1.2, 10).fill({ color: wood, alpha: 0.95 });
+  // Tilted board at top, with a gold rim for a sun-hit edge.
+  g.rect(cx - 4, cy - 9, 8, 2.5).fill({ color: wood }).stroke({ color: dark, width: 0.6 });
+  g.rect(cx - 4, cy - 9, 8, 0.5).fill({ color: gold, alpha: 0.6 });
+};
+
+const drawDesertCactus: PropDraw = (g, cx, cy) => {
+  const green = 0x567a3a, darker = 0x2a3a18, spine = 0xd8cfa0;
+  // Main trunk.
+  g.roundRect(cx - 1, cy - 8, 2.2, 10, 1).fill({ color: green }).stroke({ color: darker, width: 0.5 });
+  // Left arm.
+  g.roundRect(cx - 3.2, cy - 5, 2, 3, 1).fill({ color: green });
+  g.roundRect(cx - 3.4, cy - 7, 0.8, 2.5, 0.4).fill({ color: green });
+  // Right arm.
+  g.roundRect(cx + 1.2, cy - 6, 2, 3, 1).fill({ color: green });
+  g.roundRect(cx + 2.6, cy - 8, 0.8, 2.5, 0.4).fill({ color: green });
+  // Two tiny spines / highlights.
+  g.circle(cx, cy - 4, 0.4).fill({ color: spine, alpha: 0.8 });
+  g.circle(cx, cy - 1, 0.4).fill({ color: spine, alpha: 0.8 });
+};
+
+const drawDesertRag: PropDraw = (g, cx, cy) => {
+  const cloth = 0xa86848, dark = 0x4a2818;
+  // Wind-tattered cloth strip — drawn as two offset curves with a
+  // shadow underneath.
+  g.moveTo(cx - 5, cy + 1);
+  g.quadraticCurveTo(cx - 1, cy - 3, cx + 3, cy - 1);
+  g.quadraticCurveTo(cx + 4, cy + 2, cx + 5, cy + 1);
+  g.fill({ color: cloth });
+  g.moveTo(cx - 5, cy + 1);
+  g.quadraticCurveTo(cx - 1, cy - 3, cx + 3, cy - 1);
+  g.stroke({ color: dark, width: 0.5, alpha: 0.7 });
+};
+
+const DESERT_PROPS: PropDraw[] = [
+  drawDesertBones, drawDesertSignpost, drawDesertCactus, drawDesertRag,
+];
+
+// --- REFINERY props -------------------------------------------------
+
+const drawRefineryDrum: PropDraw = (g, cx, cy) => {
+  const body = 0x8a6a4a, rim = 0xe8c488, dark = 0x1a0e08, rust = 0xa04818;
+  // Drum body — small oval cylinder.
+  g.rect(cx - 3, cy - 6, 6, 8).fill({ color: body }).stroke({ color: dark, width: 0.6 });
+  // Rim band top + bottom.
+  g.rect(cx - 3, cy - 6, 6, 1).fill({ color: rim, alpha: 0.7 });
+  g.rect(cx - 3, cy + 1, 6, 0.6).fill({ color: dark, alpha: 0.7 });
+  // Rust streak down the face.
+  g.rect(cx - 1, cy - 4, 0.7, 5).fill({ color: rust, alpha: 0.8 });
+};
+
+const drawRefineryValve: PropDraw = (g, cx, cy) => {
+  const steel = 0x8a7868, dark = 0x1a0e08, rim = 0xd4c4a4;
+  // Disk wheel with four spokes.
+  g.circle(cx, cy - 2, 4).fill({ color: steel }).stroke({ color: dark, width: 0.6 });
+  g.circle(cx, cy - 2, 1.2).fill({ color: dark });
+  for (const [dx, dy] of [[0, -3.5], [0, 3.5], [-3.5, 0], [3.5, 0]] as const) {
+    g.moveTo(cx, cy - 2); g.lineTo(cx + dx, cy - 2 + dy);
+    g.stroke({ color: rim, width: 0.8, alpha: 0.85 });
+  }
+};
+
+const drawRefineryToolbox: PropDraw = (g, cx, cy) => {
+  const red = 0x9a2a1a, dark = 0x1a0a04, rim = 0xe8c488;
+  // Low rectangle with a handle up top.
+  g.rect(cx - 4, cy - 1, 8, 4).fill({ color: red }).stroke({ color: dark, width: 0.6 });
+  g.rect(cx - 4, cy - 1, 8, 0.6).fill({ color: rim, alpha: 0.5 });
+  // Handle arch.
+  g.moveTo(cx - 2, cy - 1); g.quadraticCurveTo(cx, cy - 3, cx + 2, cy - 1);
+  g.stroke({ color: dark, width: 0.9 });
+};
+
+const drawRefineryHose: PropDraw = (g, cx, cy) => {
+  const hose = 0x1a1010, shine = 0x5a4828;
+  // Coiled loop — two rings.
+  g.circle(cx - 2, cy, 2.6).stroke({ color: hose, width: 1.3 });
+  g.circle(cx + 2, cy - 1, 2.4).stroke({ color: hose, width: 1.3 });
+  g.circle(cx - 2, cy, 2.6).stroke({ color: shine, width: 0.4, alpha: 0.6 });
+};
+
+const REFINERY_PROPS: PropDraw[] = [
+  drawRefineryDrum, drawRefineryValve, drawRefineryToolbox, drawRefineryHose,
+];
+
+// --- URBAN props (kept for the urban tileset — no shipping maps use
+// it yet, but the renderer is prepared) ----------------------------
+
+const drawUrbanCrate: PropDraw = (g, cx, cy) => {
+  const wood = 0x5a432a, dark = 0x1a0e08, rim = 0x8a6838;
+  g.rect(cx - 3, cy - 3, 6, 5).fill({ color: wood }).stroke({ color: dark, width: 0.6 });
+  g.rect(cx - 3, cy - 3, 6, 0.6).fill({ color: rim, alpha: 0.7 });
+  g.moveTo(cx - 3, cy); g.lineTo(cx + 3, cy);
+  g.stroke({ color: dark, width: 0.4 });
+};
+
+const drawUrbanTrash: PropDraw = (g, cx, cy) => {
+  const bag = 0x1a1a22, shine = 0x4a4a58;
+  g.ellipse(cx, cy, 4, 3).fill({ color: bag }).stroke({ color: shine, width: 0.4 });
+  g.rect(cx - 0.5, cy - 4, 1, 1.5).fill({ color: bag });
+};
+
+const drawUrbanPaper: PropDraw = (g, cx, cy) => {
+  const paper = 0xc0b8a0, dark = 0x3a3428;
+  g.rect(cx - 3, cy - 1, 6, 3).fill({ color: paper, alpha: 0.85 });
+  g.moveTo(cx - 2, cy); g.lineTo(cx + 2, cy);
+  g.stroke({ color: dark, width: 0.3, alpha: 0.6 });
+};
+
+const URBAN_PROPS: PropDraw[] = [drawUrbanCrate, drawUrbanTrash, drawUrbanPaper];
 
 /**
  * Per-tile desert floor / wall detail. Deterministic by (x, y) so the map
@@ -1009,9 +1178,14 @@ function syncUnits(
 function createUnitNode(u: Unit): UnitNode {
   const container = new Container();
 
-  // Shadow is a child of container (not body) so it doesn't lean during walk/fire.
+  // Shadow is a child of container (not body) so it doesn't lean during
+  // walk/fire. Warm brown (rather than pure black) on desert/refinery
+  // maps so the shadow reads as dust-on-sand instead of floating ink.
   const shadow = new Graphics();
-  shadow.ellipse(0, 6, 14, 6).fill({ color: 0x000000, alpha: 0.45 });
+  const tileset = useCombatStore.getState().map.tileset;
+  const shadowColor = (tileset === 'desert' || tileset === 'desert-refinery')
+    ? 0x2a1a0a : 0x050709;
+  shadow.ellipse(0, 6, 14, 6).fill({ color: shadowColor, alpha: 0.55 });
 
   const selectionRing = new Graphics();
 
@@ -1043,6 +1217,16 @@ function createUnitNode(u: Unit): UnitNode {
     sprite.position.set(0, 4);
     body.addChild(sprite);
     spriteTop = -50;
+
+    // Sun-glint rim: a short gold stroke on the upper-right of the body
+    // (roughly helmet / pauldron height). Baked into the body container
+    // so it inherits walk-lean / fire-pitch rotation and reads as the
+    // same light source as the golden NE rim on every tile.
+    const glint = new Graphics();
+    glint.moveTo(5, -42);
+    glint.quadraticCurveTo(9, -40, 7, -36);
+    glint.stroke({ color: 0xe8c488, width: 1.2, alpha: 0.75 });
+    body.addChild(glint);
 
     // Weapon rides on top of the body. We use a wrap whose origin sits at the
     // character's grip — rotating the wrap then pivots the weapon around the
@@ -1217,7 +1401,10 @@ function updateUnitNode(
   // ---- Selection ring.
   node.selectionRing.clear();
   if (selected && u.alive) {
-    node.selectionRing.ellipse(0, 6, 18, 8).stroke({ color: 0x7cc4ff, width: 2 });
+    // Selection ring: gold accent matches the HUD's new "active" colour
+    // and the Excursion plot-point pulse, so active selection reads the
+    // same from every angle.
+    node.selectionRing.ellipse(0, 6, 18, 8).stroke({ color: 0xe8c488, width: 2 });
   }
   node.selected = selected;
 
