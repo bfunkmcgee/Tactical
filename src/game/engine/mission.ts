@@ -1,6 +1,7 @@
 import type { CombatState, SoldierCarry } from '../../state/combatStore';
 import type { GridMap, MissionObjective, Unit, Vec2 } from '../types';
 import { resetMissionIds, nextLogId } from './runtimeIds';
+import type { CombatEvent } from './events';
 
 /**
  * Mission initialisation — turns an `InitMissionOpts` into the initial
@@ -90,6 +91,17 @@ export function buildInitialCombatState(
     units.push(deps.mkVipUnit(obj.vipSpawn));
   }
 
+  // Seed the authoritative event log with the mission-start marker.
+  // Combined with the RNG seed, replay code can reconstruct every
+  // subsequent frame from the sequence of events appended after.
+  const seed = Date.now() & 0xffffffff;
+  const missionStart: CombatEvent = {
+    t: 'mission-start',
+    seed,
+    missionId: map.id,
+    objectiveKind: obj.kind,
+  };
+
   return {
     map,
     units,
@@ -107,7 +119,7 @@ export function buildInitialCombatState(
       text: opts.briefing ?? `Mission: ${map.name}. Neutralize all hostiles.`,
       kind: 'info',
     }],
-    rng: deps.makeRng(Date.now() & 0xffffffff),
+    rng: deps.makeRng(seed),
     kills: 0,
     damageTaken: 0,
     floaters: [],
@@ -116,5 +128,6 @@ export function buildInitialCombatState(
     isSkirmish: opts.isSkirmish ?? false,
     objective: obj,
     defendTurns: 0,
+    combatEventLog: [missionStart],
   };
 }

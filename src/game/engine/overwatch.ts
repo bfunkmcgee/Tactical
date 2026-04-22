@@ -3,6 +3,8 @@ import type { LogEntry, ShotPreview, Unit, UnitId, Weapon, WeaponMod } from '../
 import { previewShot, resolveShot, resolveEnemyAttack } from './combat';
 import { hasLineOfSight } from './los';
 import { nextFireEventId, nextLogId } from './runtimeIds';
+import type { CombatEvent } from './events';
+import { pushEvents } from './events';
 
 /**
  * Overwatch reaction fire — shared by both factions. The two paths
@@ -37,6 +39,7 @@ export type OverwatchPatch = {
   log: LogEntry[];
   floaters: Floater[];
   fireEvents: FireEvent[];
+  combatEventLog: CombatEvent[];
   shakeFrames: number;
   /** True if a watcher reacted. False means no overwatch was pending or no
    *  LOS/ammo; caller can no-op. */
@@ -103,11 +106,20 @@ export function triggerPlayerOverwatch(
     id: nextFireEventId(), shooterId: watcher.id, shooterPos: watcher.pos,
     targetPos: enemy.pos, fireClass: deps.fireClassFor(watcher, weapon),
   }];
+  const hit = result.kind === 'hit';
+  const events: CombatEvent[] = [{
+    t: 'overwatch-fire', watcherId: watcher.id, targetId: enemy.id,
+    hit, damage: hit ? result.damage : 0,
+  }];
+  if (hit && Math.max(0, enemy.hp - result.damage) <= 0) {
+    events.push({ t: 'unit-down', unitId: enemy.id, byId: watcher.id });
+  }
   return {
     units, kills, damageTaken: state.damageTaken,
     log: [...state.log, entry].slice(-60),
     floaters, fireEvents,
-    shakeFrames: result.kind === 'hit' ? 8 : 0,
+    combatEventLog: pushEvents(state.combatEventLog, events),
+    shakeFrames: hit ? 8 : 0,
     triggered: true,
   };
 }
@@ -162,11 +174,20 @@ export function triggerEnemyOverwatch(
     id: nextFireEventId(), shooterId: watcher.id, shooterPos: watcher.pos,
     targetPos: player.pos, fireClass: deps.fireClassFor(watcher, null),
   }];
+  const hit = result.kind === 'hit';
+  const events: CombatEvent[] = [{
+    t: 'overwatch-fire', watcherId: watcher.id, targetId: player.id,
+    hit, damage: hit ? result.damage : 0,
+  }];
+  if (hit && Math.max(0, player.hp - result.damage) <= 0) {
+    events.push({ t: 'unit-down', unitId: player.id, byId: watcher.id });
+  }
   return {
     units, kills: state.kills, damageTaken,
     log: [...state.log, entry].slice(-60),
     floaters, fireEvents,
-    shakeFrames: result.kind === 'hit' ? 8 : 0,
+    combatEventLog: pushEvents(state.combatEventLog, events),
+    shakeFrames: hit ? 8 : 0,
     triggered: true,
   };
 }
@@ -176,6 +197,7 @@ function noop(state: CombatState): OverwatchPatch {
   return {
     units: state.units, kills: state.kills, damageTaken: state.damageTaken,
     log: state.log, floaters: state.floaters, fireEvents: state.fireEvents,
+    combatEventLog: state.combatEventLog,
     shakeFrames: 0, triggered: false,
   };
 }

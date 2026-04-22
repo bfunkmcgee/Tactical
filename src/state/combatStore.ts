@@ -34,6 +34,7 @@ import {
 import { buildInitialCombatState, type InitMissionDeps } from '../game/engine/mission';
 import { advanceDefendCounter, finalizeEnemyTurn } from '../game/engine/turn';
 import { runEnemyTurn as runStepObjectEnemyTurn } from '../game/engine/enemyTurn/runner';
+import type { CombatEvent } from '../game/engine/events';
 
 export type ActionMode = 'idle' | 'move' | 'fire' | 'sidearm' | 'utility' | 'ability';
 
@@ -103,6 +104,8 @@ export type CombatState = {
   shakeFrames: number;
   floaters: Floater[];
   fireEvents: FireEvent[];
+  /** Authoritative event log — see engine/events.ts. Append-only. */
+  combatEventLog: CombatEvent[];
 
   init: () => void;
   selectUnit: (id: UnitId | null) => void;
@@ -371,8 +374,18 @@ function recalcReach(state: CombatState): Map<number, number> {
  */
 function checkEnd(state: CombatState): Partial<CombatState> | null {
   const outcome = evaluateObjective(state);
-  if (outcome === 'won') return { phase: 'won' };
-  if (outcome === 'lost') return { phase: 'lost' };
+  if (outcome === 'won') {
+    return {
+      phase: 'won',
+      combatEventLog: [...state.combatEventLog, { t: 'mission-end', result: 'won' }],
+    };
+  }
+  if (outcome === 'lost') {
+    return {
+      phase: 'lost',
+      combatEventLog: [...state.combatEventLog, { t: 'mission-end', result: 'lost' }],
+    };
+  }
   return null;
 }
 
@@ -401,6 +414,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   shakeFrames: 0,
   floaters: [],
   fireEvents: [],
+  combatEventLog: [],
 
   init: () => {
     get().initMission();
@@ -609,6 +623,18 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const logs = result.logs ?? [];
     let newLog = st.log;
     for (const msg of logs) newLog = pushLog(newLog, msg);
+    // Emit an authoritative ability event + optional unit-down
+    // follow-up for any enemy whose HP hit 0 as a result.
+    const abilityEvent: CombatEvent = {
+      t: 'ability', unitId: actor.id, abilityId: def.id, target,
+    };
+    const events: CombatEvent[] = [abilityEvent];
+    for (const post of units) {
+      const pre = st.units.find((o) => o.id === post.id);
+      if (pre && pre.alive && !post.alive) {
+        events.push({ t: 'unit-down', unitId: post.id, byId: actor.id });
+      }
+    }
     set({
       units,
       mode: 'idle',
@@ -620,6 +646,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
         ],
       } : {}),
       log: newLog,
+      combatEventLog: [...st.combatEventLog, ...events],
     });
     set((s) => ({ reach: recalcReach(s) }));
     const end = checkEnd(get());
@@ -654,7 +681,12 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     if (st.phase !== 'player') return;
     set({ phase: 'enemy', mode: 'idle', selectedUtilityIdx: null,
       pendingShotTargetId: null, pendingShotUsesSidearm: false, pendingUtility: null,
-      defendTurns: advanceDefendCounter(st) });
+      defendTurns: advanceDefendCounter(st),
+      combatEventLog: [
+        ...st.combatEventLog,
+        { t: 'turn-start', side: 'enemy', turnIndex: st.round },
+      ],
+    });
     // If the hold counter just completed the objective, short-circuit.
     const end = checkEnd(get());
     if (end) { set(end); return; }
@@ -742,6 +774,7 @@ function applyShotResult(
     log: patch.log,
     floaters: patch.floaters,
     fireEvents: patch.fireEvents,
+    combatEventLog: patch.combatEventLog,
     mode: 'idle',
     pendingShotTargetId: null,
     pendingShotUsesSidearm: false,
@@ -798,6 +831,17 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
       status: { ...o.status, overwatch: false } };
   });
 
+  // Authoritative utility event + any unit-down follow-ups.
+  const utilityEvent: CombatEvent = {
+    t: 'utility', unitId: u.id, utilityId: util.id, center,
+  };
+  const events: CombatEvent[] = [utilityEvent];
+  for (const post of units) {
+    const pre = st.units.find((o) => o.id === post.id);
+    if (pre && pre.alive && !post.alive) {
+      events.push({ t: 'unit-down', unitId: post.id, byId: u.id });
+    }
+  }
   set({
     units,
     kills: st.kills + result.kills,
@@ -807,6 +851,7 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
     log: pushLog(st.log, result.message, result.logKind ?? 'info'),
     shakeFrames: result.shakeFrames,
     floaters,
+    combatEventLog: [...st.combatEventLog, ...events],
     ...(result.smokeTiles ? { smokeTiles: result.smokeTiles } : {}),
     ...(result.map ? { map: result.map } : {}),
   });
@@ -840,6 +885,7 @@ function triggerEnemyOverwatch(set: Setter, get: Getter, playerId: UnitId): bool
   set({
     units: patch.units, kills: patch.kills, damageTaken: patch.damageTaken,
     floaters: patch.floaters, fireEvents: patch.fireEvents, log: patch.log,
+    combatEventLog: patch.combatEventLog,
     shakeFrames: patch.shakeFrames,
   });
   return true;

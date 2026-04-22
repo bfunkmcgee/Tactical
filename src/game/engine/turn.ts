@@ -1,6 +1,7 @@
 import type { CombatState } from '../../state/combatStore';
 import type { MissionObjective, Unit } from '../types';
 import { pushLog } from './log';
+import type { CombatEvent } from './events';
 
 /**
  * End-of-turn transitions. Small, pure helpers pulled out of combatStore so
@@ -60,11 +61,13 @@ export function finalizeEnemyTurn(state: CombatState): Partial<CombatState> {
   const log = pushLog(state.log, dissipated > 0
     ? `Round ${nextRound} — smoke dissipates. Your turn.`
     : `Round ${nextRound} — your turn.`);
+  const turnStart: CombatEvent = { t: 'turn-start', side: 'player', turnIndex: nextRound };
   return {
     units,
     phase: 'player',
     round: nextRound,
     smokeTiles: nextSmoke,
     log,
+    combatEventLog: [...state.combatEventLog, turnStart],
   };
 }

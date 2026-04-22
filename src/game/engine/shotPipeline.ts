@@ -4,6 +4,8 @@ import type { WeaponMod } from '../types';
 import { previewShot, resolveShot } from './combat';
 import { hasLineOfSight } from './los';
 import { nextFireEventId, nextFloaterId, nextLogId } from './runtimeIds';
+import type { CombatEvent } from './events';
+import { pushEvents } from './events';
 
 /**
  * Shared shot-resolution path used by primary fire, sidearm fire, and the
@@ -34,6 +36,7 @@ export type ShotPatch = {
   log: LogEntry[];
   floaters: Floater[];
   fireEvents: FireEvent[];
+  combatEventLog: CombatEvent[];
   shakeFrames: number;
   /** When true the shot path ran (shooter had AP+ammo, target in LOS). False
    *  means validation rejected the shot; no state change. */
@@ -53,6 +56,7 @@ export function applyShotResult(
   const empty: ShotPatch = {
     units: state.units, kills: state.kills, log: state.log,
     floaters: state.floaters, fireEvents: state.fireEvents,
+    combatEventLog: state.combatEventLog,
     shakeFrames: 0, applied: false,
   };
   if (!u || !t || !u.alive || !t.alive) return empty;
@@ -129,13 +133,33 @@ export function applyShotResult(
     floaters.push(deps.floaterFor(t.pos, `-${effDamage}`, result.critical ? 0xff9a3c : 0x57d18b));
   }
 
+  // Build the authoritative shot event + optional unit-down follow-up.
+  const hit = result.kind === 'hit';
+  const shotEvent: CombatEvent = {
+    t: 'shot',
+    shooterId: u.id,
+    targetId: t.id,
+    weaponClass: weapon.class,
+    hit,
+    damage: hit ? (result.damage + (t.status.marked ? 3 : 0)) : 0,
+    critical: hit ? !!result.critical : false,
+    hits: hit ? (result.hits ?? 1) : 0,
+    burstRounds: result.burstRounds ?? 0,
+  };
+  const events: CombatEvent[] = [shotEvent];
+  if (hit) {
+    const newHp = Math.max(0, t.hp - shotEvent.damage);
+    if (newHp <= 0) events.push({ t: 'unit-down', unitId: t.id, byId: u.id });
+  }
+
   return {
     units,
     kills,
     log: [...state.log, entry].slice(-60),
     floaters,
     fireEvents,
-    shakeFrames: result.kind === 'hit' ? 8 : 0,
+    combatEventLog: pushEvents(state.combatEventLog, events),
+    shakeFrames: hit ? 8 : 0,
     applied: true,
   };
 }

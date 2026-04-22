@@ -6,6 +6,8 @@ import { resolveBlast } from '../utilities';
 import { triggerPlayerOverwatch, type OverwatchDeps } from '../overwatch';
 import { pushLog } from '../log';
 import { nextFireEventId, nextLogId } from '../runtimeIds';
+import type { CombatEvent } from '../events';
+import { pushEvents } from '../events';
 
 /**
  * Step-object enemy turn execution. `runEnemyTurn` drives an async loop;
@@ -81,7 +83,17 @@ function resolveMove(state: CombatState, step: EnemyStep & { kind: 'move' }, dep
   if (step.path.length < 2) {
     const units = state.units.map((u) => u.id === actor.id ? { ...u, ap: u.ap - step.apCost } : u);
     const log = pushLog(state.log, `${actor.name} advances.`);
-    return { patch: { units, log }, applied: true, delayMs: 0 };
+    // One 'move' event covers the whole path: start = the actor's spawn
+    // this plan, to = the actor's current position (which is already the
+    // destination by the time we hit this branch).
+    const moveEvent: CombatEvent = {
+      t: 'move', unitId: actor.id,
+      from: actor.pos, to: actor.pos, apSpent: step.apCost,
+    };
+    return {
+      patch: { units, log, combatEventLog: pushEvents(state.combatEventLog, [moveEvent]) },
+      applied: true, delayMs: 0,
+    };
   }
 
   const nextTile = step.path[1];
@@ -92,10 +104,12 @@ function resolveMove(state: CombatState, step: EnemyStep & { kind: 'move' }, dep
   const ow = triggerPlayerOverwatch(stateAfterMove, actor.id, deps.overwatch);
   if (ow.triggered) {
     // Overwatch patch overrides the post-move state (it carries the
-    // damaged enemy + reduced-ammo watcher + new log/floater/fireEvents).
+    // damaged enemy + reduced-ammo watcher + new log/floater/fireEvents
+    // + combatEventLog with the overwatch-fire event appended).
     const combined: Partial<CombatState> = {
       units: ow.units, kills: ow.kills, damageTaken: ow.damageTaken,
       log: ow.log, floaters: ow.floaters, fireEvents: ow.fireEvents,
+      combatEventLog: ow.combatEventLog,
       shakeFrames: ow.shakeFrames,
     };
     const actorAfter = ow.units.find((u) => u.id === actor.id);
@@ -175,6 +189,23 @@ function resolveAttack(state: CombatState, step: EnemyStep & { kind: 'attack' },
     floaters.push(deps.floaterFor(target.pos, `-${result.damage}`, result.critical ? 0xff9a3c : 0xff5a6a));
   }
 
+  // Authoritative shot event — mirrors shotPipeline's emission so the
+  // event log reads identically for player-fired and enemy-fired shots.
+  const hit = result.kind === 'hit';
+  const shotEvent: CombatEvent = {
+    t: 'shot', shooterId: actor.id, targetId: target.id,
+    weaponClass: fireClass,
+    hit,
+    damage: hit ? result.damage : 0,
+    critical: hit ? !!result.critical : false,
+    hits: hit ? (result.hits ?? 1) : 0,
+    burstRounds: result.burstRounds ?? 0,
+  };
+  const events: CombatEvent[] = [shotEvent];
+  if (hit && Math.max(0, target.hp - result.damage) <= 0) {
+    events.push({ t: 'unit-down', unitId: target.id, byId: actor.id });
+  }
+
   return {
     patch: {
       units,
@@ -182,6 +213,7 @@ function resolveAttack(state: CombatState, step: EnemyStep & { kind: 'attack' },
       log: [...state.log, entry].slice(-60),
       floaters,
       fireEvents,
+      combatEventLog: pushEvents(state.combatEventLog, events),
       shakeFrames: result.kind === 'hit' ? 8 : 0,
     },
     applied: true,
@@ -225,8 +257,26 @@ function resolveThrow(state: CombatState, step: EnemyStep & { kind: 'throw' }, d
   const shredded = blast.tilesChanged;
   const log = pushLog(state.log,
     `${actor.name} lobs a crude grenade — ${victimCount} caught${shredded > 0 ? `, ${shredded} cover tile${shredded === 1 ? '' : 's'} shredded` : ''}.`);
+  // Throw as a utility event — enemies don't have a unique utility id, so
+  // we use a synthetic 'enemy-grenade' id that replay players can key off.
+  const events: CombatEvent[] = [{
+    t: 'utility', unitId: actor.id, utilityId: 'enemy-grenade', center: step.center,
+  }];
+  // unit-down follow-ups for any victims whose HP dropped to 0.
+  for (const [unitId, dmg] of blast.damageByUnit) {
+    const pre = state.units.find((o) => o.id === unitId);
+    const post = units.find((o) => o.id === unitId);
+    if (pre && post && pre.alive && !post.alive) {
+      events.push({ t: 'unit-down', unitId: pre.id, byId: actor.id });
+    }
+    void dmg;
+  }
   return {
-    patch: { units, damageTaken, floaters, fireEvents, map: blast.map, log, shakeFrames: 10 },
+    patch: {
+      units, damageTaken, floaters, fireEvents, map: blast.map, log,
+      combatEventLog: pushEvents(state.combatEventLog, events),
+      shakeFrames: 10,
+    },
     applied: true,
     delayMs: DELAY_ACTION,
   };
@@ -239,6 +289,12 @@ function resolveOverwatchSet(state: CombatState, step: EnemyStep & { kind: 'over
   const units = state.units.map((o) => o.id === actor.id
     ? { ...o, ap: 0, status: { ...o.status, overwatch: true } } : o);
   const log = pushLog(state.log, `${actor.name} sets overwatch.`);
-  return { patch: { units, log }, applied: true, delayMs: 0 };
+  return {
+    patch: {
+      units, log,
+      combatEventLog: pushEvents(state.combatEventLog, [{ t: 'overwatch-set', unitId: actor.id }]),
+    },
+    applied: true, delayMs: 0,
+  };
 }
 
