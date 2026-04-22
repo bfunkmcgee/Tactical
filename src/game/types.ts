@@ -293,6 +293,14 @@ export type EnemyTemplate = {
     radius: number;  // chebyshev blast radius
     range: number;   // chebyshev max throw distance from the enemy
   };
+  /**
+   * When set, the renderer composes this enemy from the rig instead of
+   * the template-bespoke `${id}:body/arms/weapon` triple — same opt-in
+   * as SoldierTemplate.appearance. Future human-faction enemies (bandits,
+   * rival operatives) consume this; Rust Choir goblins/orcs/trolls and
+   * the Hollow Wraith stay bespoke for now.
+   */
+  appearance?: HumanAppearance;
 };
 
 export type Faction = 'player' | 'enemy';

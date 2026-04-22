@@ -273,6 +273,9 @@ function mkEnemyUnit(templateId: string): Unit {
     status: { overwatch: false, blinded: false, suppressed: false, marked: false, seeThroughSmoke: false },
     alive: true,
     color: t.color,
+    // Mirrors mkSoldierUnit: rig-composed appearance copied from the
+    // template. Undefined for bespoke-SVG enemies (Rust Choir today).
+    appearance: t.appearance,
   };
 }
 
