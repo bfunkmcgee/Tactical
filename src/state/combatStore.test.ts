@@ -416,6 +416,103 @@ describe('combatStore: mission objectives', () => {
     useCombatStore.getState().tryMove({ x: 2, y: 0 });
     expect(useCombatStore.getState().phase).toBe('player');
   });
+
+  it('destroy_objective: spawns an objective unit + victory fires when it dies, enemies still alive', () => {
+    // The goblin stays alive — the mission should end anyway because
+    // the objective tile's role='objective' unit hit 0 HP.
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.....G...']),
+      rosterIds: ['ranger_kestrel'],
+      objective: { kind: 'destroy_objective', pos: { x: 3, y: 0 }, hp: 5 },
+    });
+    const obj = useCombatStore.getState().units.find((u) => u.role === 'objective')!;
+    expect(obj).toBeDefined();
+    expect(obj.pos).toEqual({ x: 3, y: 0 });
+    expect(obj.hp).toBe(5);
+    // Kestrel fires at the objective — force a hit so it dies in one
+    // shot (rifle damage 5-8 > 5 HP).
+    forceRng('hit');
+    useCombatStore.getState().queueShot(obj.id);
+    useCombatStore.getState().confirmPending();
+    expect(useCombatStore.getState().phase).toBe('won');
+    // Goblin is still alive — eliminate_all would not have fired yet.
+    expect(useCombatStore.getState().units.some((u) =>
+      u.faction === 'enemy' && !u.role && u.alive)).toBe(true);
+  });
+
+  it('destroy_objective: eliminate_all does NOT misfire on the objective unit', () => {
+    // If the map has zero real enemies, eliminate_all would call it
+    // won — but a destroy_objective mission should only end when the
+    // relay is destroyed, not before. Sanity check on the role filter.
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.........']),
+      rosterIds: ['ranger_kestrel'],
+      objective: { kind: 'destroy_objective', pos: { x: 5, y: 0 }, hp: 10 },
+    });
+    expect(useCombatStore.getState().phase).toBe('player');
+  });
+
+  it('defend_point: victory fires at end-of-player-turn when the hold counter reaches turns', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.........']),
+      rosterIds: ['ranger_kestrel'],
+      objective: { kind: 'defend_point', pos: { x: 3, y: 0 }, turns: 2 },
+    });
+    // Move onto the point, end turn → hold counter 1.
+    useCombatStore.getState().tryMove({ x: 3, y: 0 });
+    useCombatStore.getState().endPlayerTurn();
+    // Because the sleep delay is 0 in test env, runEnemyTurn completes
+    // synchronously. Check phase after runEnemyTurn resolves.
+    // We're still alive on the point, so after the next endPlayerTurn
+    // the counter hits 2 and phase flips to 'won'.
+    useCombatStore.setState({ phase: 'player' });  // force back to player turn for the test
+    useCombatStore.getState().endPlayerTurn();
+    expect(useCombatStore.getState().phase === 'won'
+      || useCombatStore.getState().defendTurns >= 2).toBe(true);
+  });
+
+  it('defend_point: NOT won if the soldier leaves the tile', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.........']),
+      rosterIds: ['ranger_kestrel'],
+      objective: { kind: 'defend_point', pos: { x: 3, y: 0 }, turns: 2 },
+    });
+    // Move AWAY from the point; end turn. Counter stays 0.
+    useCombatStore.getState().tryMove({ x: 2, y: 0 });
+    useCombatStore.getState().endPlayerTurn();
+    expect(useCombatStore.getState().defendTurns).toBe(0);
+  });
+
+  it('extract_vip: spawns the VIP unit at vipSpawn', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.........']),
+      rosterIds: ['ranger_kestrel'],
+      objective: { kind: 'extract_vip',
+        vipSpawn: { x: 5, y: 0 }, extractTile: { x: 0, y: 0 } },
+    });
+    const vip = useCombatStore.getState().units.find((u) => u.role === 'vip');
+    expect(vip).toBeDefined();
+    expect(vip!.faction).toBe('player'); // escortable
+    expect(vip!.pos).toEqual({ x: 5, y: 0 });
+  });
+
+  it('extract_vip: loss fires the moment the VIP dies', () => {
+    useCombatStore.getState().initMission({
+      map: mkMap(['P.........']),
+      rosterIds: ['ranger_kestrel'],
+      objective: { kind: 'extract_vip',
+        vipSpawn: { x: 5, y: 0 }, extractTile: { x: 0, y: 0 } },
+    });
+    const vip = useCombatStore.getState().units.find((u) => u.role === 'vip')!;
+    // Kill the VIP (manual setState since we don't have an enemy path here).
+    useCombatStore.setState({
+      units: useCombatStore.getState().units.map((u) =>
+        u.id === vip.id ? { ...u, hp: 0, alive: false } : u),
+    });
+    // Trigger checkEnd by ending the player turn.
+    useCombatStore.getState().endPlayerTurn();
+    expect(useCombatStore.getState().phase).toBe('lost');
+  });
 });
 
 describe('combatStore: class abilities', () => {

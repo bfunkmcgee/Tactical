@@ -69,9 +69,12 @@ export const ZONES: Zone[] = [
       {
         id: 'rr-signal-relay',
         name: 'Silence the Wire',
-        briefing: 'Choir runners hold a hilltop signal relay two ridges west of the refinery. If they raise their tower, the refinery gets a day\'s warning — and we lose the element of surprise. Knock it offline before the first transmission.',
+        briefing: 'Choir runners hold a hilltop signal relay two ridges west of the refinery. If they raise their tower, the refinery gets a day\'s warning — and we lose the element of surprise. Knock the relay offline — the operators aren\'t the mission.',
         mapId: 'signal_relay',
-        objective: { kind: 'eliminate_all' },
+        // The relay tower sits at the centre of the signal_relay map
+        // (between the H cluster, at (7,7)). Drop it to zero HP and
+        // the mission ends — enemies don't need to die.
+        objective: { kind: 'destroy_objective', pos: { x: 7, y: 7 }, hp: 18 },
       },
       {
         id: 'rr-dry-well',

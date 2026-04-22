@@ -78,6 +78,9 @@ type CombatState = {
   isSkirmish: boolean;
   /** Mission victory condition evaluated by checkEnd. Defaults to eliminate_all. */
   objective: MissionObjective;
+  /** Turns the squad has held the defend_point tile. Incremented at
+   *  end of player turn when any alive player occupies the goal. */
+  defendTurns: number;
   // pending confirm
   pendingShotTargetId: UnitId | null;
   /** When set, the pending shot uses the soldier's sidearm instead of primary. */
@@ -250,6 +253,54 @@ function mkEnemyUnit(templateId: string): Unit {
   };
 }
 
+/**
+ * Non-combatant destructible: a shootable relay / generator / pylon
+ * placed by missions with objective.kind === 'destroy_objective'.
+ * Uses the 'enemy' faction so existing target-selection routes work
+ * (`queueShot` lets the player tap it) but carries role='objective'
+ * so `checkEnd` (eliminate_all) ignores it in the win condition.
+ */
+function mkObjectiveUnit(pos: Vec2, hp: number): Unit {
+  return {
+    id: nextUnitId++,
+    faction: 'enemy',
+    templateId: '__objective__',
+    name: 'Objective',
+    pos,
+    hp, hpMax: hp,
+    aim: 0, mobility: 0, ap: 0, apMax: 0,
+    ammo: 0, sidearmAmmo: 0, utilityCharges: [],
+    dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
+    status: { overwatch: false, blinded: false, suppressed: false, marked: false, seeThroughSmoke: false },
+    alive: true,
+    color: '#e8c488',
+    role: 'objective',
+  };
+}
+
+/**
+ * Escort NPC for extract_vip missions. Non-combatant, moves on the
+ * player's turn via tryMove (selected like any player unit). Dies to
+ * enemy fire — mission lost if that happens before extraction.
+ */
+function mkVipUnit(pos: Vec2): Unit {
+  return {
+    id: nextUnitId++,
+    faction: 'player',
+    templateId: '__vip__',
+    name: 'VIP',
+    pos,
+    hp: 8, hpMax: 8,
+    aim: 0, mobility: 3, ap: 2, apMax: 2,
+    ammo: 0, sidearmAmmo: 0, utilityCharges: [],
+    dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
+    status: { overwatch: false, blinded: false, suppressed: false, marked: false, seeThroughSmoke: false },
+    alive: true,
+    color: '#c79aff',
+    role: 'vip',
+  };
+}
+
 function unitArmor(u: Unit): number {
   if (!u.loadout) return 0;
   return useContent().armor[u.loadout.armorId]?.dr ?? 0;
@@ -300,9 +351,11 @@ function recalcReach(state: CombatState): Map<number, number> {
  *   - eliminate_target  → every unit with the given templateId is dead
  *   - reach_tile        → any alive player stands on pos (turnLimit
  *                         exceeded is a loss if set)
- *   - destroy_objective / defend_point / extract_vip → stubbed to
- *                         eliminate_all for now; hook the entity model
- *                         once those kinds are authored.
+ *   - destroy_objective → the role='objective' unit at pos is dead
+ *   - defend_point      → defendTurns >= obj.turns (incremented at
+ *                         end-of-player-turn when a player stands on pos)
+ *   - extract_vip       → role='vip' unit reaches extractTile alive;
+ *                         lost if it dies before then
  */
 function checkEnd(state: CombatState): Partial<CombatState> | null {
   const aliveP = state.units.some((u) => u.faction === 'player' && u.alive);
@@ -310,7 +363,7 @@ function checkEnd(state: CombatState): Partial<CombatState> | null {
   const obj = state.objective;
   switch (obj.kind) {
     case 'eliminate_all': {
-      const aliveE = state.units.some((u) => u.faction === 'enemy' && u.alive);
+      const aliveE = state.units.some((u) => u.faction === 'enemy' && u.alive && !u.role);
       if (!aliveE) return { phase: 'won' };
       return null;
     }
@@ -327,11 +380,23 @@ function checkEnd(state: CombatState): Partial<CombatState> | null {
       if (obj.turnLimit !== undefined && state.round > obj.turnLimit) return { phase: 'lost' };
       return null;
     }
-    default: {
-      // Unimplemented objectives fall back to eliminate_all semantics so
-      // the mission is still winnable.
-      const aliveE = state.units.some((u) => u.faction === 'enemy' && u.alive);
-      if (!aliveE) return { phase: 'won' };
+    case 'destroy_objective': {
+      // Won when the objective unit at obj.pos is dead.
+      const target = state.units.find((u) =>
+        u.role === 'objective' && u.pos.x === obj.pos.x && u.pos.y === obj.pos.y);
+      if (!target || !target.alive) return { phase: 'won' };
+      return null;
+    }
+    case 'defend_point': {
+      if (state.defendTurns >= obj.turns) return { phase: 'won' };
+      return null;
+    }
+    case 'extract_vip': {
+      const vip = state.units.find((u) => u.role === 'vip');
+      if (!vip || !vip.alive) return { phase: 'lost' };
+      if (vip.pos.x === obj.extractTile.x && vip.pos.y === obj.extractTile.y) {
+        return { phase: 'won' };
+      }
       return null;
     }
   }
@@ -355,6 +420,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   damageTaken: 0,
   isSkirmish: false,
   objective: { kind: 'eliminate_all' },
+  defendTurns: 0,
   pendingShotTargetId: null,
   pendingShotUsesSidearm: false,
   pendingUtility: null,
@@ -401,6 +467,16 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       e.pos = es.pos;
       units.push(e);
     }
+    // Spawn role-driven special units for the non-eliminate objective
+    // kinds — they share the Unit shape so the existing combat math
+    // (previewShot / applyShotResult / tryMove) handles them without
+    // a parallel code path.
+    const obj = opts?.objective ?? { kind: 'eliminate_all' };
+    if (obj.kind === 'destroy_objective') {
+      units.push(mkObjectiveUnit(obj.pos, obj.hp));
+    } else if (obj.kind === 'extract_vip') {
+      units.push(mkVipUnit(obj.vipSpawn));
+    }
     set({
       map,
       units,
@@ -418,7 +494,8 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       kills: 0, damageTaken: 0, floaters: [], fireEvents: [],
       shakeFrames: 0,
       isSkirmish: opts?.isSkirmish ?? false,
-      objective: opts?.objective ?? { kind: 'eliminate_all' },
+      objective: obj,
+      defendTurns: 0,
     });
     set((st) => ({ reach: recalcReach(st) }));
   },
@@ -675,8 +752,22 @@ export const useCombatStore = create<CombatState>((set, get) => ({
   endPlayerTurn: () => {
     const st = get();
     if (st.phase !== 'player') return;
+    // defend_point: tick a turn if any live player unit (NOT the VIP)
+    // occupies the defend tile at end of player turn.
+    let defendTurns = st.defendTurns;
+    if (st.objective.kind === 'defend_point') {
+      const { pos } = st.objective;
+      const holding = st.units.some((u) =>
+        u.faction === 'player' && u.alive && !u.role
+        && u.pos.x === pos.x && u.pos.y === pos.y);
+      if (holding) defendTurns += 1;
+    }
     set({ phase: 'enemy', mode: 'idle', selectedUtilityIdx: null,
-      pendingShotTargetId: null, pendingShotUsesSidearm: false, pendingUtility: null });
+      pendingShotTargetId: null, pendingShotUsesSidearm: false, pendingUtility: null,
+      defendTurns });
+    // If the hold counter just completed the objective, short-circuit.
+    const end = checkEnd(get());
+    if (end) { set(end); return; }
     void get().runEnemyTurn();
   },
 

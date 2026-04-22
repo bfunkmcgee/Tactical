@@ -61,7 +61,7 @@ export default function CombatHUD() {
             <strong>Round {round}</strong> · {phase === 'player' ? 'Your turn' : phase === 'enemy' ? 'Enemy turn' : phase === 'won' ? 'Victory' : 'Defeat'}
           </div>
           <div style={{ fontSize: 11, color: 'var(--fg-2)', textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            {objectiveLabel(objective)}
+            {objectiveLabel(objective, units, useCombatStore.getState().defendTurns)}
           </div>
         </div>
         <div className="panel scroll-x" style={{ padding: 6, flex: 1, display: 'flex', gap: 6, pointerEvents: 'auto' }}>
@@ -363,8 +363,16 @@ function coverColor(c: string) {
   return 'var(--danger)';
 }
 
-/** One-line objective summary for the top-of-screen HUD chip. */
-function objectiveLabel(o: import('../game/types').MissionObjective): string {
+/**
+ * One-line objective summary for the top-of-screen HUD chip.
+ * Includes live progress for the objective kinds that have it (HP of
+ * the destructible, rounds held, VIP health + distance to extract).
+ */
+function objectiveLabel(
+  o: import('../game/types').MissionObjective,
+  units: import('../game/types').Unit[],
+  defendTurns: number,
+): string {
   switch (o.kind) {
     case 'eliminate_all':    return 'Objective: eliminate all hostiles';
     case 'eliminate_target': return `Objective: eliminate target`;
@@ -372,8 +380,20 @@ function objectiveLabel(o: import('../game/types').MissionObjective): string {
       return o.turnLimit
         ? `Objective: reach the extraction (${o.turnLimit} rounds)`
         : 'Objective: reach the extraction';
-    case 'destroy_objective': return 'Objective: destroy the target';
-    case 'defend_point':      return `Objective: hold the point (${o.turns} rounds)`;
-    case 'extract_vip':       return 'Objective: extract the VIP';
+    case 'destroy_objective': {
+      const tgt = units.find((u) => u.role === 'objective'
+        && u.pos.x === o.pos.x && u.pos.y === o.pos.y);
+      if (!tgt || !tgt.alive) return 'Objective: target destroyed';
+      return `Objective: destroy the target (${tgt.hp}/${tgt.hpMax} HP)`;
+    }
+    case 'defend_point':
+      return `Objective: hold the point (${defendTurns}/${o.turns} rounds)`;
+    case 'extract_vip': {
+      const vip = units.find((u) => u.role === 'vip');
+      if (!vip) return 'Objective: extract the VIP';
+      if (!vip.alive) return 'Objective: VIP lost';
+      const d = Math.abs(vip.pos.x - o.extractTile.x) + Math.abs(vip.pos.y - o.extractTile.y);
+      return `Objective: extract VIP (HP ${vip.hp}/${vip.hpMax}, ${d} tiles to exit)`;
+    }
   }
 }

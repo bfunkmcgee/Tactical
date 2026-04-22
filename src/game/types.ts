@@ -259,6 +259,14 @@ export type Unit = {
    * (players); a Field Wash consumable could also strip it later.
    */
   dirt?: number;
+  /**
+   * Optional role flag for objective-driven units. 'objective' is a
+   * shootable destructible (e.g. a relay tower) with no behaviour —
+   * it just has HP. 'vip' is a non-combatant escorted by the player
+   * and moves on the player's turn. Combat-normal units leave this
+   * unset.
+   */
+  role?: 'objective' | 'vip';
 };
 
 export type TurnPhase = 'player' | 'enemy' | 'won' | 'lost';
