@@ -223,8 +223,15 @@ export function drawMuzzleFlash(
   g.circle(x, y, 3.5 * s).fill({ color: 0xffffff, alpha: 0.95 * intensity });
 }
 
-/** Apply a uniform tint to every sprite inside a unit's body/weapon hierarchy. */
+/** Apply a uniform tint to every sprite inside a unit's body/weapon hierarchy.
+ *  Rig-composed units (HumanAppearance was set) maintain a flat tintTargets
+ *  list on their rigComposition — walk that. Bespoke-SVG units get the
+ *  three legacy sprite slots tinted directly. */
 export function applyTint(node: UnitNode, tint: number) {
+  if (node.rigComposition) {
+    for (const sprite of node.rigComposition.tintTargets) sprite.tint = tint;
+    return;
+  }
   if (node.sprite) node.sprite.tint = tint;
   if (node.armsSprite) node.armsSprite.tint = tint;
   if (node.weaponSprite) node.weaponSprite.tint = tint;

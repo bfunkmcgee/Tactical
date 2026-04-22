@@ -297,6 +297,13 @@ export type Unit = {
    * unset.
    */
   role?: 'objective' | 'vip';
+  /**
+   * When set, the renderer composes this unit from the named rig +
+   * palette. Copied from the template at spawn time. Units without
+   * this field render via the legacy bespoke `${id}:body/arms/weapon`
+   * path unchanged.
+   */
+  appearance?: HumanAppearance;
 };
 
 export type TurnPhase = 'player' | 'enemy' | 'won' | 'lost';

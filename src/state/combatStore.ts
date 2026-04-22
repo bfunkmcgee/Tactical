@@ -242,6 +242,9 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
     alive: true,
     color: t.portraitColor,
     dirt: carry?.dirt ?? 0,
+    // Rig-composed appearance copied from the template; undefined for
+    // bespoke-SVG soldiers (they fall through to the legacy render path).
+    appearance: t.appearance,
   };
 }
 

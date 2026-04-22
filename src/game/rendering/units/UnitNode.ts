@@ -6,6 +6,8 @@ import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
 import { GRIP_ANCHOR, HIT_FLASH_MS, MOVE_TWEEN_MS } from './constants';
 import { FIRE_STYLES, type FireStyle } from './fireStyles';
+import { buildHumanRigBody, type RigBodyComposition } from './humanRigBody';
+import { allRigs, rigById, rigPartSvg } from '../../../content/rigs';
 
 /**
  * Per-unit render node. Persists across store updates so animations
@@ -64,6 +66,10 @@ export type UnitNode = {
   deathMs: number | null;
   selected: boolean;
   bobPhase: number;
+  /** Rig composition when the unit was built from HumanAppearance.
+   *  Null for bespoke-SVG units. animate.ts and future equipment
+   *  overlay passes reach named parts through this. */
+  rigComposition: RigBodyComposition | null;
 };
 
 /**
@@ -102,6 +108,16 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
   // the identical visual.
   for (const w of Object.values(pack.weapons)) {
     if (w.spritePath) pushLoad(`w:${w.id}`, w.spritePath);
+  }
+  // Rig part SVGs — one pass per registered rig, preloaded under keys
+  // `rig:${rigId}:${partId}` (e.g. `rig:human:torso`). Missing part URLs
+  // are non-fatal; the rig path falls through to an empty Sprite for
+  // that part (same tolerance the bespoke path has for missing body
+  // SVGs). This lets a pack ship a partial rig during authoring.
+  for (const rig of allRigs()) {
+    for (const partId of rig.parts) {
+      pushLoad(`rig:${rig.id}:${partId}`, rigPartSvg(rig.id, partId));
+    }
   }
   await Promise.all(loads);
 }
@@ -165,9 +181,8 @@ function createUnitNode(u: Unit): UnitNode {
   let armsSprite: Sprite | null = null;
   let weaponRestY = 0;
   let spriteTop: number;
+  let rigComposition: RigBodyComposition | null = null;
 
-  const bodyTex = spriteCache.get(`${u.templateId}:body`);
-  const armsTex = spriteCache.get(`${u.templateId}:arms`);
   // Players resolve their weapon sprite by the EQUIPPED weapon's id so the
   // same weapon renders identically on any wielder. Enemies (no loadout)
   // keep the per-template weapon — their weapon is part of their identity.
@@ -176,6 +191,50 @@ function createUnitNode(u: Unit): UnitNode {
     (playerWeaponId && spriteCache.get(`w:${playerWeaponId}`)) ??
     spriteCache.get(`${u.templateId}:weapon`);
 
+  // Rig-composed path: when the unit carries a HumanAppearance, build the
+  // body from the rig's five named parts instead of the single monolithic
+  // torso sprite. The weapon wrap is constructed the same way as the
+  // bespoke path, but the rig's `arms-front` part lives inside it (taking
+  // the place the legacy `armsSprite` used to occupy) so it rides with
+  // the weapon grip for aim + recoil.
+  const rig = u.appearance ? rigById(u.appearance.rig) : undefined;
+  if (rig && u.appearance) {
+    rigComposition = buildHumanRigBody(rig, u.appearance, spriteCache);
+    body.addChild(rigComposition.root);
+    // spriteTop matches the bespoke-path value so ornaments / HP bar /
+    // label land at the same offset above the character.
+    spriteTop = -50;
+
+    const glint = new Graphics();
+    glint.moveTo(5, -42);
+    glint.quadraticCurveTo(9, -40, 7, -36);
+    glint.stroke({ color: 0xe8c488, width: 1.2, alpha: 0.75 });
+    body.addChild(glint);
+
+    if (weaponTex) {
+      weaponWrap = new Container();
+      weaponRestY = (GRIP_ANCHOR.y - 1) * 128 * 0.42 + 4;
+      weaponWrap.position.set(0, weaponRestY);
+
+      // arms-front IS the rig's front-arm sprite — parent it into the
+      // weapon wrap so it rotates + lifts with the weapon. This replaces
+      // the legacy `armsSprite` that the bespoke path creates here.
+      armsSprite = rigComposition.armsFront;
+      armsSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
+      armsSprite.scale.set(0.42);
+      armsSprite.position.set(0, 0);
+      weaponWrap.addChild(armsSprite);
+
+      weaponSprite = new Sprite(weaponTex);
+      weaponSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
+      weaponSprite.scale.set(0.42);
+      weaponWrap.addChild(weaponSprite);
+      body.addChild(weaponWrap);
+      rigComposition.tintTargets.push(weaponSprite);
+    }
+  } else {
+  const bodyTex = spriteCache.get(`${u.templateId}:body`);
+  const armsTex = spriteCache.get(`${u.templateId}:arms`);
   if (bodyTex) {
     sprite = new Sprite(bodyTex);
     sprite.anchor.set(0.5, 1);
@@ -226,6 +285,7 @@ function createUnitNode(u: Unit): UnitNode {
     body.addChild(fallback);
     spriteTop = -44;
   }
+  } // end bespoke-SVG path
 
   // Muzzle flash is a child of the weapon wrap (when present) so it rotates
   // with the weapon and sits at the barrel tip. When there's no weapon wrap
@@ -267,6 +327,7 @@ function createUnitNode(u: Unit): UnitNode {
     deathMs: u.alive ? null : 0,
     selected: false,
     bobPhase: Math.random() * Math.PI * 2,
+    rigComposition,
   };
 }
 
