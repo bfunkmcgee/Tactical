@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Assault Plate — legs overlay. Heavy greaves: full thigh cuisse
+  plates, reinforced domed knee pauldrons, segmented shin guards,
+  and steel-toe armored boots. Dense, high-coverage. 96x128.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Trouser / inner leg layer -->
+  <path d="M 34 82 L 33 118 L 44 120 L 46 82 Z" fill="#1a1e26" stroke="#05070a" stroke-width="0.4"/>
+  <path d="M 50 82 L 52 120 L 63 118 L 62 82 Z" fill="#1a1e26" stroke="#05070a" stroke-width="0.4"/>
+  <!-- Thigh cuisse plates -->
+  <path d="M 34 84 L 46 84 L 46 102 L 34 102 Z" fill="#2a2e36" stroke="#05070a" stroke-width="0.4"/>
+  <path d="M 50 84 L 62 84 L 62 102 L 50 102 Z" fill="#2a2e36" stroke="#05070a" stroke-width="0.4"/>
+  <!-- Cuisse rib bands -->
+  <line x1="34" y1="90" x2="46" y2="90" stroke="#05070a" stroke-width="0.3"/>
+  <line x1="34" y1="96" x2="46" y2="96" stroke="#05070a" stroke-width="0.3"/>
+  <line x1="50" y1="90" x2="62" y2="90" stroke="#05070a" stroke-width="0.3"/>
+  <line x1="50" y1="96" x2="62" y2="96" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Rivets at corners -->
+  <circle cx="35.5" cy="85.5" r="0.5" fill="#7a7e88"/>
+  <circle cx="44.5" cy="85.5" r="0.5" fill="#7a7e88"/>
+  <circle cx="51.5" cy="85.5" r="0.5" fill="#7a7e88"/>
+  <circle cx="60.5" cy="85.5" r="0.5" fill="#7a7e88"/>
+  <!-- Domed knee pauldrons -->
+  <path d="M 33 102 Q 40 98 46 102 L 46 108 Q 40 110 33 108 Z" fill="#3a3e48" stroke="#05070a" stroke-width="0.4"/>
+  <path d="M 50 102 Q 56 98 63 102 L 63 108 Q 56 110 50 108 Z" fill="#3a3e48" stroke="#05070a" stroke-width="0.4"/>
+  <!-- Knee spike nubs -->
+  <circle cx="39.5" cy="102" r="1" fill="#5a5e68" stroke="#05070a" stroke-width="0.3"/>
+  <circle cx="56.5" cy="102" r="1" fill="#5a5e68" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Segmented shin guards -->
+  <rect x="34" y="110" width="11" height="2.5" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="34" y="113.5" width="11" height="2.5" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="51" y="110" width="11" height="2.5" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="51" y="113.5" width="11" height="2.5" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Steel-toe armored boots -->
+  <path d="M 32 118 L 32 124 L 47 124 L 47 120 Z" fill="#05070a"/>
+  <path d="M 49 120 L 49 124 L 64 124 L 64 118 Z" fill="#05070a"/>
+  <!-- Toe cap gleam -->
+  <path d="M 32 123 L 32 124 L 40 124 L 40 123 Z" fill="#3a3e48"/>
+  <path d="M 56 123 L 56 124 L 64 124 L 64 123 Z" fill="#3a3e48"/>
+</svg>

@@ -62,6 +62,58 @@ export const ARMOR: Record<string, Armor> = {
       legsOverlay: '/styles/flat/armor_legs/oakheart_helm_legs.svg',
     },
   },
+
+  // ---- Basic Combat Armor — class-agnostic issue gear ----
+  // Three tiers of mundane load-bearing equipment authored as rig overlays
+  // under `public/styles/flat/armor/basic/`. Any soldier with
+  // `appearance.rig = 'human'` can equip any of these and the composed
+  // silhouette updates per slot (torso / legs / helmet / shoulder pads /
+  // gauntlets). They sit alongside the class-canonical armors above as
+  // alternative picks; the LoadoutScreen enumerates all pack armor with
+  // no class filter (see src/ui/LoadoutScreen.tsx:196 + src/content/
+  // registry.ts allArmor).
+
+  field_harness: {
+    id: 'field_harness',
+    name: 'Field Harness',
+    flavor: 'Webbing vest, mag pouches, reinforced fatigues. Light and fast.',
+    hpBonus: 1, dr: 0, mobility: 1,
+    tag: 'mundane',
+    visual: {
+      torsoOverlay: '/styles/flat/armor/basic/field_harness_torso.svg',
+      legsOverlay: '/styles/flat/armor/basic/field_harness_legs.svg',
+    },
+  },
+  combat_plate: {
+    id: 'combat_plate',
+    name: 'Combat Plate',
+    flavor: 'Plate carrier, tactical helm, shoulder pads, bracers — standard issue.',
+    hpBonus: 2, dr: 1, mobility: 0,
+    tag: 'mundane',
+    visual: {
+      torsoOverlay: '/styles/flat/armor/basic/combat_plate_torso.svg',
+      legsOverlay: '/styles/flat/armor/basic/combat_plate_legs.svg',
+      helmet: '/styles/flat/armor/basic/combat_plate_helmet.svg',
+      shoulderPads: '/styles/flat/armor/basic/combat_plate_shoulder.svg',
+      gauntletsFront: '/styles/flat/armor/basic/combat_plate_gauntlets.svg',
+      gauntletsBack: '/styles/flat/armor/basic/combat_plate_gauntlets.svg',
+    },
+  },
+  assault_plate: {
+    id: 'assault_plate',
+    name: 'Assault Plate',
+    flavor: 'Hardshell chest scales, closed combat helm, pauldrons, armored gauntlets.',
+    hpBonus: 4, dr: 2, mobility: -1,
+    tag: 'mundane',
+    visual: {
+      torsoOverlay: '/styles/flat/armor/basic/assault_plate_torso.svg',
+      legsOverlay: '/styles/flat/armor/basic/assault_plate_legs.svg',
+      helmet: '/styles/flat/armor/basic/assault_plate_helmet.svg',
+      shoulderPads: '/styles/flat/armor/basic/assault_plate_shoulder.svg',
+      gauntletsFront: '/styles/flat/armor/basic/assault_plate_gauntlets.svg',
+      gauntletsBack: '/styles/flat/armor/basic/assault_plate_gauntlets.svg',
+    },
+  },
 };
 
 export const ALL_ARMOR = Object.values(ARMOR);

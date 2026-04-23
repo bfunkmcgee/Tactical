@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Combat Plate — shoulder pad. Slot-mounted at each shoulder joint
+  (shoulder-l at 36,52 / shoulder-r at 60,52). Renderer mirrors the
+  right-side instance horizontally. Author convention: draw a LEFT
+  shoulder pad centered on this viewBox's center (8,8). Soft nylon
+  shoulder cap with a small unit patch.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- Shoulder cap (rounded cap over the top of the deltoid) -->
+  <path d="M 1 9 Q 2 2 8 2 Q 14 3 15 9 L 15 11 L 1 11 Z" fill="#3a3e32" stroke="#0a0c08" stroke-width="0.4"/>
+  <!-- Seam down center -->
+  <line x1="8" y1="2" x2="8" y2="11" stroke="#1a1c14" stroke-width="0.3"/>
+  <!-- Unit patch (generic black square) -->
+  <rect x="5" y="5" width="3" height="3" fill="#1a1c14" stroke="#0a0c08" stroke-width="0.2"/>
+  <!-- Stitching accents -->
+  <path d="M 2 7 Q 4 5 6 7" stroke="#1a1c14" stroke-width="0.2" fill="none"/>
+  <path d="M 10 7 Q 12 5 14 7" stroke="#1a1c14" stroke-width="0.2" fill="none"/>
+</svg>

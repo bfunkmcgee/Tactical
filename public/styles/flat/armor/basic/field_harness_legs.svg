@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Field Harness — legs overlay. Reinforced fatigue trousers with
+  knee patches + low boots. Light / mobility-focused.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Trouser legs (transparent bg) -->
+  <path d="M 36 82 L 35 116 L 43 118 L 45 82 Z" fill="#4a4028"/>
+  <path d="M 51 82 L 53 118 L 61 116 L 60 82 Z" fill="#4a4028"/>
+  <!-- Thigh pouch (cargo pocket) on left leg -->
+  <rect x="36" y="90" width="7" height="8" fill="#5a4e30" stroke="#1a1208" stroke-width="0.3"/>
+  <line x1="36" y1="94" x2="43" y2="94" stroke="#1a1208" stroke-width="0.3"/>
+  <!-- Knee patches -->
+  <rect x="36" y="98" width="9" height="6" fill="#3a3020" stroke="#1a1208" stroke-width="0.3"/>
+  <rect x="51" y="98" width="9" height="6" fill="#3a3020" stroke="#1a1208" stroke-width="0.3"/>
+  <!-- Ankle cinch straps -->
+  <rect x="35" y="112" width="9" height="1.5" fill="#1a1208"/>
+  <rect x="52" y="112" width="9" height="1.5" fill="#1a1208"/>
+  <!-- Low combat boots -->
+  <path d="M 34 116 L 34 124 L 46 124 L 46 118 Z" fill="#2a1f14" stroke="#0a0604" stroke-width="0.3"/>
+  <path d="M 50 118 L 50 124 L 62 124 L 62 116 Z" fill="#2a1f14" stroke="#0a0604" stroke-width="0.3"/>
+  <!-- Boot laces -->
+  <line x1="37" y1="119" x2="43" y2="122" stroke="#6a5030" stroke-width="0.4"/>
+  <line x1="43" y1="119" x2="37" y2="122" stroke="#6a5030" stroke-width="0.4"/>
+  <line x1="53" y1="119" x2="59" y2="122" stroke="#6a5030" stroke-width="0.4"/>
+  <line x1="59" y1="119" x2="53" y2="122" stroke="#6a5030" stroke-width="0.4"/>
+</svg>

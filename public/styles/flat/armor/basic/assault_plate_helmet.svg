@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Assault Plate — helmet. Full-coverage closed combat helm with
+  slit visor, cheek guards, and neck drape. Slot-mounted on head
+  joint, draw centered on viewBox center (16,16).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Neck drape skirt (drops below head joint) -->
+  <path d="M 5 20 L 27 20 L 28 25 L 4 25 Z" fill="#1a1e26" stroke="#05070a" stroke-width="0.4"/>
+  <!-- Main dome -->
+  <path d="M 3 17 Q 3 1 16 0 Q 29 1 29 17 L 29 20 L 3 20 Z" fill="#2a2e36" stroke="#05070a" stroke-width="0.5"/>
+  <!-- Crown ridge / reinforcement band -->
+  <path d="M 3 17 L 29 17" stroke="#05070a" stroke-width="0.6"/>
+  <!-- Top spine ridge -->
+  <rect x="15" y="2" width="2" height="15" fill="#1a1e26"/>
+  <!-- Cheek guards (side flares) -->
+  <path d="M 3 14 L 3 21 L 7 20 L 7 14 Z" fill="#1a1e26" stroke="#05070a" stroke-width="0.3"/>
+  <path d="M 29 14 L 29 21 L 25 20 L 25 14 Z" fill="#1a1e26" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Visor slit (horizontal eye line) -->
+  <rect x="7" y="13" width="18" height="3" fill="#05070a"/>
+  <!-- Glowing slit reflection -->
+  <line x1="8" y1="14.5" x2="24" y2="14.5" stroke="#6ab0e0" stroke-width="0.4" opacity="0.8"/>
+  <!-- Slit vertical dividers -->
+  <line x1="13" y1="13" x2="13" y2="16" stroke="#1a1e26" stroke-width="0.4"/>
+  <line x1="19" y1="13" x2="19" y2="16" stroke="#1a1e26" stroke-width="0.4"/>
+  <!-- Side bolts -->
+  <circle cx="4.5" cy="17" r="0.7" fill="#5a5e68" stroke="#05070a" stroke-width="0.2"/>
+  <circle cx="27.5" cy="17" r="0.7" fill="#5a5e68" stroke="#05070a" stroke-width="0.2"/>
+  <!-- Breathing vents along the lower mouth area -->
+  <line x1="12" y1="19" x2="15" y2="19" stroke="#05070a" stroke-width="0.5"/>
+  <line x1="17" y1="19" x2="20" y2="19" stroke="#05070a" stroke-width="0.5"/>
+</svg>

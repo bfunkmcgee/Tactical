@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Assault Plate — gauntlets. Heavy articulated bracers + armored
+  gauntlets with plate knuckles. Used for both gauntletsFront and
+  gauntletsBack. Body-aligned 96x128.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Left forearm bracer (layered plates) -->
+  <rect x="28" y="58" width="7" height="16" fill="#2a2e36" stroke="#05070a" stroke-width="0.4"/>
+  <line x1="28" y1="62" x2="35" y2="62" stroke="#05070a" stroke-width="0.3"/>
+  <line x1="28" y1="66" x2="35" y2="66" stroke="#05070a" stroke-width="0.3"/>
+  <line x1="28" y1="70" x2="35" y2="70" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Bracer rivets -->
+  <circle cx="29.5" cy="60" r="0.5" fill="#7a7e88"/>
+  <circle cx="33.5" cy="60" r="0.5" fill="#7a7e88"/>
+  <circle cx="29.5" cy="72" r="0.5" fill="#7a7e88"/>
+  <circle cx="33.5" cy="72" r="0.5" fill="#7a7e88"/>
+  <!-- Left armored gauntlet (plate knuckles) -->
+  <rect x="28" y="74" width="7" height="5" fill="#3a3e48" stroke="#05070a" stroke-width="0.4"/>
+  <rect x="29" y="75" width="1.5" height="1.5" fill="#7a7e88"/>
+  <rect x="31.25" y="75" width="1.5" height="1.5" fill="#7a7e88"/>
+  <rect x="33.5" y="75" width="1.5" height="1.5" fill="#7a7e88"/>
+  <!-- Right forearm bracer -->
+  <rect x="61" y="58" width="7" height="16" fill="#2a2e36" stroke="#05070a" stroke-width="0.4"/>
+  <line x1="61" y1="62" x2="68" y2="62" stroke="#05070a" stroke-width="0.3"/>
+  <line x1="61" y1="66" x2="68" y2="66" stroke="#05070a" stroke-width="0.3"/>
+  <line x1="61" y1="70" x2="68" y2="70" stroke="#05070a" stroke-width="0.3"/>
+  <circle cx="62.5" cy="60" r="0.5" fill="#7a7e88"/>
+  <circle cx="66.5" cy="60" r="0.5" fill="#7a7e88"/>
+  <circle cx="62.5" cy="72" r="0.5" fill="#7a7e88"/>
+  <circle cx="66.5" cy="72" r="0.5" fill="#7a7e88"/>
+  <!-- Right armored gauntlet -->
+  <rect x="61" y="74" width="7" height="5" fill="#3a3e48" stroke="#05070a" stroke-width="0.4"/>
+  <rect x="62" y="75" width="1.5" height="1.5" fill="#7a7e88"/>
+  <rect x="64.25" y="75" width="1.5" height="1.5" fill="#7a7e88"/>
+  <rect x="66.5" y="75" width="1.5" height="1.5" fill="#7a7e88"/>
+</svg>

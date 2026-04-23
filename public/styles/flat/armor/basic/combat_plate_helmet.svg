@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Combat Plate — helmet. Slot-mounted at the head joint (48,22 in rig
+  coords). Sprite anchor (0.5, 0.5), scaled by SPRITE_SCALE. Author
+  convention: draw the helmet CENTERED on this viewBox's center
+  (16,16). Tactical MICH-style shell + chinstrap. Hair peeks below
+  the dome since real-world fit shows a sliver of hair around ears.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Helmet shell (domed, centered on the head joint at 16,16) -->
+  <path d="M 4 16 Q 4 2 16 1 Q 28 2 28 16 L 28 19 L 4 19 Z" fill="#3a3e32" stroke="#0a0c08" stroke-width="0.5"/>
+  <!-- Helmet rim / brow line -->
+  <path d="M 4 16 L 28 16" stroke="#1a1c14" stroke-width="0.5"/>
+  <!-- Rail accessory bump (left) -->
+  <rect x="3" y="10" width="2" height="4" fill="#1a1c14"/>
+  <!-- Rail accessory bump (right) -->
+  <rect x="27" y="10" width="2" height="4" fill="#1a1c14"/>
+  <!-- NVG mount stub on the forehead -->
+  <rect x="13" y="6" width="6" height="3" fill="#1a1c14" stroke="#0a0c08" stroke-width="0.3"/>
+  <circle cx="16" cy="7.5" r="0.8" fill="#0a0c08"/>
+  <!-- Chin strap (curves under) -->
+  <path d="M 6 18 Q 16 24 26 18" stroke="#2a2e24" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- Strap buckle on right cheek -->
+  <rect x="20.5" y="20" width="2" height="1.5" fill="#5a5e54" stroke="#0a0c08" stroke-width="0.2"/>
+  <!-- Camo texture (minimal leaf splotches) -->
+  <ellipse cx="10" cy="11" rx="2" ry="1.2" fill="#4a5040" opacity="0.6"/>
+  <ellipse cx="22" cy="9" rx="1.5" ry="1" fill="#4a5040" opacity="0.6"/>
+  <ellipse cx="17" cy="14" rx="1.6" ry="1" fill="#2a2e24" opacity="0.7"/>
+</svg>

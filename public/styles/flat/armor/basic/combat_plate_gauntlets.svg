@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Combat Plate — gauntlets overlay. Used for both gauntletsFront (child
+  of arms-front sprite, origin top-left) and gauntletsBack (body-
+  aligned at arms-back). 96x128 frame, targeting the arm positions.
+  Fingerless tactical gloves + canvas bracer at the forearm.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Left forearm bracer -->
+  <rect x="29" y="62" width="6" height="12" fill="#3a3e32" stroke="#0a0c08" stroke-width="0.4"/>
+  <line x1="29" y1="66" x2="35" y2="66" stroke="#1a1c14" stroke-width="0.3"/>
+  <line x1="29" y1="70" x2="35" y2="70" stroke="#1a1c14" stroke-width="0.3"/>
+  <!-- Left glove hint (knuckle cap) -->
+  <rect x="29" y="74" width="6" height="3" fill="#1a1c14" stroke="#0a0c08" stroke-width="0.3"/>
+  <!-- Right forearm bracer -->
+  <rect x="61" y="62" width="6" height="12" fill="#3a3e32" stroke="#0a0c08" stroke-width="0.4"/>
+  <line x1="61" y1="66" x2="67" y2="66" stroke="#1a1c14" stroke-width="0.3"/>
+  <line x1="61" y1="70" x2="67" y2="70" stroke="#1a1c14" stroke-width="0.3"/>
+  <!-- Right glove hint -->
+  <rect x="61" y="74" width="6" height="3" fill="#1a1c14" stroke="#0a0c08" stroke-width="0.3"/>
+</svg>

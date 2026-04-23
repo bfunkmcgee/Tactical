@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Field Harness — torso overlay. Tier-1 (light) basic combat armor.
+  Minimal load-bearing webbing vest + mag pouches over the base
+  outfit torso. Body-aligned, 96x128 frame. Transparent outside the
+  chest so the rig head + face still read.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Shoulder harness straps (crossing over chest) -->
+  <path d="M 36 50 L 52 74 L 50 78 L 34 54 Z" fill="#3a3024" stroke="#1a1208" stroke-width="0.4"/>
+  <path d="M 60 50 L 44 74 L 46 78 L 62 54 Z" fill="#3a3024" stroke="#1a1208" stroke-width="0.4"/>
+  <!-- Webbing belt around waist -->
+  <rect x="33" y="78" width="30" height="4" fill="#3a3024" stroke="#1a1208" stroke-width="0.4"/>
+  <!-- Chest-rig pouches -->
+  <rect x="37" y="62" width="8" height="10" fill="#4a4028" stroke="#1a1208" stroke-width="0.4"/>
+  <rect x="51" y="62" width="8" height="10" fill="#4a4028" stroke="#1a1208" stroke-width="0.4"/>
+  <!-- Pouch elastic straps -->
+  <line x1="37" y1="66" x2="45" y2="66" stroke="#2a2018" stroke-width="0.3"/>
+  <line x1="51" y1="66" x2="59" y2="66" stroke="#2a2018" stroke-width="0.3"/>
+  <!-- Radio clip at left collarbone -->
+  <rect x="37" y="52" width="4" height="6" fill="#2a2018" stroke="#1a1208" stroke-width="0.3"/>
+  <!-- Knife sheath on the belt -->
+  <rect x="56" y="80" width="3" height="7" fill="#2a1e14" stroke="#0a0604" stroke-width="0.3"/>
+  <!-- Buckle at waist center -->
+  <rect x="46" y="79" width="4" height="3" fill="#7a6a48" stroke="#2a1f14" stroke-width="0.3"/>
+</svg>

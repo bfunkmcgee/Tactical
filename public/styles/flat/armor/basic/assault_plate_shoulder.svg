@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Assault Plate — shoulder pauldron. Heavy riveted pauldron with
+  layered armor scales. Slot-mounted on each shoulder; renderer
+  mirrors right. Author centered on viewBox center (10,10).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20">
+  <!-- Base pauldron shell (large curved cap) -->
+  <path d="M 0 11 Q 1 1 10 1 Q 19 2 20 11 L 20 14 L 0 14 Z" fill="#2a2e36" stroke="#05070a" stroke-width="0.4"/>
+  <!-- Top scale -->
+  <path d="M 2 6 Q 5 2 10 2 Q 15 2 18 6 L 18 8 L 2 8 Z" fill="#3a3e48" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Middle scale -->
+  <path d="M 1 9 L 19 9 L 19 12 L 1 12 Z" fill="#3a3e48" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Rivets along the cap edge -->
+  <circle cx="3" cy="11" r="0.6" fill="#7a7e88"/>
+  <circle cx="7" cy="11" r="0.6" fill="#7a7e88"/>
+  <circle cx="13" cy="11" r="0.6" fill="#7a7e88"/>
+  <circle cx="17" cy="11" r="0.6" fill="#7a7e88"/>
+  <!-- Top crest ridge -->
+  <rect x="9" y="1" width="2" height="8" fill="#05070a"/>
+  <!-- Lower trim -->
+  <line x1="0" y1="14" x2="20" y2="14" stroke="#05070a" stroke-width="0.5"/>
+</svg>

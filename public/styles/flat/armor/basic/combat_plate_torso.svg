@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Combat Plate — torso overlay. Tier-2 (standard) basic combat armor.
+  Plate carrier vest with front plate, mag pouches, radio, and
+  shoulder-strap cummerbund. Body-aligned, 96x128 frame. Draws over
+  the base outfit torso but leaves the head + neck transparent so
+  the rig's face reads cleanly.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Plate carrier body -->
+  <path d="M 33 50 L 63 50 L 65 82 L 31 82 Z" fill="#3a3e32" stroke="#0a0c08" stroke-width="0.5"/>
+  <!-- Shoulder strap loops (over the tops of shoulders) -->
+  <rect x="33" y="48" width="7" height="4" fill="#2a2e24" stroke="#0a0c08" stroke-width="0.3"/>
+  <rect x="56" y="48" width="7" height="4" fill="#2a2e24" stroke="#0a0c08" stroke-width="0.3"/>
+  <!-- Front chest plate insert -->
+  <rect x="38" y="56" width="20" height="20" fill="#2a2e24" stroke="#0a0c08" stroke-width="0.5"/>
+  <!-- Plate ribs (horizontal stitching lines) -->
+  <line x1="38" y1="62" x2="58" y2="62" stroke="#1a1c14" stroke-width="0.4"/>
+  <line x1="38" y1="68" x2="58" y2="68" stroke="#1a1c14" stroke-width="0.4"/>
+  <line x1="38" y1="74" x2="58" y2="74" stroke="#1a1c14" stroke-width="0.4"/>
+  <!-- Mag pouches flanking plate -->
+  <rect x="33" y="66" width="5" height="10" fill="#4a4028" stroke="#0a0c08" stroke-width="0.3"/>
+  <rect x="58" y="66" width="5" height="10" fill="#4a4028" stroke="#0a0c08" stroke-width="0.3"/>
+  <line x1="33" y1="70" x2="38" y2="70" stroke="#2a2018" stroke-width="0.3"/>
+  <line x1="58" y1="70" x2="63" y2="70" stroke="#2a2018" stroke-width="0.3"/>
+  <!-- Radio antenna on left shoulder harness -->
+  <rect x="35" y="52" width="3" height="5" fill="#1a1c14" stroke="#0a0c08" stroke-width="0.2"/>
+  <line x1="36.5" y1="52" x2="36.5" y2="46" stroke="#1a1c14" stroke-width="0.4"/>
+  <!-- Patch (Velcro identification, generic) on right chest -->
+  <rect x="52" y="52" width="6" height="3" fill="#5a4028" stroke="#1a1208" stroke-width="0.3"/>
+  <!-- Cummerbund (lower belt) -->
+  <rect x="32" y="78" width="32" height="5" fill="#2a2e24" stroke="#0a0c08" stroke-width="0.4"/>
+  <!-- Buckle center -->
+  <rect x="45" y="79" width="6" height="3" fill="#5a5e54" stroke="#0a0c08" stroke-width="0.3"/>
+</svg>

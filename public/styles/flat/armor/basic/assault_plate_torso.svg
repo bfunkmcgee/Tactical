@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Assault Plate — torso overlay. Tier-3 (heavy) basic combat armor.
+  Full hardshell chest plate with ribbed armor scales, side rig
+  plates, dense mag pouch row, and a combat-knife sheath. 96x128
+  body-aligned; leaves head + neck transparent.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Main hardshell plate carrier body -->
+  <path d="M 31 48 L 65 48 L 67 82 L 29 82 Z" fill="#2a2e36" stroke="#05070a" stroke-width="0.6"/>
+  <!-- Shoulder plate caps (tops over deltoids) -->
+  <path d="M 31 48 L 31 54 L 39 52 L 39 48 Z" fill="#1a1e26" stroke="#05070a" stroke-width="0.4"/>
+  <path d="M 65 48 L 65 54 L 57 52 L 57 48 Z" fill="#1a1e26" stroke="#05070a" stroke-width="0.4"/>
+  <!-- Main chest plate insert (layered scales) -->
+  <rect x="37" y="54" width="22" height="24" fill="#1a1e26" stroke="#05070a" stroke-width="0.5"/>
+  <!-- Scale plates (stacked horizontal bands) -->
+  <rect x="38" y="55" width="20" height="4" fill="#3a3e48" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="38" y="60" width="20" height="4" fill="#3a3e48" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="38" y="65" width="20" height="4" fill="#3a3e48" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="38" y="70" width="20" height="4" fill="#3a3e48" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Center rib / sternum ridge -->
+  <rect x="47" y="55" width="2" height="23" fill="#05070a"/>
+  <!-- Rivets at plate corners -->
+  <circle cx="39" cy="56" r="0.6" fill="#7a7e88"/>
+  <circle cx="57" cy="56" r="0.6" fill="#7a7e88"/>
+  <circle cx="39" cy="76" r="0.6" fill="#7a7e88"/>
+  <circle cx="57" cy="76" r="0.6" fill="#7a7e88"/>
+  <!-- Side mag pouch row (left) -->
+  <rect x="31" y="62" width="5" height="5" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="31" y="68" width="5" height="5" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="31" y="74" width="5" height="4" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Side mag pouch row (right) -->
+  <rect x="60" y="62" width="5" height="5" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="60" y="68" width="5" height="5" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <rect x="60" y="74" width="5" height="4" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Cummerbund belt with armor plate buckle -->
+  <rect x="30" y="78" width="36" height="5" fill="#1a1e26" stroke="#05070a" stroke-width="0.4"/>
+  <rect x="44" y="78.5" width="8" height="4" fill="#5a5e68" stroke="#05070a" stroke-width="0.3"/>
+  <!-- Combat knife sheath on the left strap -->
+  <rect x="33" y="54" width="3" height="8" fill="#05070a"/>
+  <rect x="33.2" y="55" width="2.6" height="6" fill="#3a3e48"/>
+  <!-- Radio pouch on the right strap -->
+  <rect x="60" y="54" width="5" height="6" fill="#2a2e36" stroke="#05070a" stroke-width="0.3"/>
+  <line x1="62.5" y1="54" x2="62.5" y2="50" stroke="#05070a" stroke-width="0.5"/>
+</svg>
