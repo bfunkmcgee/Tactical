@@ -26,8 +26,10 @@
 
   <!-- Neck. -->
   <rect x="56" y="88" width="16" height="20" fill="#e8c4a4"/>
-  <!-- Jaw shadow. -->
-  <path d="M 56 104 Q 64 108 72 104" fill="#8a6844" opacity="0.4"/>
+  <!-- Collarbone shadow — a thin curve under the jaw-to-neck join,
+       drawn as a STROKE so it's just a shadow line rather than the
+       filled wedge the earlier revision accidentally rendered. -->
+  <path d="M 56 104 Q 64 107 72 104" stroke="#8a6844" stroke-width="0.5" fill="none" opacity="0.45"/>
 
   <!-- Head: fair skin 0xe8c4a4. Egg-shaped, slightly tapered jaw. -->
   <path d="M 44 58 Q 44 32 64 28 Q 84 32 84 58 Q 84 84 64 92 Q 44 84 44 58 Z"
