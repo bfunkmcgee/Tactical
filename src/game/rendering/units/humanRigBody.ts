@@ -31,6 +31,9 @@ export interface RigBodyComposition {
   shoulderSlotL: Container;
   shoulderSlotR: Container;
   backSlot: Container;
+  /** Belt / waist-mounted overlays (kit pouches, grenades). Introduced
+   *  in Phase 6d; previously piggybacked on backSlot. */
+  waistSlot: Container;
   /** All sprites that should receive the per-frame tint (dirt / hit-flash
    *  / death). animate.ts walks this list for rig-composed units. */
   tintTargets: Sprite[];
@@ -59,6 +62,37 @@ export interface RigBodyDeps {
  * the old monolithic sprites used.
  */
 const SPRITE_SCALE = 0.42;
+
+/**
+ * Phase 6d z-bucket vocabulary. Root's children sort by these values so
+ * draw order is declarative. Base parts sit in 10–40; the 'torso'
+ * overlay jumps to 45 (above the base head at 40) so armor covers any
+ * face paint bleeding through the rig-head — replaces the pre-6d
+ * "insert after 'head'" insertion-order hack.
+ */
+const Z_BASE_PART: Record<RigPartId, number> = {
+  legs: 10,
+  'arms-back': 20,
+  torso: 30,
+  head: 40,
+  'arms-front': 90, // lives in weaponWrap, not root; kept for completeness
+};
+/** Body-aligned overlay zIndex per BodySlot target. Not every BodySlot
+ *  lands here — slot-mounted ones (helmet, shoulders, etc.) render
+ *  inside their dedicated Container. */
+const Z_BODY_OVERLAY: Partial<Record<'legs' | 'torso' | 'gauntlet-back', number>> = {
+  legs: 12,
+  'gauntlet-back': 22,
+  torso: 45,
+};
+/** Slot containers — each gets a zIndex so the sort pass puts them in
+ *  the right stack relative to base parts. */
+const Z_SLOT = {
+  back:      15, // behind torso, above legs (cloaks, backpacks)
+  waist:     22, // above arms-back, below torso (belt pouches, grenades)
+  head:      50, // above base head (hair + helmet layer)
+  shoulder:  55, // above head so shoulder pads don't hide behind face
+} as const;
 
 /**
  * Build a rigged body tree + composite armor / clothing overlays.
@@ -98,6 +132,13 @@ export function buildHumanRigBody(
   const partTopY = footOffsetY - scaledH;
   const partLeftX = -(rig.viewBox.w * SPRITE_SCALE) / 2;
 
+  // Phase 6d — explicit z-buckets replace the old insertion-order hacks.
+  // Every renderable gets a zIndex; sortableChildren on root enforces
+  // the order regardless of addChild sequence. Keeps the "torso overlay
+  // above base head" rule declarative instead of a comment in the
+  // dispatcher.
+  root.sortableChildren = true;
+
   // Instantiate each base part in the rig's draw order. Per-soldier
   // `appearance.partOverrides` can substitute a custom SVG for any
   // individual part — the renderer prefers the override URL (cached
@@ -113,6 +154,7 @@ export function buildHumanRigBody(
     sprite.anchor.set(0, 0);
     sprite.scale.set(SPRITE_SCALE);
     sprite.position.set(partLeftX, partTopY);
+    sprite.zIndex = Z_BASE_PART[partId];
     parts[partId] = sprite;
     tintTargets.push(sprite);
     if (partId !== 'arms-front') root.addChild(sprite);
@@ -127,38 +169,49 @@ export function buildHumanRigBody(
   if (!appearance.partOverrides?.['arms-front']) applyPartTint(parts, 'arms-front', appearance.skinTone);
 
   // Attachment slots. Positioning follows joint anchors scaled into local
-  // coords; z-order is enforced by insertion order relative to the base
-  // parts.
+  // coords; z-order is now enforced by the Z_SLOT bucket table (Phase
+  // 6d) rather than insertion order.
   const backSlot = new Container();
+  const waistSlot = new Container();
   const shoulderSlotL = new Container();
   const shoulderSlotR = new Container();
   const headSlot = new Container();
 
-  // backSlot between legs and torso so cloaks drape from the neck behind
-  // the body but in front of the legs.
-  const legsIndex = root.children.indexOf(parts.legs!);
-  root.addChildAt(backSlot, legsIndex + 1);
   backSlot.position.set(
     partLeftX + rig.joints['neck'].offset.x * SPRITE_SCALE,
     partTopY + rig.joints['neck'].offset.y * SPRITE_SCALE,
   );
+  backSlot.zIndex = Z_SLOT.back;
+  root.addChild(backSlot);
+
+  // Waist slot for belt-mounted overlays (kit pouches, grenades).
+  // Positioned at the waist joint; dedicated anchor supersedes the
+  // pre-6d hack of piggybacking 'belt' onto backSlot.
+  waistSlot.position.set(
+    partLeftX + rig.joints['waist'].offset.x * SPRITE_SCALE,
+    partTopY + rig.joints['waist'].offset.y * SPRITE_SCALE,
+  );
+  waistSlot.zIndex = Z_SLOT.waist;
+  root.addChild(waistSlot);
 
   shoulderSlotL.position.set(
     partLeftX + rig.joints['shoulder-l'].offset.x * SPRITE_SCALE,
     partTopY + rig.joints['shoulder-l'].offset.y * SPRITE_SCALE,
   );
+  shoulderSlotL.zIndex = Z_SLOT.shoulder;
   shoulderSlotR.position.set(
     partLeftX + rig.joints['shoulder-r'].offset.x * SPRITE_SCALE,
     partTopY + rig.joints['shoulder-r'].offset.y * SPRITE_SCALE,
   );
+  shoulderSlotR.zIndex = Z_SLOT.shoulder;
   root.addChild(shoulderSlotL, shoulderSlotR);
 
   headSlot.position.set(
     partLeftX + rig.joints['head'].offset.x * SPRITE_SCALE,
     partTopY + rig.joints['head'].offset.y * SPRITE_SCALE,
   );
-  const headIndex = root.children.indexOf(parts.head!);
-  root.addChildAt(headSlot, headIndex + 1);
+  headSlot.zIndex = Z_SLOT.head;
+  root.addChild(headSlot);
 
   // ---- Overlay pass: armor + clothing ----
   //
@@ -167,19 +220,23 @@ export function buildHumanRigBody(
   // straightforward copy of the base-part transform for body-aligned
   // overlays, or a slot position for anchor-mounted pieces.
 
-  const addBodyAlignedOverlay = (url: string, tint: number | undefined, afterPart: RigPartId) => {
+  /**
+   * Add a body-aligned overlay sprite in the 96x128 rig frame. zIndex
+   * comes from the Z_BODY_OVERLAY table keyed on BodySlot — 'torso'
+   * lands above the base head so armor covers any painted face on the
+   * rig-head; 'legs' / 'gauntlet-back' sit just above their base part.
+   */
+  const addBodyAlignedOverlay = (url: string, tint: number | undefined,
+    bodySlot: 'legs' | 'torso' | 'gauntlet-back') => {
     const tex = cache.get(`overlay:${url}`);
     if (!tex) return null;
     const s = new Sprite(tex);
     s.anchor.set(0, 0);
     s.scale.set(SPRITE_SCALE);
     s.position.set(partLeftX, partTopY);
+    s.zIndex = Z_BODY_OVERLAY[bodySlot] ?? 0;
     if (tint !== undefined) s.tint = tint;
-    // Insert immediately after the named base part (e.g. torsoOverlay
-    // after torso, legsOverlay after legs).
-    const baseIdx = root.children.indexOf(parts[afterPart]!);
-    if (baseIdx >= 0) root.addChildAt(s, baseIdx + 1);
-    else root.addChild(s);
+    root.addChild(s);
     tintTargets.push(s);
     return s;
   };
@@ -242,17 +299,16 @@ export function buildHumanRigBody(
       if (!layer) continue;
       switch (bodySlot) {
         case 'torso':
-          // Insert AFTER 'head' (not after 'torso') so overlay sits on
-          // top of the base face paint. Documented placeholder-art
-          // limitation — real authored torso overlays should clear the
-          // head region so the rig face shows through.
-          addBodyAlignedOverlay(layer.svg, layer.tint, 'head');
+          // zIndex 45 (Z_BODY_OVERLAY.torso) places the overlay above
+          // the base head (zIndex 40) so armor covers any painted face
+          // on the rig-head. Replaces the pre-6d insertion-order hack.
+          addBodyAlignedOverlay(layer.svg, layer.tint, 'torso');
           break;
         case 'legs':
           addBodyAlignedOverlay(layer.svg, layer.tint, 'legs');
           break;
         case 'gauntlet-back':
-          addBodyAlignedOverlay(layer.svg, layer.tint, 'arms-back');
+          addBodyAlignedOverlay(layer.svg, layer.tint, 'gauntlet-back');
           break;
         case 'helmet':
           addSlotOverlay(headSlot, layer.svg, layer.tint);
@@ -281,12 +337,10 @@ export function buildHumanRigBody(
           break;
         }
         case 'back':
-        case 'belt':
-          // Belt overlays hang off the waist joint — for now we anchor
-          // them at the back slot (neck), which is close enough for
-          // silhouette authoring. A dedicated waist slot can land in 6d
-          // alongside z-bucket cleanup.
           addSlotOverlay(backSlot, layer.svg, layer.tint);
+          break;
+        case 'belt':
+          addSlotOverlay(waistSlot, layer.svg, layer.tint);
           break;
         // boot-l, boot-r, face, weapon-* — no dedicated slot yet;
         // consumed by future phases or the weapon renderer.
@@ -329,6 +383,7 @@ export function buildHumanRigBody(
     shoulderSlotL,
     shoulderSlotR,
     backSlot,
+    waistSlot,
     tintTargets,
   };
 }

@@ -210,6 +210,52 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     expect(tabardSprite).toBeDefined();
   });
 
+  it('z-order: zIndex buckets place torso overlay above base head, waistSlot above arms-back', () => {
+    // Phase 6d — explicit zIndex buckets replace the old insertion-order
+    // "addChildAt(index+1)" hack. Pin the key orderings here so a slip
+    // in Z_BASE_PART / Z_BODY_OVERLAY / Z_SLOT breaks a test.
+    const cache = new Map<string, Texture>();
+    const dummyTex = {} as unknown as Texture;
+    cache.set('overlay:/fake/torso_overlay.svg', dummyTex);
+
+    const chest: Armor = {
+      id: 'chest', name: 'Chest', flavor: '',
+      slot: 'chest', hpBonus: 0, dr: 0, mobility: 0, tag: 'mundane',
+      visual: { overlays: {
+        torso: { svg: '/fake/torso_overlay.svg' },
+      }},
+    };
+    const comp = buildHumanRigBody(
+      HUMAN_RIG,
+      mkAppearance(),
+      mkLoadout({ armor: { chest: 'chest' } }),
+      cache,
+      { armorOf: (id) => (id === 'chest' ? chest : undefined), clothingOf: () => undefined },
+    );
+
+    // Base-part zIndexes ladder: legs → arms-back → torso → head.
+    const legs = comp.parts.legs.zIndex;
+    const armsBack = comp.parts['arms-back'].zIndex;
+    const torso = comp.parts.torso.zIndex;
+    const head = comp.parts.head.zIndex;
+    expect(legs).toBeLessThan(armsBack);
+    expect(armsBack).toBeLessThan(torso);
+    expect(torso).toBeLessThan(head);
+
+    // The torso OVERLAY (zIndex 45) must sit above the base head (40)
+    // so armor silhouettes cover any face paint on the rig-head. Find
+    // it in tintTargets (overlays are always enrolled there).
+    const overlay = comp.tintTargets.find((s) =>
+      s !== comp.parts.legs && s !== comp.parts.torso && s !== comp.parts.head
+      && s !== comp.parts['arms-back'] && s !== comp.parts['arms-front']);
+    expect(overlay).toBeDefined();
+    expect(overlay!.zIndex).toBeGreaterThan(head);
+
+    // Slot Containers are also zIndex-sorted.
+    expect(comp.backSlot.zIndex).toBeLessThan(comp.waistSlot.zIndex);
+    expect(comp.waistSlot.zIndex).toBeLessThan(comp.headSlot.zIndex);
+  });
+
   it('kit.visual.overlays composite onto the rig alongside armor', () => {
     // Phase 6c — Kit gained an optional Visual field. Kit overlays
     // share the same BodySlot vocabulary as armor pieces; the renderer
@@ -243,12 +289,12 @@ describe('humanRigBody: equipment + clothing overlays', () => {
       },
     );
 
-    // Belt overlays land in backSlot (6c — will move to a waist slot in 6d).
-    expect(comp.backSlot.children.length).toBe(1);
+    // Belt overlays land in the dedicated waistSlot (6d).
+    expect(comp.waistSlot.children.length).toBe(1);
     // 5 base + 1 kit overlay = 6.
     expect(comp.tintTargets.length).toBe(6);
     // Kit tint applied.
-    const attached = comp.backSlot.children[0] as { tint: number };
+    const attached = comp.waistSlot.children[0] as { tint: number };
     expect(attached.tint).toBe(0x8a6a48);
   });
 
