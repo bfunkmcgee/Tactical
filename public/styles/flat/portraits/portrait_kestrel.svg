@@ -41,18 +41,22 @@
   <!-- Hair strand over forehead (suggests a fringe). -->
   <path d="M 52 48 Q 58 46 64 48 L 62 52 Q 56 50 52 52 Z" fill="#0a0a08"/>
 
-  <!-- Eyebrows — thin, focused. -->
-  <path d="M 51 60 L 59 58" stroke="#0a0a08" stroke-width="1.6" stroke-linecap="round"/>
-  <path d="M 69 58 L 77 60" stroke="#0a0a08" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Eyebrows — outer corners RAISED (in SVG smaller y = higher on
+       screen), inner corners lower. Reads as determined/alert rather
+       than the "inner-brows-up" pleading/sad angle. Slightly thicker
+       to read clearly at thumbnail size. -->
+  <path d="M 50 58 Q 54 55 60 60" stroke="#0a0a08" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M 68 60 Q 74 55 78 58" stroke="#0a0a08" stroke-width="2" stroke-linecap="round" fill="none"/>
 
-  <!-- Eyes: blue 0x4a6a9a. Almond shape for a focused/scout read. -->
-  <ellipse cx="54" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
-  <ellipse cx="74" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
-  <circle cx="55" cy="66" r="2.2" fill="#4a6a9a"/>
-  <circle cx="73" cy="66" r="2.2" fill="#4a6a9a"/>
+  <!-- Eyes: slightly narrower than before so they don't read doe-eyed.
+       Iris fills more of the eye area for a confident stare. -->
+  <ellipse cx="54" cy="66" rx="3.4" ry="2.2" fill="#ffffff"/>
+  <ellipse cx="74" cy="66" rx="3.4" ry="2.2" fill="#ffffff"/>
+  <circle cx="55" cy="66" r="2.4" fill="#4a6a9a"/>
+  <circle cx="73" cy="66" r="2.4" fill="#4a6a9a"/>
   <!-- Pupils. -->
-  <circle cx="55" cy="66" r="0.9" fill="#0a0a0c"/>
-  <circle cx="73" cy="66" r="0.9" fill="#0a0a0c"/>
+  <circle cx="55" cy="66" r="1" fill="#0a0a0c"/>
+  <circle cx="73" cy="66" r="1" fill="#0a0a0c"/>
   <!-- Catchlight. -->
   <circle cx="56" cy="65" r="0.6" fill="#ffffff"/>
   <circle cx="74" cy="65" r="0.6" fill="#ffffff"/>
@@ -61,14 +65,12 @@
   <path d="M 64 68 L 62 80 L 64 82 L 66 80 Z" fill="#d4a888" opacity="0.6"/>
   <path d="M 62 80 Q 64 81 66 80" stroke="#8a6844" stroke-width="0.5" fill="none"/>
 
-  <!-- Mouth: subtle confident half-smile. The Q control point sits
-       ABOVE the endpoints so the curve bows upward (in SVG coords,
-       smaller y = higher on screen). -->
-  <path d="M 58 89 Q 64 86 70 89" stroke="#4a2818" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-  <!-- Lower-lip shading following the same upward curve. -->
-  <path d="M 58 89 Q 64 87 70 89" stroke="#c48a6a" stroke-width="0.6" fill="none" opacity="0.7"/>
-  <!-- Small smile-dimple hint on the left cheek. -->
-  <path d="M 54 86 Q 56 88 55 90" stroke="#8a6844" stroke-width="0.4" fill="none" opacity="0.4"/>
+  <!-- Mouth: a clear confident smile. Wider than before (54→74 instead
+       of 58→70), control point pulled up to y=85 for a pronounced
+       upward curve that actually reads as a smile at thumbnail size. -->
+  <path d="M 54 89 Q 64 85 74 89" stroke="#4a2818" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <!-- Lower-lip curve following the same smile. -->
+  <path d="M 54 89 Q 64 87 74 89" stroke="#c48a6a" stroke-width="0.8" fill="none" opacity="0.7"/>
 
   <!-- Cheekbone highlight — subtle for warmth. -->
   <ellipse cx="50" cy="76" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.4"/>

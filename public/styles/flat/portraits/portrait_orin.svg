@@ -43,9 +43,12 @@
   <!-- Ear tip peek (left side). -->
   <ellipse cx="44" cy="66" rx="2" ry="4" fill="#c48a6a" stroke="#6a4030" stroke-width="0.3"/>
 
-  <!-- Eyebrows — angled, a little playful. -->
-  <path d="M 50 58 L 58 60" stroke="#4a1808" stroke-width="1.6" stroke-linecap="round"/>
-  <path d="M 70 60 L 78 58" stroke="#4a1808" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- Eyebrows — playful arch. Outer corners RAISED (not inner) so
+       the look reads as impish / alert rather than pleading. The
+       right brow sits a touch higher than the left — reinforces the
+       smirk-asymmetry. -->
+  <path d="M 50 60 Q 54 57 58 59" stroke="#4a1808" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <path d="M 70 58 Q 74 55 78 58" stroke="#4a1808" stroke-width="1.8" stroke-linecap="round" fill="none"/>
 
   <!-- Eyes: green 0x3a5a3a. Bright, alert. -->
   <ellipse cx="54" cy="68" rx="4" ry="2.6" fill="#ffffff"/>
@@ -61,15 +64,13 @@
   <path d="M 64 70 L 62 80 L 64 82 L 67 80 Z" fill="#a86838" opacity="0.6"/>
   <path d="M 62 80 Q 64 81 67 80" stroke="#6a4030" stroke-width="0.5" fill="none"/>
 
-  <!-- Mouth: confident smirk — whole mouth bows upward with the right
-       corner pulling a touch higher than the left for asymmetric
-       smirk. Both Q control points sit above the endpoints so no
-       segment dips down into a frown. -->
-  <path d="M 56 89 Q 62 86 68 87 Q 70 85.5 72 87" stroke="#4a2818" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <!-- Mouth: confident smirk — wider arc, stronger upward curve. The
+       right corner lands higher than the left for asymmetric smirk. -->
+  <path d="M 54 89 Q 62 85 74 85" stroke="#4a2818" stroke-width="1.6" fill="none" stroke-linecap="round"/>
   <!-- Lower-lip shading along the same curve. -->
-  <path d="M 56 89 Q 62 87 68 88" stroke="#c48a6a" stroke-width="0.5" fill="none" opacity="0.6"/>
-  <!-- Small dimple at the higher (right) corner to sell the smirk. -->
-  <circle cx="72" cy="87" r="0.5" fill="#6a4030" opacity="0.55"/>
+  <path d="M 54 89 Q 62 86 72 86" stroke="#c48a6a" stroke-width="0.6" fill="none" opacity="0.6"/>
+  <!-- Dimple at the higher (right) corner to sell the smirk. -->
+  <circle cx="74" cy="85" r="0.7" fill="#6a4030" opacity="0.6"/>
 
   <!-- Cheek highlights. -->
   <ellipse cx="50" cy="76" rx="3" ry="1.6" fill="#e0a888" opacity="0.5"/>
