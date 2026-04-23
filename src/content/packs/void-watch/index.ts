@@ -37,6 +37,26 @@ export const pack: ContentPack = {
   // empty registry validates the engine handles packs with zero abilities.
   abilities: {},
 
+  // Minimal rig-appearance catalogs (Phase 6e). Void-Watch reuses the
+  // shared /styles/flat/human/ placeholder assets; the operators' own
+  // bespoke art is deferred pending a content sprint. Having these
+  // catalogs present means Vex + Kade can ship `appearance` + go
+  // through the single rig render path.
+  hairStyles: {
+    short_crop: { id: 'short_crop', name: 'Short Crop', svg: '/styles/flat/human/hair_short_crop.svg' },
+    bob:        { id: 'bob',        name: 'Bob',        svg: '/styles/flat/human/hair_bob.svg' },
+    ponytail:   { id: 'ponytail',   name: 'Ponytail',   svg: '/styles/flat/human/hair_ponytail.svg' },
+    bald:       { id: 'bald',       name: 'Bald',       svg: '/styles/flat/human/hair_bald.svg' },
+  },
+  baseOutfits: {
+    fatigues: { id: 'fatigues', name: 'Void Fatigues',
+                torsoSvg: '/styles/flat/human/outfit_fatigues_torso.svg',
+                legsSvg:  '/styles/flat/human/outfit_fatigues_legs.svg' },
+    utility:  { id: 'utility',  name: 'Boarding Rig',
+                torsoSvg: '/styles/flat/human/outfit_utility_torso.svg',
+                legsSvg:  '/styles/flat/human/outfit_utility_legs.svg' },
+  },
+
   spawnLegend: {
     G: 'hollow_wraith',
     O: 'hollow_wraith',

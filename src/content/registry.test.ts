@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { aggregateArmorStat, equippedArmorPieces } from './registry';
+import {
+  aggregateArmorStat, equippedArmorPieces, ALL_PACKS,
+} from './registry';
 
 /**
  * Phase 6a — armor piece aggregation. `Loadout.armor` is a per-slot
@@ -46,4 +48,39 @@ describe('registry: armor piece aggregation', () => {
     expect(aggregateArmorStat({ chest: 'no_such_piece' }, 'dr')).toBe(0);
     expect(equippedArmorPieces({ chest: 'no_such_piece' })).toEqual([]);
   });
+});
+
+/**
+ * Phase 6e coverage gate — every shipping soldier template must declare
+ * an `appearance` so the rig render path is the single code path for
+ * the player faction. Enemy templates are exempt for now (their content
+ * migration is tracked as a follow-up; createUnitNode's bespoke branch
+ * still covers them).
+ *
+ * Hair styles + base outfits referenced by each appearance must resolve
+ * inside the soldier's pack catalog; otherwise the renderer silently
+ * drops the corresponding overlay at composition time.
+ */
+describe('packs: soldier rig-coverage gate', () => {
+  for (const pack of ALL_PACKS) {
+    it(`${pack.id}: every soldier template declares appearance + resolvable catalog ids`, () => {
+      for (const s of Object.values(pack.soldierTemplates)) {
+        expect(s.appearance, `${s.id} is missing appearance`).toBeDefined();
+        const app = s.appearance!;
+        expect(app.rig).toBe('human');
+        expect(typeof app.skinTone).toBe('number');
+        expect(typeof app.hairColor).toBe('number');
+        expect(typeof app.eyeColor).toBe('number');
+        // hairStyle + baseOutfit must exist in the pack's catalog.
+        expect(
+          pack.hairStyles?.[app.hairStyle],
+          `${s.id}: hairStyle '${app.hairStyle}' is missing from ${pack.id}.hairStyles`
+        ).toBeDefined();
+        expect(
+          pack.baseOutfits?.[app.baseOutfit],
+          `${s.id}: baseOutfit '${app.baseOutfit}' is missing from ${pack.id}.baseOutfits`
+        ).toBeDefined();
+      }
+    });
+  }
 });

@@ -24,6 +24,14 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       utilityIds: ['plasma_charge', 'stim_patch'],
       kitId: 'hardpoint_webbing',
     },
+    appearance: {
+      rig: 'human',
+      skinTone: 0xa8805c,        // tan
+      hairStyle: 'bob',
+      hairColor: 0x1a1410,       // black
+      eyeColor: 0x4a6a9a,        // blue
+      baseOutfit: 'utility',
+    },
   },
   kade_sentinel: {
     id: 'kade_sentinel',
@@ -41,6 +49,14 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       },
       utilityIds: ['stim_patch'],
       kitId: 'marksman_rig',
+    },
+    appearance: {
+      rig: 'human',
+      skinTone: 0xe8c4a4,        // fair
+      hairStyle: 'short_crop',
+      hairColor: 0xd4b080,       // blond
+      eyeColor: 0x6a7078,        // grey
+      baseOutfit: 'fatigues',
     },
   },
 };
