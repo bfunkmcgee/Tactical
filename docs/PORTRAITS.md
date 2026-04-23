@@ -20,6 +20,28 @@ soldier (e.g. "Kestrel: longer hair", "Brannock: softer mouth",
 
 ---
 
+## Standard Human Template
+
+![Standard Human Template](../public/styles/flat/portraits/template_human.svg)
+
+The baseline figure the character-creation rig composes when no palette
+choices are made and no armor is equipped. All hero portraits above are
+variants on this template — skin tone, hair style + color, eye color,
+and base outfit are the player-facing knobs.
+
+**Defaults shown**
+- Skin: medium (`#c48a6a`)
+- Hair: short-crop, brown (`#4a3020`)
+- Eyes: brown (`#3a2a1c`)
+- Base outfit: field fatigues (drab olive shirt + trousers, belt, boots)
+- Pose: neutral (front-facing, hands at sides)
+- No armor overlay, no weapon
+
+Rig parts labeled on the right (`legs`, `torso`, `head`, `arms_back`,
+`arms_front`) match the `RigPartId` values in `src/game/engine/rig.ts`.
+
+---
+
 ## Kestrel — Ranger
 
 ![Kestrel, Ranger](../public/styles/flat/portraits/portrait_kestrel.svg)
