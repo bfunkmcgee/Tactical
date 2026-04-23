@@ -159,6 +159,9 @@ export type Utility = {
   heal?: number;
   apCost: number;
   tag: ElementTag;
+  /** Optional belt-mounted visual (grenades / canisters dangling off
+   *  the harness). Good fit: overlays keyed on 'belt'. */
+  visual?: Visual;
 };
 
 /**
@@ -198,6 +201,13 @@ export type WeaponMod = {
     flags?: WeaponFlag[];
   };
   tag: ElementTag;
+  /**
+   * Optional visual — mod attachments render onto the weapon sprite at
+   * per-weapon-class anchor offsets. Overlays should target
+   * 'weapon-optic' / 'weapon-muzzle' / 'weapon-mag' / 'weapon-stock'.
+   * Unset → invisible attachment (stat-only).
+   */
+  visual?: Visual;
 };
 
 export type Loadout = {
@@ -233,6 +243,12 @@ export type Kit = {
     extraUtilityCharges?: number; // applied to every equipped utility
   };
   tag: ElementTag;
+  /**
+   * Optional visual — kits render at body slots like any other
+   * equipment. Good fits: 'belt', 'boot-l' / 'boot-r', 'back'.
+   * Unset → invisible (stat-only).
+   */
+  visual?: Visual;
 };
 
 /**

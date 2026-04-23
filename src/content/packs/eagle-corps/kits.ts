@@ -11,6 +11,9 @@ export const KITS: Record<string, Kit> = {
     flavor: 'Stripped-pocket vest favoured by long-range scouts. Carries the spare rounds nobody wants to think about.',
     effects: { extraAmmoPrimary: 2, extraAmmoSidearm: 1 },
     tag: 'mundane',
+    visual: { overlays: {
+      belt: { svg: '/styles/flat/kit_visuals/salvagers_webbing.svg' },
+    }},
   },
   whisperstep_boots: {
     id: 'whisperstep_boots',

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildHumanRigBody } from './humanRigBody';
 import { HUMAN_RIG } from '../../../content/rigs';
-import type { Armor, Clothing, HumanAppearance, Loadout } from '../../types';
+import type { Armor, Clothing, HumanAppearance, Kit, Loadout } from '../../types';
 import type { Texture } from 'pixi.js';
 
 /**
@@ -208,6 +208,48 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     // Tabard tint applied.
     const tabardSprite = comp.tintTargets.find((s) => s.tint === 0xc85a3a);
     expect(tabardSprite).toBeDefined();
+  });
+
+  it('kit.visual.overlays composite onto the rig alongside armor', () => {
+    // Phase 6c — Kit gained an optional Visual field. Kit overlays
+    // share the same BodySlot vocabulary as armor pieces; the renderer
+    // walks them in a pass that mirrors the armor loop. Belt slot
+    // currently anchors to backSlot (a 6d cleanup replaces this with a
+    // dedicated waist slot).
+    const cache = new Map<string, Texture>();
+    const dummyTex = {} as unknown as Texture;
+    cache.set('overlay:/fake/webbing.svg', dummyTex);
+
+    const kit: Kit = {
+      id: 'salvagers_webbing',
+      name: "Salvager's Webbing",
+      flavor: '',
+      effects: { extraAmmoPrimary: 2 },
+      tag: 'mundane',
+      visual: { overlays: {
+        belt: { svg: '/fake/webbing.svg', tint: 0x8a6a48 },
+      }},
+    };
+
+    const comp = buildHumanRigBody(
+      HUMAN_RIG,
+      mkAppearance(),
+      mkLoadout({ kitId: 'salvagers_webbing' }),
+      cache,
+      {
+        armorOf: () => undefined,
+        clothingOf: () => undefined,
+        kitOf: (id) => (id === 'salvagers_webbing' ? kit : undefined),
+      },
+    );
+
+    // Belt overlays land in backSlot (6c — will move to a waist slot in 6d).
+    expect(comp.backSlot.children.length).toBe(1);
+    // 5 base + 1 kit overlay = 6.
+    expect(comp.tintTargets.length).toBe(6);
+    // Kit tint applied.
+    const attached = comp.backSlot.children[0] as { tint: number };
+    expect(attached.tint).toBe(0x8a6a48);
   });
 
   it('baseOutfit adds torso + legs overlays, and hair attaches to headSlot with hairColor tint', () => {

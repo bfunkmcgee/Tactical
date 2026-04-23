@@ -1,6 +1,7 @@
 import { Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import { useCombatStore } from '../../../state/combatStore';
-import { getArmor, getClothing, useContent } from '../../../content/registry';
+import { getArmor, getClothing, getKit, getMod, useContent } from '../../../content/registry';
+import { WEAPON_ANCHORS } from '../../../content/rigs/weapons';
 import type { Unit, UnitId, Vec2 } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
@@ -135,6 +136,29 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
       if (layer) pushLoad(overlayCacheKey(layer.svg), layer.svg);
     }
   }
+  // Weapon-mod + kit + utility visuals (Phase 6c). Optional; any item
+  // without a `visual` field silently skips.
+  for (const mod of Object.values(pack.mods)) {
+    const overlays = mod.visual?.overlays;
+    if (!overlays) continue;
+    for (const layer of Object.values(overlays)) {
+      if (layer) pushLoad(overlayCacheKey(layer.svg), layer.svg);
+    }
+  }
+  for (const kit of Object.values(pack.kits)) {
+    const overlays = kit.visual?.overlays;
+    if (!overlays) continue;
+    for (const layer of Object.values(overlays)) {
+      if (layer) pushLoad(overlayCacheKey(layer.svg), layer.svg);
+    }
+  }
+  for (const util of Object.values(pack.utilities)) {
+    const overlays = util.visual?.overlays;
+    if (!overlays) continue;
+    for (const layer of Object.values(overlays)) {
+      if (layer) pushLoad(overlayCacheKey(layer.svg), layer.svg);
+    }
+  }
   if (pack.clothing) {
     for (const c of Object.values(pack.clothing)) {
       pushLoad(overlayCacheKey(c.svg), c.svg);
@@ -260,6 +284,9 @@ function createUnitNode(u: Unit): UnitNode {
       clothingOf: getClothing,
       hairStyleOf: (id) => useContent().hairStyles?.[id],
       baseOutfitOf: (id) => useContent().baseOutfits?.[id],
+      kitOf: (id) => {
+        try { return getKit(id); } catch { return undefined; }
+      },
     });
     body.addChild(rigComposition.root);
     // spriteTop matches the bespoke-path value so ornaments / HP bar /
@@ -292,6 +319,39 @@ function createUnitNode(u: Unit): UnitNode {
       weaponWrap.addChild(weaponSprite);
       body.addChild(weaponWrap);
       rigComposition.tintTargets.push(weaponSprite);
+
+      // Weapon-mod attachments. For each mod in loadout.primaryMods that
+      // carries a `visual.overlays['weapon-*']` entry, attach the overlay
+      // sprite as a child of the weapon sprite at the anchor offset for
+      // the weapon's class. Children are positioned in the weapon sprite's
+      // local space (top-left origin), so they ride with aim/recoil via
+      // parent-child inheritance. Missing overlays / unknown mod ids /
+      // un-authored anchors all silently no-op.
+      const primary = u.loadout?.primaryId
+        ? useContent().weapons[u.loadout.primaryId]
+        : undefined;
+      if (primary) {
+        const anchors = WEAPON_ANCHORS[primary.class];
+        for (const [modSlot, modId] of Object.entries(u.loadout?.primaryMods ?? {})) {
+          if (!modId) continue;
+          let mod;
+          try { mod = getMod(modId); } catch { continue; }
+          const bodySlotKey = (modSlot === 'magazine'
+            ? 'weapon-mag'
+            : `weapon-${modSlot}`) as import('../../types').BodySlot;
+          const layer = mod.visual?.overlays?.[bodySlotKey];
+          if (!layer) continue;
+          const tex = spriteCache.get(overlayCacheKey(layer.svg));
+          if (!tex) continue;
+          const attach = new Sprite(tex);
+          attach.anchor.set(0, 0);
+          const off = anchors?.[modSlot as import('../../types').ModSlot] ?? { x: 0, y: 0 };
+          attach.position.set(off.x, off.y);
+          if (layer.tint !== undefined) attach.tint = layer.tint;
+          weaponSprite.addChild(attach);
+          rigComposition.tintTargets.push(attach);
+        }
+      }
     }
   } else {
   const bodyTex = spriteCache.get(`${u.templateId}:body`);

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Reflex scope (weapon-optic attachment). Mounts on top of the
+  weapon rail at the weapon's 'optic' anchor (see WEAPON_ANCHORS
+  in src/content/rigs/weapons.ts). Compact 24x12 footprint — sits
+  above the rail, single red-dot visible in center.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" width="24" height="12">
+  <!-- Mount base (rail clamp) -->
+  <rect x="2" y="8" width="20" height="3" fill="#1a1a1c" stroke="#0a0a0c" stroke-width="0.5"/>
+  <!-- Optic housing -->
+  <rect x="4" y="2" width="16" height="7" fill="#2a2e34" stroke="#0a0a0c" stroke-width="0.5"/>
+  <!-- Window (reticle frame) -->
+  <rect x="7" y="3.5" width="10" height="4.5" fill="#0a0a0c" stroke="#3a3e48" stroke-width="0.3"/>
+  <!-- Red dot -->
+  <circle cx="12" cy="5.8" r="0.8" fill="#e04040"/>
+  <!-- Adjustment turret -->
+  <rect x="14" y="0.5" width="3" height="2" fill="#3a3e48" stroke="#0a0a0c" stroke-width="0.3"/>
+</svg>

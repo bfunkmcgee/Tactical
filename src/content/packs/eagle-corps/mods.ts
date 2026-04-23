@@ -15,6 +15,9 @@ export const MODS: Record<string, WeaponMod> = {
     fits: ['rifle', 'smg', 'shotgun', 'pistol'],
     effects: { aim: 5 },
     tag: 'mundane',
+    visual: { overlays: {
+      'weapon-optic': { svg: '/styles/flat/attachments/scope_reflex.svg' },
+    }},
   },
   optic_marksman_scope: {
     id: 'optic_marksman_scope',
@@ -91,6 +94,9 @@ export const MODS: Record<string, WeaponMod> = {
     fits: ['rifle', 'smg', 'pistol', 'sniper'],
     effects: { dmgMin: -1, dmgMax: -1, flags: ['no_range_falloff'] },
     tag: 'mundane',
+    visual: { overlays: {
+      'weapon-muzzle': { svg: '/styles/flat/attachments/suppressor_short.svg' },
+    }},
   },
   muzzle_compensator: {
     id: 'muzzle_compensator',

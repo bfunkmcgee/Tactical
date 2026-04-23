@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Salvager's Webbing kit visual — belt-mounted utility pouches.
+  Body-aligned 96x128 rig frame. Two canvas pouches flanking a
+  central cinch strap across the waist joint (y=82 in rig coords).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <!-- Left hip pouch (salvage tools) -->
+  <rect x="30" y="82" width="10" height="12" fill="#5a4028" stroke="#1a1008" stroke-width="0.4"/>
+  <rect x="31" y="85" width="8" height="1" fill="#3a2a18"/>
+  <line x1="30" y1="88" x2="40" y2="88" stroke="#1a1008" stroke-width="0.3"/>
+  <!-- Right hip pouch (ammo box) -->
+  <rect x="56" y="82" width="10" height="12" fill="#5a4028" stroke="#1a1008" stroke-width="0.4"/>
+  <rect x="57" y="85" width="8" height="1" fill="#3a2a18"/>
+  <line x1="56" y1="88" x2="66" y2="88" stroke="#1a1008" stroke-width="0.3"/>
+  <!-- Belt band across -->
+  <rect x="30" y="83" width="36" height="2" fill="#3a2a18"/>
+  <!-- Centre utility clip -->
+  <rect x="46" y="85" width="4" height="5" fill="#8a7a58" stroke="#1a1008" stroke-width="0.3"/>
+  <!-- Dangling hook on the left pouch -->
+  <path d="M 35 94 L 35 96 L 37 96" stroke="#8a7a58" stroke-width="0.6" fill="none"/>
+</svg>

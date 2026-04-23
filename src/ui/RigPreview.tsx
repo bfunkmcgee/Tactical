@@ -3,7 +3,7 @@ import { Application, Assets, Container, type Texture } from 'pixi.js';
 import { buildHumanRigBody } from '../game/rendering/units/humanRigBody';
 import { HUMAN_RIG } from '../content/rigs';
 import { spriteCache } from '../game/rendering/context';
-import { useContent, getArmor, getClothing } from '../content/registry';
+import { useContent, getArmor, getClothing, getKit } from '../content/registry';
 import type { HumanAppearance, Loadout } from '../game/types';
 
 /**
@@ -191,6 +191,7 @@ export default function RigPreview({
       clothingOf: getClothing,
       hairStyleOf: (id) => useContent().hairStyles?.[id],
       baseOutfitOf: (id) => useContent().baseOutfits?.[id],
+      kitOf: (id) => { try { return getKit(id); } catch { return undefined; } },
     });
     world.addChild(comp.root);
     rootRef.current = comp.root;
