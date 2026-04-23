@@ -256,6 +256,71 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     expect(comp.waistSlot.zIndex).toBeLessThan(comp.headSlot.zIndex);
   });
 
+  it('skin-mask: a cached `overlay:${url}:skin` texture mounts a tinted companion sprite above the base part', () => {
+    // When a partOverride SVG opts in via class="skin", the preloader
+    // extracts a skin-only variant + caches it under the :skin key.
+    // The renderer picks that up and mounts it as a second sprite
+    // with appearance.skinTone tint — recolor-by-tint without double-
+    // tinting the non-skin pixels of the base.
+    const cache = new Map<string, Texture>();
+    const dummyTex = {} as unknown as Texture;
+    cache.set('overlay:/fake/kestrel_head.svg', dummyTex);
+    cache.set('overlay:/fake/kestrel_head.svg:skin', dummyTex);
+
+    const appearance: HumanAppearance = {
+      rig: 'human',
+      skinTone: 0x6a4030,           // deep — clearly not the authored color
+      hairStyle: 'short_crop',
+      hairColor: 0x1a1410,
+      eyeColor: 0x3a2a1c,
+      baseOutfit: 'fatigues',
+      partOverrides: {
+        head: '/fake/kestrel_head.svg',
+      },
+    };
+
+    const comp = buildHumanRigBody(
+      HUMAN_RIG, appearance, mkLoadout({}), cache,
+      { armorOf: () => undefined, clothingOf: () => undefined },
+    );
+
+    // 5 base parts + 1 skin-mask companion sprite = 6.
+    expect(comp.tintTargets.length).toBe(6);
+    // The companion sprite carries the skinTone tint.
+    const skinSprite = comp.tintTargets.find((s) =>
+      s !== comp.parts.legs && s !== comp.parts.torso && s !== comp.parts.head
+      && s !== comp.parts['arms-back'] && s !== comp.parts['arms-front']);
+    expect(skinSprite).toBeDefined();
+    expect(skinSprite!.tint).toBe(0x6a4030);
+    // zIndex sits just above the head base part (40 + 0.5 = 40.5).
+    expect(skinSprite!.zIndex).toBe(comp.parts.head.zIndex + 0.5);
+  });
+
+  it('skin-mask: override without a cached :skin texture renders no extra sprite', () => {
+    // Non-opt-in SVGs (no class="skin") don't get a :skin cache entry
+    // from the preloader. Renderer should not add a companion sprite.
+    const cache = new Map<string, Texture>();
+    const dummyTex = {} as unknown as Texture;
+    cache.set('overlay:/fake/no_skin.svg', dummyTex);
+    // No :skin entry seeded.
+
+    const appearance: HumanAppearance = {
+      rig: 'human',
+      skinTone: 0x6a4030,
+      hairStyle: 'short_crop',
+      hairColor: 0x1a1410,
+      eyeColor: 0x3a2a1c,
+      baseOutfit: 'fatigues',
+      partOverrides: { head: '/fake/no_skin.svg' },
+    };
+    const comp = buildHumanRigBody(
+      HUMAN_RIG, appearance, mkLoadout({}), cache,
+      { armorOf: () => undefined, clothingOf: () => undefined },
+    );
+    // 5 base parts only — no companion sprite.
+    expect(comp.tintTargets.length).toBe(5);
+  });
+
   it('kit.visual.overlays composite onto the rig alongside armor', () => {
     // Phase 6c — Kit gained an optional Visual field. Kit overlays
     // share the same BodySlot vocabulary as armor pieces; the renderer

@@ -145,6 +145,9 @@ export function buildHumanRigBody(
   // under `overlay:${url}`) when present, falling back to the shared
   // rig part (`rig:${rigId}:${partId}`) when not.
   const parts: Partial<Record<RigPartId, Sprite>> = {};
+  // Track parts that carry a baked-art partOverride so the skin-mask
+  // pass (below) knows which ones may have a companion skin-texture.
+  const overrideParts: Array<{ partId: RigPartId; url: string }> = [];
   for (const partId of rig.parts) {
     const overrideUrl = appearance.partOverrides?.[partId];
     const tex = overrideUrl
@@ -158,6 +161,41 @@ export function buildHumanRigBody(
     parts[partId] = sprite;
     tintTargets.push(sprite);
     if (partId !== 'arms-front') root.addChild(sprite);
+    if (overrideUrl) overrideParts.push({ partId, url: overrideUrl });
+  }
+
+  // Skin-mask pass. For each part whose override SVG opted in via
+  // `class="skin"` on the exposed-skin paths, the preloader cached a
+  // skin-only variant under `overlay:${url}:skin`. We mount it as a
+  // companion sprite at the same position + slightly-higher zIndex,
+  // tinted with appearance.skinTone — overwrites the base skin pixels
+  // with the recolored result without double-tinting non-skin pixels.
+  // Missing skin texture = graceful skip (the common case).
+  for (const { partId, url } of overrideParts) {
+    const skinTex = cache.get(skinMaskCacheKey(url));
+    if (!skinTex) continue;
+    const s = new Sprite(skinTex);
+    s.tint = appearance.skinTone;
+    if (partId === 'arms-front') {
+      // arms-front is re-parented into weaponWrap by the caller and
+      // has its anchor/scale reset to GRIP_ANCHOR + 0.42 there. Parent
+      // the skin sprite under it at local (0,0) with scale 1 so it
+      // rides along with the parent's transform (same pattern as the
+      // gauntlet-front dispatch case below).
+      s.anchor.set(0, 0);
+      s.scale.set(1);
+      s.position.set(0, 0);
+      parts['arms-front']!.addChild(s);
+    } else {
+      s.anchor.set(0, 0);
+      s.scale.set(SPRITE_SCALE);
+      s.position.set(partLeftX, partTopY);
+      // +0.5 sits the skin layer immediately above its base part,
+      // below any overlay that targets a higher slot.
+      s.zIndex = Z_BASE_PART[partId] + 0.5;
+      root.addChild(s);
+    }
+    tintTargets.push(s);
   }
 
   // Skin tint applies only to shared-rig parts. When a soldier ships
@@ -397,4 +435,15 @@ function applyPartTint(parts: Partial<Record<RigPartId, Sprite>>, id: RigPartId,
  *  the same prefix so buildHumanRigBody's cache lookups find them. */
 export function overlayCacheKey(url: string): string {
   return `overlay:${url}`;
+}
+
+/**
+ * Skin-mask texture cache key. When a partOverride SVG opts in via
+ * `class="skin"` on its skin paths, the preloader extracts a skin-only
+ * variant + caches the derived texture under this key. The renderer
+ * mounts it as a tinted sprite on top of the base part so hero art
+ * can recolor by skinTone without double-tinting the non-skin pixels.
+ */
+export function skinMaskCacheKey(url: string): string {
+  return `overlay:${url}:skin`;
 }

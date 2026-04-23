@@ -7,7 +7,8 @@ import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
 import { GRIP_ANCHOR, HIT_FLASH_MS, MOVE_TWEEN_MS } from './constants';
 import { FIRE_STYLES, type FireStyle } from './fireStyles';
-import { buildHumanRigBody, overlayCacheKey, type RigBodyComposition } from './humanRigBody';
+import { buildHumanRigBody, overlayCacheKey, skinMaskCacheKey, type RigBodyComposition } from './humanRigBody';
+import { loadSkinMaskDataUrl } from './skinMask';
 import { allRigs, rigById, rigPartSvg } from '../../../content/rigs';
 
 /**
@@ -182,18 +183,51 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
   // substitute for the shared rig parts at composition time. Cached
   // under overlay:${url} matching the key shape buildHumanRigBody
   // checks for overridden parts.
+  //
+  // For skin-tintable overrides (SVGs tagged `class="skin"` on the
+  // exposed-skin paths), a second texture is cached under
+  // `overlay:${url}:skin`. The renderer mounts it as a tinted sprite
+  // on top of the base so partOverride art can recolor by skinTone
+  // without double-tinting the non-skin pixels. Extraction runs only
+  // when the SVG opts in — non-tagged SVGs skip silently.
+  const overridePaths = new Set<string>();
   for (const s of Object.values(pack.soldierTemplates)) {
     const overrides = s.appearance?.partOverrides;
     if (!overrides) continue;
     for (const url of Object.values(overrides)) {
-      if (url) pushLoad(overlayCacheKey(url), url);
+      if (url) {
+        pushLoad(overlayCacheKey(url), url);
+        overridePaths.add(url);
+      }
     }
   }
   for (const e of Object.values(pack.enemyTemplates)) {
     const overrides = e.appearance?.partOverrides;
     if (!overrides) continue;
     for (const url of Object.values(overrides)) {
-      if (url) pushLoad(overlayCacheKey(url), url);
+      if (url) {
+        pushLoad(overlayCacheKey(url), url);
+        overridePaths.add(url);
+      }
+    }
+  }
+  // Skin-mask preload pass. Only runs in the browser (DOMParser +
+  // fetch are ambient). A sibling job per override URL — each tries
+  // to extract a skin-only SVG; if the source has no `class="skin"`
+  // the job resolves to null and the cache entry is skipped.
+  if (typeof DOMParser !== 'undefined' && typeof fetch !== 'undefined') {
+    for (const url of overridePaths) {
+      if (spriteCache.has(skinMaskCacheKey(url))) continue;
+      loads.push((async () => {
+        try {
+          const dataUrl = await loadSkinMaskDataUrl(url);
+          if (!dataUrl) return;
+          const tex = await Assets.load<Texture>(dataUrl);
+          spriteCache.set(skinMaskCacheKey(url), tex);
+        } catch (err) {
+          console.warn(`[sprites] skin-mask extract failed for ${url}`, err);
+        }
+      })());
     }
   }
   await Promise.all(loads);
