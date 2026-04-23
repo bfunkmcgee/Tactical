@@ -129,14 +129,11 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
   // rig composition's addBodyAlignedOverlay / addSlotOverlay helpers
   // can look them up without re-deriving the key shape.
   for (const armor of Object.values(pack.armor)) {
-    const v = armor.visual;
-    if (!v) continue;
-    if (v.torsoOverlay) pushLoad(overlayCacheKey(v.torsoOverlay), v.torsoOverlay);
-    if (v.helmet) pushLoad(overlayCacheKey(v.helmet), v.helmet);
-    if (v.shoulderPads) pushLoad(overlayCacheKey(v.shoulderPads), v.shoulderPads);
-    if (v.gauntletsFront) pushLoad(overlayCacheKey(v.gauntletsFront), v.gauntletsFront);
-    if (v.gauntletsBack) pushLoad(overlayCacheKey(v.gauntletsBack), v.gauntletsBack);
-    if (v.legsOverlay) pushLoad(overlayCacheKey(v.legsOverlay), v.legsOverlay);
+    const overlays = armor.visual?.overlays;
+    if (!overlays) continue;
+    for (const layer of Object.values(overlays)) {
+      if (layer) pushLoad(overlayCacheKey(layer.svg), layer.svg);
+    }
   }
   if (pack.clothing) {
     for (const c of Object.values(pack.clothing)) {

@@ -86,7 +86,7 @@ describe('resolveShot', () => {
     // Force a hit by giving 100% chance
     const forced = { ...p, hitChance: 100, critChance: 0 };
     const rng = makeRng(1);
-    const r = resolveShot(forced, RIFLE, { id: 'a', name: '', flavor: '', hpBonus: 0, dr: 99, mobility: 0, tag: 'mundane' }, rng);
+    const r = resolveShot(forced, RIFLE, { id: 'a', name: '', flavor: '', slot: 'chest', hpBonus: 0, dr: 99, mobility: 0, tag: 'mundane' }, rng);
     expect(r.kind).toBe('hit');
     if (r.kind === 'hit') expect(r.damage).toBeGreaterThanOrEqual(1);
   });
@@ -180,7 +180,7 @@ describe('resolveShot (burst fire)', () => {
   });
 
   it('armor DR applies per round — burst payload is smaller than single-shot vs tanky targets', () => {
-    const armor = { id: 'a', name: '', flavor: '', hpBonus: 0, dr: 2, mobility: 0, tag: 'mundane' as const };
+    const armor = { id: 'a', name: '', flavor: '', slot: 'chest' as const, hpBonus: 0, dr: 2, mobility: 0, tag: 'mundane' as const };
     const m = mkMap(['.....']);
     const shooter = mkUnit({ pos: { x: 0, y: 0 } });
     const target = mkUnit({ id: 2, faction: 'enemy', pos: { x: 2, y: 0 } });

@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../state/gameStore';
 import {
-  useContent, getSoldierTemplate, getWeapon, getArmor, getMod,
-  allArmor, allUtilities, allKits, primaryWeapons, sidearms,
+  useContent, getSoldierTemplate, getWeapon, getMod,
+  allArmorPieces, aggregateArmorStat, allUtilities, allKits,
+  primaryWeapons, sidearms,
 } from '../content/registry';
-import type { Loadout, ModSlot, SoldierTemplate, WeaponClass } from '../game/types';
+import type { ArmorSlot, Loadout, ModSlot, SoldierTemplate, WeaponClass } from '../game/types';
 import { SIDEARM_MOD_SLOTS } from '../game/types';
 import ModPicker from './components/ModPicker';
 import CharacterCreationScreen from './CharacterCreationScreen';
@@ -39,20 +40,23 @@ export default function LoadoutScreen() {
   const soldier = getSoldierTemplate(soldierId);
   const current = loadouts[soldierId];
 
-  const armor = getArmor(current.armorId);
   const primary = getWeapon(current.primaryId);
   const sidearm = getWeapon(current.sidearmId);
   const kit = current.kitId ? useContent().kits[current.kitId] ?? null : null;
 
   const derived = useMemo(() => {
     const k = kit?.effects ?? {};
+    const armorHp = aggregateArmorStat(current.armor, 'hpBonus');
+    const armorMobility = aggregateArmorStat(current.armor, 'mobility');
+    const armorDr = aggregateArmorStat(current.armor, 'dr');
     return {
-      hpMax: Math.max(1, soldier.hpMax + (armor?.hpBonus ?? 0) + (k.hpBonus ?? 0)),
-      mobility: Math.max(2, soldier.mobility + (armor?.mobility ?? 0) + (k.mobilityBonus ?? 0)),
+      hpMax: Math.max(1, soldier.hpMax + armorHp + (k.hpBonus ?? 0)),
+      mobility: Math.max(2, soldier.mobility + armorMobility + (k.mobilityBonus ?? 0)),
       aim: soldier.aim + (primary?.aim ?? 0) + (k.aimBonus ?? 0),
       ammoPrimary: (primary?.ammo ?? 0) + (k.extraAmmoPrimary ?? 0),
+      dr: armorDr,
     };
-  }, [soldier, armor, primary, kit]);
+  }, [soldier, current.armor, primary, kit]);
 
   function set(partial: Partial<Loadout>) {
     setLoadout(soldierId, { ...current, ...partial });
@@ -125,6 +129,7 @@ export default function LoadoutScreen() {
             <p>{soldier.class}</p>
             <div className="row" style={{ gap: 'var(--s-4)', color: 'var(--fg-1)', fontSize: 14, flexWrap: 'wrap' }}>
               <span>HP {derived.hpMax}</span>
+              <span>DR {derived.dr}</span>
               <span>Aim {derived.aim >= 0 ? '+' : ''}{derived.aim}</span>
               <span>Move {derived.mobility}</span>
               <span>Ammo {derived.ammoPrimary}</span>
@@ -191,18 +196,15 @@ export default function LoadoutScreen() {
         )}
 
         {tab === 'armor' && (
-          <Section title="Armor">
-            <Grid>
-              {allArmor().map((a) => (
-                <Card key={a.id} selected={current.armorId === a.id} onClick={() => set({ armorId: a.id })}
-                  title={a.name} tag={a.tag}
-                  lines={[
-                    `+${a.hpBonus} HP · ${a.dr} DR · ${a.mobility >= 0 ? '+' : ''}${a.mobility} move`,
-                    a.flavor,
-                  ]} />
-              ))}
-            </Grid>
-          </Section>
+          <ArmorTab
+            armor={current.armor}
+            onSet={(slot, pieceId) => {
+              const next = { ...current.armor };
+              if (pieceId === null) delete next[slot];
+              else next[slot] = pieceId;
+              set({ armor: next });
+            }}
+          />
         )}
 
         {tab === 'kit' && (
@@ -390,6 +392,60 @@ function ArmorySlot({ label, weapon, size }:
       <div style={{ fontSize: 10, color: 'var(--fg-2)', textTransform: 'uppercase', letterSpacing: 0.6 }}>{label}</div>
       <div style={{ fontSize: 12, color: 'var(--fg-1)' }}>{weapon.name}</div>
     </div>
+  );
+}
+
+/**
+ * Per-slot armor tab. Renders one Section per ArmorSlot; each section
+ * lists that slot's available pieces + a "None" unequip card. A single
+ * Loadout.armor map carries the selection.
+ */
+const ARMOR_SLOT_ORDER: ArmorSlot[] = ['helmet', 'shoulders', 'chest', 'legs', 'gauntlets'];
+const ARMOR_SLOT_LABEL: Record<ArmorSlot, string> = {
+  helmet: 'Helmet', shoulders: 'Shoulders', chest: 'Chest',
+  legs: 'Legs', gauntlets: 'Gauntlets',
+};
+
+function ArmorTab({ armor, onSet }: {
+  armor: Loadout['armor'];
+  onSet: (slot: ArmorSlot, pieceId: string | null) => void;
+}) {
+  return (
+    <>
+      {ARMOR_SLOT_ORDER.map((slot) => {
+        const pieces = allArmorPieces(slot);
+        if (pieces.length === 0) return null;
+        const currentId = armor[slot] ?? null;
+        const currentPiece = currentId ? pieces.find((p) => p.id === currentId) : null;
+        const title = `${ARMOR_SLOT_LABEL[slot]}${currentPiece ? ` · ${currentPiece.name}` : ''}`;
+        return (
+          <Section key={slot} title={title}>
+            <Grid>
+              <Card
+                selected={currentId === null}
+                onClick={() => onSet(slot, null)}
+                title="(None)"
+                tag="mundane"
+                lines={['Leave this slot empty.', 'No stats or visual.']}
+              />
+              {pieces.map((p) => (
+                <Card
+                  key={p.id}
+                  selected={currentId === p.id}
+                  onClick={() => onSet(slot, p.id)}
+                  title={p.name}
+                  tag={p.tag}
+                  lines={[
+                    `${p.hpBonus >= 0 ? '+' : ''}${p.hpBonus} HP · ${p.dr} DR · ${p.mobility >= 0 ? '+' : ''}${p.mobility} move`,
+                    p.flavor,
+                  ]}
+                />
+              ))}
+            </Grid>
+          </Section>
+        );
+      })}
+    </>
   );
 }
 

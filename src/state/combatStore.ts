@@ -5,7 +5,8 @@ import type {
 } from '../game/types';
 import { RUINED_MARKET, pickRandomMap } from '../game/maps';
 import {
-  useContent, getSoldierTemplate, getEnemyTemplate, getWeapon, getArmor,
+  useContent, getSoldierTemplate, getEnemyTemplate, getWeapon,
+  aggregateArmorStat,
   getKit, resolveSpawn, getAbility,
 } from '../content/registry';
 import { modsFromIds, totalMobilityDeltaFromMods } from '../game/engine/loadout';
@@ -204,11 +205,12 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
   const loadout = store.loadouts[templateId] ?? t.defaultLoadout;
   const primary = getWeapon(loadout.primaryId);
   const sidearm = getWeapon(loadout.sidearmId);
-  const armor = getArmor(loadout.armorId);
+  const armorHp = aggregateArmorStat(loadout.armor, 'hpBonus');
+  const armorMobility = aggregateArmorStat(loadout.armor, 'mobility');
   const kit = loadout.kitId ? getKit(loadout.kitId) : null;
   const k = kit?.effects ?? {};
   // Kit folds into spawn-time stats — no runtime hooks needed in phase 1.
-  const hpMax = Math.max(1, t.hpMax + armor.hpBonus + (k.hpBonus ?? 0));
+  const hpMax = Math.max(1, t.hpMax + armorHp + (k.hpBonus ?? 0));
   const utilityChargesMax = loadout.utilityIds.map((id) =>
     (useContent().utilities[id]?.charges ?? 0) + (k.extraUtilityCharges ?? 0)
   );
@@ -230,7 +232,7 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
     hp: startHp,
     hpMax,
     aim: t.aim + (k.aimBonus ?? 0),
-    mobility: Math.max(2, t.mobility + armor.mobility + (k.mobilityBonus ?? 0) + modMobility),
+    mobility: Math.max(2, t.mobility + armorMobility + (k.mobilityBonus ?? 0) + modMobility),
     ap: 2, apMax: 2,
     loadout,
     ammo: carry?.ammoPrimary !== undefined ? Math.min(primaryCap, carry.ammoPrimary) : primaryCap,
@@ -327,9 +329,15 @@ function mkVipUnit(pos: Vec2): Unit {
   };
 }
 
+/**
+ * Aggregate damage reduction across every equipped armor piece. Called
+ * per-shot from resolveShot / previewShot, so it re-reads content on
+ * every call — cheap (bounded map iteration) and keeps the Unit struct
+ * free of derived state that would go stale after tryRefit.
+ */
 function unitArmor(u: Unit): number {
   if (!u.loadout) return 0;
-  return useContent().armor[u.loadout.armorId]?.dr ?? 0;
+  return aggregateArmorStat(u.loadout.armor, 'dr');
 }
 
 function unitPrimary(u: Unit) {

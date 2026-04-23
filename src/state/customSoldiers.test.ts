@@ -22,7 +22,11 @@ function mkCustom(id: string, name: string): SoldierTemplate {
       primaryMods: {}, sidearmMods: {},
       primaryId: 'runeweave_carbine',
       sidearmId: 'sigilshot_pistol',
-      armorId: 'mithril_vest',
+      armor: {
+        chest: 'mithril_vest_chest',
+        gauntlets: 'mithril_vest_gauntlets',
+        legs: 'mithril_vest_legs',
+      },
       utilityIds: ['embercore_orb'],
       kitId: null,
     },
@@ -61,7 +65,11 @@ describe('customSoldiers: lookup override + lifecycle', () => {
     const loadout = useGameStore.getState().loadouts['custom_test_2'];
     expect(loadout).toBeDefined();
     expect(loadout.primaryId).toBe('runeweave_carbine');
-    expect(loadout.armorId).toBe('mithril_vest');
+    expect(loadout.armor).toEqual({
+      chest: 'mithril_vest_chest',
+      gauntlets: 'mithril_vest_gauntlets',
+      legs: 'mithril_vest_legs',
+    });
   });
 
   it('removeCustomSoldier drops the template + its loadout + rebinds roster slots to defaults', () => {

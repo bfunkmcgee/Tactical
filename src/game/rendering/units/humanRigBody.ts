@@ -227,40 +227,65 @@ export function buildHumanRigBody(
   }
 
   if (loadout) {
-    const armor = deps.armorOf(loadout.armorId);
-    const vis = armor?.visual;
-    if (vis) {
-      // torsoOverlay inserts AFTER 'head' rather than after 'torso' so the
-      // overlay draws on top of the base torso + base head. This matters
-      // because rig part SVGs (especially placeholder art) render a face
-      // on the head part — inserting after 'torso' would leave that face
-      // painted on top of the armor. Real torso-only armor SVGs can carry
-      // transparent pixels at the head region; authored-correctly art
-      // still shows the rig head underneath. Full-body armor overlays
-      // (like the current bespoke-reuse in 5b) are opaque at the head
-      // region and fully occlude the placeholder face.
-      if (vis.torsoOverlay) addBodyAlignedOverlay(vis.torsoOverlay, vis.tint, 'head');
-      if (vis.legsOverlay) addBodyAlignedOverlay(vis.legsOverlay, vis.tint, 'legs');
-      if (vis.gauntletsBack) addBodyAlignedOverlay(vis.gauntletsBack, vis.tint, 'arms-back');
-      if (vis.helmet) addSlotOverlay(headSlot, vis.helmet, vis.tint);
-      if (vis.shoulderPads) {
-        addSlotOverlay(shoulderSlotL, vis.shoulderPads, vis.tint);
-        addSlotOverlay(shoulderSlotR, vis.shoulderPads, vis.tint, true);
-      }
-      // gauntletsFront composites onto the arms-front sprite — but
-      // arms-front lives inside the weapon wrap (set up by the caller).
-      // We don't have the weapon wrap here; instead, stash the gauntlet
-      // sprite as a child of arms-front itself via a local position.
-      if (vis.gauntletsFront && parts['arms-front']) {
-        const tex = cache.get(`overlay:${vis.gauntletsFront}`);
-        if (tex) {
-          const s = new Sprite(tex);
-          s.anchor.set(0, 0);
-          s.scale.set(1);
-          s.position.set(0, 0);
-          if (vis.tint !== undefined) s.tint = vis.tint;
-          parts['arms-front'].addChild(s);
-          tintTargets.push(s);
+    // Walk every equipped armor piece; each piece declares overlays keyed
+    // on BodySlot. The dispatch table below routes a BodySlot to the right
+    // host (body-aligned vs slot-mounted) and keeps hard-coded hacks like
+    // "insert torso after head" contained in one place. Unknown slots
+    // (e.g. weapon-*) silently skip — those are consumed by the weapon
+    // renderer in UnitNode, not the body pass.
+    for (const armorId of Object.values(loadout.armor)) {
+      if (!armorId) continue;
+      const armor = deps.armorOf(armorId);
+      const overlays = armor?.visual?.overlays;
+      if (!overlays) continue;
+      for (const [bodySlot, layer] of Object.entries(overlays)) {
+        if (!layer) continue;
+        switch (bodySlot) {
+          case 'torso':
+            // Insert AFTER 'head' (not after 'torso') so overlay sits on
+            // top of the base face paint. Documented placeholder-art
+            // limitation — real authored torso overlays should clear the
+            // head region so the rig face shows through.
+            addBodyAlignedOverlay(layer.svg, layer.tint, 'head');
+            break;
+          case 'legs':
+            addBodyAlignedOverlay(layer.svg, layer.tint, 'legs');
+            break;
+          case 'gauntlet-back':
+            addBodyAlignedOverlay(layer.svg, layer.tint, 'arms-back');
+            break;
+          case 'helmet':
+            addSlotOverlay(headSlot, layer.svg, layer.tint);
+            break;
+          case 'shoulder-l':
+            addSlotOverlay(shoulderSlotL, layer.svg, layer.tint);
+            break;
+          case 'shoulder-r':
+            addSlotOverlay(shoulderSlotR, layer.svg, layer.tint, true);
+            break;
+          case 'gauntlet-front': {
+            // gauntlet-front composites onto the arms-front sprite, which
+            // lives inside the weapon wrap (set up by the caller). Same
+            // workaround as pre-6a — stash as a child of arms-front at
+            // local (0,0).
+            const frontSprite = parts['arms-front'];
+            if (!frontSprite) break;
+            const tex = cache.get(`overlay:${layer.svg}`);
+            if (!tex) break;
+            const s = new Sprite(tex);
+            s.anchor.set(0, 0);
+            s.scale.set(1);
+            s.position.set(0, 0);
+            if (layer.tint !== undefined) s.tint = layer.tint;
+            frontSprite.addChild(s);
+            tintTargets.push(s);
+            break;
+          }
+          case 'back':
+            addSlotOverlay(backSlot, layer.svg, layer.tint);
+            break;
+          // weapon-*, belt, boot-l, boot-r, face — consumed in later phases
+          // or by the weapon renderer; safe no-op here.
         }
       }
     }

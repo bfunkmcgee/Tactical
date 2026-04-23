@@ -9,7 +9,7 @@ import type { SoldierTemplate } from '../../../game/types';
  *
  *   1. appearance.baseOutfit + hair + palette — what they look like
  *      without armor: civvies, hair, skin tone, eyes.
- *   2. defaultLoadout.armorId → Armor.visual — what their class-canonical
+ *   2. defaultLoadout.armor → per-slot Armor pieces — what their class-canonical
  *      armor looks like bolted on top. See armor.ts for the overlay SVGs
  *      (they re-use the existing per-class torso/arms files).
  *
@@ -28,7 +28,11 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       primaryMods: {}, sidearmMods: {},
       primaryId: 'runeweave_carbine',
       sidearmId: 'sigilshot_pistol',
-      armorId: 'mithril_vest',
+      armor: {
+        chest: 'mithril_vest_chest',
+        gauntlets: 'mithril_vest_gauntlets',
+        legs: 'mithril_vest_legs',
+      },
       utilityIds: ['embercore_orb', 'phoenix_draught'],
       kitId: 'salvagers_webbing',
     },
@@ -59,7 +63,11 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       primaryMods: {}, sidearmMods: {},
       primaryId: 'dragonmaw_autocannon',
       sidearmId: 'thornlock_revolver',
-      armorId: 'warded_plate',
+      armor: {
+        chest: 'warded_plate_chest',
+        gauntlets: 'warded_plate_gauntlets',
+        legs: 'warded_plate_legs',
+      },
       utilityIds: ['mistvial', 'phoenix_draught'],
       kitId: 'warden_plate',
     },
@@ -89,7 +97,11 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       primaryMods: {}, sidearmMods: {},
       primaryId: 'arclight_marksman',
       sidearmId: 'sigilshot_pistol',
-      armorId: 'swiftstep_greaves',
+      armor: {
+        chest: 'swiftstep_greaves_chest',
+        gauntlets: 'swiftstep_greaves_gauntlets',
+        legs: 'swiftstep_greaves_legs',
+      },
       utilityIds: ['faewisp_flare', 'mistvial'],
       kitId: 'spotters_lens',
     },
@@ -119,7 +131,11 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       primaryMods: {}, sidearmMods: {},
       primaryId: 'hexbore_scattergun',
       sidearmId: 'thornlock_revolver',
-      armorId: 'oakheart_helm',
+      armor: {
+        chest: 'oakheart_helm_chest',
+        gauntlets: 'oakheart_helm_gauntlets',
+        legs: 'oakheart_helm_legs',
+      },
       utilityIds: ['embercore_orb', 'embercore_orb'],
       kitId: 'alchemists_satchel',
     },

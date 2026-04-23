@@ -69,43 +69,59 @@ export type Weapon = {
 };
 
 /**
- * Optional visual overrides layered onto the rig by equipping this armor.
- * Consulted only for rig-composed units (Unit.appearance set); the legacy
- * bespoke-SVG path ignores these fields. Every entry is optional — a
- * "jacket" armor might only set torsoOverlay, while full plate sets
- * torso + helmet + shoulders + gauntlets + legs.
+ * Anatomical vocabulary for overlay placement. Every equipment Visual
+ * targets one or more of these slots. Slot-mounted unless marked (B),
+ * which means body-aligned in the 96x128 rig viewBox.
  */
-export interface ArmorVisual {
-  /** Drawn on top of the base torso (chest plate, harness, under-plate tabard). */
-  torsoOverlay?: string;
-  /** Drawn at the head joint — helmets, hoods, goggles. Occlusion of base
-   *  hair is the artist's responsibility via SVG opacity. */
-  helmet?: string;
-  /** Shoulder-mounted overlay. Authored centered on a single shoulder
-   *  anchor; the renderer instantiates two copies (L unscaled, R mirrored). */
-  shoulderPads?: string;
-  /** Gauntlets split front/back to match the arms parts. */
-  gauntletsFront?: string;
-  gauntletsBack?: string;
-  /** Greaves, boots, combat trousers — layered on top of base legs. */
-  legsOverlay?: string;
-  /** Optional multiplicative tint applied across every overlay AND the
-   *  base torso + legs (but NOT the skin-tinted head + arms). Lets one
-   *  overlay SVG produce red/blue/black variants. */
+export type BodySlot =
+  | 'helmet'
+  | 'shoulder-l' | 'shoulder-r'
+  | 'torso'              // (B)
+  | 'back'               // neck joint; cloaks, packs
+  | 'legs'               // (B)
+  | 'gauntlet-front' | 'gauntlet-back'
+  | 'belt'               // waist joint
+  | 'boot-l' | 'boot-r'  // foot joints
+  | 'weapon-optic' | 'weapon-muzzle' | 'weapon-mag' | 'weapon-stock'
+  | 'face';              // above helmet (goggles / masks)
+
+export interface VisualLayer {
+  /** SVG asset path. */
+  svg: string;
+  /** Multiplicative tint. Undefined = identity. */
   tint?: number;
 }
+
+/**
+ * Uniform visual shape shared by ArmorPiece, Clothing, Kit, WeaponMod, etc.
+ * An equipment item declares which BodySlots it draws into via the overlays
+ * map. Empty / missing overlays = invisible equipment (allowed).
+ */
+export interface Visual {
+  overlays?: Partial<Record<BodySlot, VisualLayer>>;
+}
+
+/**
+ * Armor equip slots — the subset of BodySlot that Loadout.armor maps
+ * pieces to. A single ArmorPiece fills one slot and can render into
+ * multiple BodySlot overlays (e.g. a 'chest' piece may draw to 'torso'
+ * AND 'back' BodySlots).
+ */
+export type ArmorSlot =
+  | 'helmet' | 'shoulders' | 'chest' | 'legs' | 'gauntlets';
 
 export type Armor = {
   id: string;
   name: string;
   flavor: string;
+  /** Which loadout slot this piece fills — drives LoadoutScreen grouping. */
+  slot: ArmorSlot;
   hpBonus: number;
   dr: number;         // flat damage reduction
   mobility: number;   // +/- to soldier mobility
   tag: ElementTag;
-  /** Optional rig overlays. Rig-composed units consume these at spawn +
-   *  on loadout-change; bespoke-SVG units ignore them. */
-  visual?: ArmorVisual;
+  /** Rig overlays contributed by this piece. Empty = stat-only / invisible. */
+  visual?: Visual;
 };
 
 /**
@@ -189,7 +205,9 @@ export type Loadout = {
   primaryMods: Partial<Record<ModSlot, string>>;
   sidearmId: string;
   sidearmMods: Partial<Record<ModSlot, string>>;
-  armorId: string;
+  /** Per-slot armor piece ids. Any slot may be unset; stats + visuals
+   *  aggregate across the equipped pieces. */
+  armor: Partial<Record<ArmorSlot, string>>;
   utilityIds: string[]; // length up to 2
   kitId: string | null; // optional passive equipment
   /** Cosmetic clothing layer ids. Draw order = array order. Capped at 3

@@ -100,11 +100,11 @@ export default function RigPreview({
       }
       // Armor visual overlays + clothing (so preview can reflect a loadout).
       for (const a of Object.values(pack.armor)) {
-        const v = a.visual;
-        if (!v) continue;
-        const overlay = (u?: string) => u && pushLoad(`overlay:${u}`, u);
-        overlay(v.torsoOverlay); overlay(v.helmet); overlay(v.shoulderPads);
-        overlay(v.gauntletsFront); overlay(v.gauntletsBack); overlay(v.legsOverlay);
+        const overlays = a.visual?.overlays;
+        if (!overlays) continue;
+        for (const layer of Object.values(overlays)) {
+          if (layer) pushLoad(`overlay:${layer.svg}`, layer.svg);
+        }
       }
       if (pack.clothing) {
         for (const c of Object.values(pack.clothing)) {

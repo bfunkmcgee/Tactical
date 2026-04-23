@@ -17,7 +17,10 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       primaryMods: { optic: 'optic_targeting_computer' },
       sidearmId: 'service_pistol',
       sidearmMods: {},
-      armorId: 'eva_plate',
+      armor: {
+        chest: 'eva_plate_chest',
+        legs: 'eva_plate_legs',
+      },
       utilityIds: ['plasma_charge', 'stim_patch'],
       kitId: 'hardpoint_webbing',
     },
@@ -33,7 +36,9 @@ export const SOLDIERS: Record<string, SoldierTemplate> = {
       primaryMods: { stock: 'stock_stabilizer' },
       sidearmId: 'shock_baton',
       sidearmMods: {},
-      armorId: 'suit_lining',
+      armor: {
+        chest: 'suit_lining_chest',
+      },
       utilityIds: ['stim_patch'],
       kitId: 'marksman_rig',
     },

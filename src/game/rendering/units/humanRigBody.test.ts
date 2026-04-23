@@ -35,7 +35,7 @@ function mkLoadout(partial: Partial<Loadout>): Loadout {
     primaryMods: {},
     sidearmId: 'pistol',
     sidearmMods: {},
-    armorId: 'carapace',
+    armor: { chest: 'carapace' },
     utilityIds: [],
     kitId: null,
     ...partial,
@@ -65,7 +65,7 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     expect(comp.tintTargets.length).toBe(5);
   });
 
-  it('armor.visual.torsoOverlay + helmet + shoulderPads attach to their slots + tintTargets', () => {
+  it('armor piece overlays (torso + helmet + shoulders) attach to their slots + tintTargets', () => {
     const cache = new Map<string, Texture>();
     // Populate cache so overlays actually attach (missing textures no-op).
     const dummyTex = {} as unknown as Texture;
@@ -73,28 +73,40 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     cache.set('overlay:/fake/helmet.svg', dummyTex);
     cache.set('overlay:/fake/shoulder_pads.svg', dummyTex);
 
-    const armor: Armor = {
-      id: 'carapace',
-      name: 'Scout Carapace',
-      flavor: 'Light plated vest.',
-      hpBonus: 2,
-      dr: 1,
-      mobility: 0,
-      tag: 'mundane',
-      visual: {
-        torsoOverlay: '/fake/torso_overlay.svg',
-        helmet: '/fake/helmet.svg',
-        shoulderPads: '/fake/shoulder_pads.svg',
-        tint: 0x6a8a4a,
-      },
+    const chest: Armor = {
+      id: 'carapace_chest', name: 'Scout Carapace', flavor: 'Light plated vest.',
+      slot: 'chest', hpBonus: 2, dr: 1, mobility: 0, tag: 'mundane',
+      visual: { overlays: {
+        torso: { svg: '/fake/torso_overlay.svg', tint: 0x6a8a4a },
+      }},
+    };
+    const helm: Armor = {
+      id: 'carapace_helm', name: 'Scout Helmet', flavor: 'Matching helm.',
+      slot: 'helmet', hpBonus: 0, dr: 0, mobility: 0, tag: 'mundane',
+      visual: { overlays: {
+        helmet: { svg: '/fake/helmet.svg', tint: 0x6a8a4a },
+      }},
+    };
+    const shoulders: Armor = {
+      id: 'carapace_shoulders', name: 'Scout Pauldrons', flavor: 'Matching pauldrons.',
+      slot: 'shoulders', hpBonus: 0, dr: 0, mobility: 0, tag: 'mundane',
+      visual: { overlays: {
+        'shoulder-l': { svg: '/fake/shoulder_pads.svg', tint: 0x6a8a4a },
+        'shoulder-r': { svg: '/fake/shoulder_pads.svg', tint: 0x6a8a4a },
+      }},
+    };
+    const byId: Record<string, Armor> = {
+      carapace_chest: chest, carapace_helm: helm, carapace_shoulders: shoulders,
     };
 
     const comp = buildHumanRigBody(
       HUMAN_RIG,
       mkAppearance(),
-      mkLoadout({ armorId: 'carapace' }),
+      mkLoadout({ armor: {
+        chest: 'carapace_chest', helmet: 'carapace_helm', shoulders: 'carapace_shoulders',
+      }}),
       cache,
-      { armorOf: (id) => (id === 'carapace' ? armor : undefined), clothingOf: () => undefined },
+      { armorOf: (id) => byId[id], clothingOf: () => undefined },
     );
 
     // Helmet lands in headSlot.
@@ -104,12 +116,56 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     expect(comp.shoulderSlotR.children.length).toBe(1);
     // Torso overlay is body-aligned (lives in root, not a slot). Its
     // presence is visible in the tintTargets growing past 5 base parts.
-    // 5 base + 3 overlays (torso + helmet + 2 shoulders) = 9.
+    // 5 base + 4 overlays (torso + helmet + 2 shoulders) = 9.
     expect(comp.tintTargets.length).toBe(9);
     // Armor tint applied on each overlay.
     for (const sprite of comp.tintTargets.slice(5)) {
       expect(sprite.tint).toBe(0x6a8a4a);
     }
+  });
+
+  it('pieces from different ArmorSlots compose additively onto the rig', () => {
+    const cache = new Map<string, Texture>();
+    const dummyTex = {} as unknown as Texture;
+    cache.set('overlay:/fake/ranger_torso.svg', dummyTex);
+    cache.set('overlay:/fake/heavy_helm.svg', dummyTex);
+    cache.set('overlay:/fake/heavy_legs.svg', dummyTex);
+
+    // Mix-and-match pieces from two "sets".
+    const chest: Armor = {
+      id: 'ranger_chest', name: 'Ranger Chest', flavor: '',
+      slot: 'chest', hpBonus: 2, dr: 1, mobility: 0, tag: 'mundane',
+      visual: { overlays: { torso: { svg: '/fake/ranger_torso.svg' } } },
+    };
+    const helm: Armor = {
+      id: 'heavy_helm', name: 'Heavy Helm', flavor: '',
+      slot: 'helmet', hpBonus: 1, dr: 0, mobility: 0, tag: 'mundane',
+      visual: { overlays: { helmet: { svg: '/fake/heavy_helm.svg' } } },
+    };
+    const legs: Armor = {
+      id: 'heavy_legs', name: 'Heavy Legs', flavor: '',
+      slot: 'legs', hpBonus: 1, dr: 1, mobility: -1, tag: 'mundane',
+      visual: { overlays: { legs: { svg: '/fake/heavy_legs.svg' } } },
+    };
+    const byId: Record<string, Armor> = {
+      ranger_chest: chest, heavy_helm: helm, heavy_legs: legs,
+    };
+
+    const comp = buildHumanRigBody(
+      HUMAN_RIG,
+      mkAppearance(),
+      mkLoadout({ armor: {
+        chest: 'ranger_chest', helmet: 'heavy_helm', legs: 'heavy_legs',
+      }}),
+      cache,
+      { armorOf: (id) => byId[id], clothingOf: () => undefined },
+    );
+
+    // Helmet slot populated.
+    expect(comp.headSlot.children.length).toBe(1);
+    // Both body-aligned overlays (torso + legs) in tintTargets past the
+    // 5 base parts. 5 base + 3 = 8.
+    expect(comp.tintTargets.length).toBe(8);
   });
 
   it('clothing cloak attaches to backSlot, tabard lands body-aligned', () => {

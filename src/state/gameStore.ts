@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Loadout, SoldierTemplate } from '../game/types';
+import type { ArmorSlot, Loadout, SoldierTemplate } from '../game/types';
 import {
   useContent, allSoldierTemplates, onPackChange, registerCustomSoldierLookup,
 } from '../content/registry';
@@ -15,23 +15,98 @@ type Screen =
 type SquadLoadouts = Record<string, Loadout>;
 type CustomSoldiers = Record<string, SoldierTemplate>;
 
-/** Per-pack localStorage key — keeps Eagle Corps loadouts from leaking into Void-Watch and vice versa. */
-const lsKey = (packId: string) => `tactical.${packId}.squadLoadouts.v1`;
+/** Per-pack localStorage key. `v2` (Phase 6a) carries per-slot `armor` maps;
+ *  `v1` loadouts are migrated on first load (see migrateV1). */
+const lsKey = (packId: string) => `tactical.${packId}.squadLoadouts.v2`;
+/** Legacy v1 key — read-only; used by the v1→v2 migration at load. */
+const lsKeyV1 = (packId: string) => `tactical.${packId}.squadLoadouts.v1`;
 /** Separate key for custom-created soldiers (Phase 5d). Per-pack scoped
  *  the same way loadouts are. */
 const lsCustomKey = (packId: string) => `tactical.${packId}.customSoldiers.v1`;
 
 /**
- * Older saved loadouts (pre-Kit / pre-mods) lack newer fields. Normalise on
- * load so the runtime always sees a complete Loadout shape.
+ * Phase 6a decomposed monolithic Armor entries into per-slot pieces. v1
+ * loadouts carry a single `armorId: 'warded_plate'`; this table maps
+ * each legacy monolith id to the per-slot pieces that replaced it.
+ *
+ * Kept in this file (not pulled from pack content) so migration stays
+ * deterministic — a pack rename downstream shouldn't silently drop
+ * previously-equipped pieces. Unknown ids fall back to an empty armor
+ * map (the template's defaultLoadout will repopulate on next reset).
  */
-function normalise(loadout: Partial<Loadout>): Loadout {
+const V1_TO_V2_ARMOR: Record<string, Partial<Record<ArmorSlot, string>>> = {
+  // Eagle Corps class-canonical sets.
+  warded_plate: {
+    chest: 'warded_plate_chest',
+    gauntlets: 'warded_plate_gauntlets',
+    legs: 'warded_plate_legs',
+  },
+  mithril_vest: {
+    chest: 'mithril_vest_chest',
+    gauntlets: 'mithril_vest_gauntlets',
+    legs: 'mithril_vest_legs',
+  },
+  swiftstep_greaves: {
+    chest: 'swiftstep_greaves_chest',
+    gauntlets: 'swiftstep_greaves_gauntlets',
+    legs: 'swiftstep_greaves_legs',
+  },
+  oakheart_helm: {
+    chest: 'oakheart_helm_chest',
+    gauntlets: 'oakheart_helm_gauntlets',
+    legs: 'oakheart_helm_legs',
+  },
+  // Eagle Corps basic tier.
+  field_harness: {
+    chest: 'field_harness_chest',
+    legs: 'field_harness_legs',
+  },
+  combat_plate: {
+    helmet: 'combat_plate_helmet',
+    shoulders: 'combat_plate_shoulders',
+    chest: 'combat_plate_chest',
+    legs: 'combat_plate_legs',
+    gauntlets: 'combat_plate_gauntlets',
+  },
+  assault_plate: {
+    helmet: 'assault_plate_helmet',
+    shoulders: 'assault_plate_shoulders',
+    chest: 'assault_plate_chest',
+    legs: 'assault_plate_legs',
+    gauntlets: 'assault_plate_gauntlets',
+  },
+  // Void-Watch.
+  suit_lining: { chest: 'suit_lining_chest' },
+  eva_plate:   { chest: 'eva_plate_chest', legs: 'eva_plate_legs' },
+};
+
+/** v1 loadout shape — pre-6a. Keep typed here so migrateV1 is explicit. */
+type LoadoutV1 = Omit<Loadout, 'armor'> & { armorId?: string };
+
+/**
+ * v1 → v2 armor migration. Looks up `armorId` in V1_TO_V2_ARMOR and
+ * returns the per-slot armor map. Unknown legacy ids yield `{}` — the
+ * next loadout edit (or a reset) will repopulate.
+ */
+function migrateV1Armor(armorId: string | undefined): Partial<Record<ArmorSlot, string>> {
+  if (!armorId) return {};
+  return V1_TO_V2_ARMOR[armorId] ?? {};
+}
+
+/**
+ * Older saved loadouts (pre-Kit / pre-mods / pre-6a) lack newer fields.
+ * Normalise on load so the runtime always sees a complete Loadout shape.
+ *
+ * v1 `armorId` is auto-migrated to the v2 `armor` map via migrateV1Armor.
+ */
+function normalise(loadout: Partial<LoadoutV1> & Partial<Loadout>): Loadout {
+  const armor = loadout.armor ?? migrateV1Armor(loadout.armorId);
   return {
     primaryId: loadout.primaryId!,
     primaryMods: loadout.primaryMods ?? {},
     sidearmId: loadout.sidearmId!,
     sidearmMods: loadout.sidearmMods ?? {},
-    armorId: loadout.armorId!,
+    armor,
     utilityIds: loadout.utilityIds ?? [],
     kitId: loadout.kitId ?? null,
     clothingIds: loadout.clothingIds,
@@ -45,9 +120,10 @@ function defaultsForActivePack(): SquadLoadouts {
 }
 
 function loadPersisted(): SquadLoadouts {
-  const key = lsKey(useContent().id);
+  const packId = useContent().id;
+  // 1. Try v2 first (current shape).
   try {
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(lsKey(packId));
     if (raw) {
       const parsed = JSON.parse(raw) as Record<string, Partial<Loadout>>;
       const out: SquadLoadouts = {};
@@ -55,6 +131,21 @@ function loadPersisted(): SquadLoadouts {
       return out;
     }
   } catch {}
+  // 2. Fall back to v1 and migrate. Writes v2 + drops v1 on success.
+  try {
+    const rawV1 = localStorage.getItem(lsKeyV1(packId));
+    if (rawV1) {
+      const parsedV1 = JSON.parse(rawV1) as Record<string, Partial<LoadoutV1>>;
+      const out: SquadLoadouts = {};
+      for (const id in parsedV1) out[id] = normalise(parsedV1[id]);
+      try {
+        localStorage.setItem(lsKey(packId), JSON.stringify(out));
+        localStorage.removeItem(lsKeyV1(packId));
+      } catch {}
+      return out;
+    }
+  } catch {}
+  // 3. Nothing persisted — use pack defaults.
   return defaultsForActivePack();
 }
 

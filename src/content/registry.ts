@@ -1,6 +1,6 @@
 import type {
-  Armor, Clothing, EnemyTemplate, Kit, ModSlot, SoldierTemplate, Utility,
-  Weapon, WeaponClass, WeaponMod,
+  Armor, ArmorSlot, Clothing, EnemyTemplate, Kit, Loadout, ModSlot,
+  SoldierTemplate, Utility, Weapon, WeaponClass, WeaponMod,
 } from '../game/types';
 import type { AbilityDef } from '../game/engine/abilities';
 import type { ContentPack } from './types';
@@ -84,6 +84,34 @@ export const allWeapons = (): Weapon[] => Object.values(active.weapons);
 export const primaryWeapons = (): Weapon[] => allWeapons().filter((w) => w.slot === 'primary');
 export const sidearms = (): Weapon[] => allWeapons().filter((w) => w.slot === 'sidearm');
 export const allArmor = (): Armor[] => Object.values(active.armor);
+/** Pieces filtered to one ArmorSlot — feeds the LoadoutScreen's per-slot pickers. */
+export const allArmorPieces = (slot?: ArmorSlot): Armor[] =>
+  slot == null ? allArmor() : allArmor().filter((a) => a.slot === slot);
+
+/**
+ * Iterate every equipped armor piece in a Loadout. Safe against stale ids
+ * (skips pieces whose id isn't in the current pack — mid-run pack swaps
+ * can leave orphan refs until the next loadout edit).
+ */
+export function equippedArmorPieces(armor: Loadout['armor']): Armor[] {
+  const pieces: Armor[] = [];
+  for (const id of Object.values(armor)) {
+    if (!id) continue;
+    const p = active.armor[id];
+    if (p) pieces.push(p);
+  }
+  return pieces;
+}
+
+/** Sum of a numeric Armor field across every equipped piece. */
+export function aggregateArmorStat(
+  armor: Loadout['armor'],
+  field: 'hpBonus' | 'dr' | 'mobility',
+): number {
+  let total = 0;
+  for (const p of equippedArmorPieces(armor)) total += p[field];
+  return total;
+}
 export const allUtilities = (): Utility[] => Object.values(active.utilities);
 export const allKits = (): Kit[] => Object.values(active.kits);
 export const allMods = (): WeaponMod[] => Object.values(active.mods);
