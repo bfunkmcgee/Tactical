@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Transparent placeholder for rig parts that should not render. Used by
+  enemy templates whose bespoke per-part art covers multiple rig slots
+  in a single SVG — the slots NOT covered by that art point here to
+  silence the shared rig fallback.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128"></svg>

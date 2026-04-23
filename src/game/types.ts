@@ -266,17 +266,28 @@ export interface HumanAppearance {
   /** Multiplicative tint applied to exposed-skin patches
    *  (paths authored with class="skin") on head + arms. */
   skinTone: number;
-  /** Id into pack.hairStyles. */
-  hairStyle: string;
-  hairColor: number;
-  eyeColor: number;
-  /** Id into pack.baseOutfits — clothes worn when no armor is equipped. */
-  baseOutfit: string;
+  /**
+   * Id into pack.hairStyles. Optional — enemies with bespoke per-part
+   * art typically skip hair entirely (their head SVG draws whatever
+   * headgear / silhouette they need, so a rig-mounted hair overlay
+   * isn't wanted). Unresolvable ids silently skip the hair pass.
+   */
+  hairStyle?: string;
+  /** Hair tint. Unused when hairStyle is undefined. */
+  hairColor?: number;
+  /** Iris color (future use — not currently rendered as an overlay). */
+  eyeColor?: number;
+  /**
+   * Id into pack.baseOutfits — clothes worn when no armor is equipped.
+   * Optional for enemy templates whose torso/legs art already includes
+   * clothing. Unresolvable ids silently skip the base-outfit overlays.
+   */
+  baseOutfit?: string;
   /**
    * Optional per-part SVG overrides. When a rig part id appears here,
    * the renderer uses the URL instead of the shared rig-part default.
-   * Lets signature characters (Eagle Corps heroes, future hand-authored
-   * enemies) ship distinct body art without creating a whole new rig.
+   * Lets signature characters (Eagle Corps heroes, rig-composed enemies)
+   * ship distinct body art without creating a whole new rig.
    *
    * Keyed by `RigPartId` — 'legs' | 'torso' | 'arms-back' | 'head' |
    * 'arms-front'. Types are stringly here to avoid an engine import

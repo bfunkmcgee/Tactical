@@ -354,51 +354,12 @@ function createUnitNode(u: Unit): UnitNode {
       }
     }
   } else {
-  const bodyTex = spriteCache.get(`${u.templateId}:body`);
-  const armsTex = spriteCache.get(`${u.templateId}:arms`);
-  if (bodyTex) {
-    sprite = new Sprite(bodyTex);
-    sprite.anchor.set(0.5, 1);
-    sprite.scale.set(0.42);
-    sprite.position.set(0, 4);
-    body.addChild(sprite);
-    spriteTop = -50;
-
-    // Sun-glint rim: a short gold stroke on the upper-right of the body
-    // (roughly helmet / pauldron height). Baked into the body container
-    // so it inherits walk-lean / fire-pitch rotation.
-    const glint = new Graphics();
-    glint.moveTo(5, -42);
-    glint.quadraticCurveTo(9, -40, 7, -36);
-    glint.stroke({ color: 0xe8c488, width: 1.2, alpha: 0.75 });
-    body.addChild(glint);
-
-    // Weapon rides on top of the body. We use a wrap whose origin sits at the
-    // character's grip — rotating the wrap then pivots the weapon around the
-    // hand. The weapon sprite is anchored at GRIP_ANCHOR so its internal
-    // coordinates stay aligned with the body's 96×128 viewBox.
-    if (weaponTex) {
-      weaponWrap = new Container();
-      // Grip viewBox coords = (GRIP_ANCHOR.x*96, GRIP_ANCHOR.y*128). Body
-      // sprite renders viewBox → local via anchor (0.5, 1) at position (0, 4),
-      // so grip local = ((0.5-0.5)*96*0.42, (0.56-1)*128*0.42 + 4) = (0, -19.64).
-      weaponRestY = (GRIP_ANCHOR.y - 1) * 128 * 0.42 + 4;
-      weaponWrap.position.set(0, weaponRestY);
-
-      if (armsTex) {
-        armsSprite = new Sprite(armsTex);
-        armsSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
-        armsSprite.scale.set(0.42);
-        weaponWrap.addChild(armsSprite);
-      }
-
-      weaponSprite = new Sprite(weaponTex);
-      weaponSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
-      weaponSprite.scale.set(0.42);
-      weaponWrap.addChild(weaponSprite);
-      body.addChild(weaponWrap);
-    }
-  } else {
+    // Fallback — reachable only when the unit's appearance is missing or
+    // references an unregistered rig. Phase 6e removed the legacy bespoke
+    // ${templateId}:body / :arms / :weapon render path; every shipping
+    // template carries `appearance`. This tiny coloured-rect is kept as
+    // a graceful-degradation guard for future non-human rigs landing
+    // without their asset catalog populated.
     fallback = new Graphics();
     const color = parseInt(u.color.slice(1), 16);
     fallback.roundRect(-10, -30, 20, 30, 4).fill(color).stroke({ color: 0x0b0f14, width: 1 });
@@ -406,7 +367,6 @@ function createUnitNode(u: Unit): UnitNode {
     body.addChild(fallback);
     spriteTop = -44;
   }
-  } // end bespoke-SVG path
 
   // Muzzle flash is a child of the weapon wrap (when present) so it rotates
   // with the weapon and sits at the barrel tip. When there's no weapon wrap

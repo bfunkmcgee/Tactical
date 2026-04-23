@@ -281,7 +281,7 @@ export function buildHumanRigBody(
       const h = new Sprite(hairTex);
       h.anchor.set(0.5, 0.5);
       h.scale.set(SPRITE_SCALE);
-      h.tint = appearance.hairColor;
+      if (appearance.hairColor !== undefined) h.tint = appearance.hairColor;
       headSlot.addChild(h);
       tintTargets.push(h);
     }

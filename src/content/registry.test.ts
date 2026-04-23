@@ -69,15 +69,19 @@ describe('packs: soldier rig-coverage gate', () => {
         const app = s.appearance!;
         expect(app.rig).toBe('human');
         expect(typeof app.skinTone).toBe('number');
+        // Soldiers are expected to opt into the full appearance contract
+        // (hair + outfit ids, not the optional enemy shorthand).
+        expect(app.hairStyle, `${s.id}: missing hairStyle`).toBeDefined();
+        expect(app.baseOutfit, `${s.id}: missing baseOutfit`).toBeDefined();
         expect(typeof app.hairColor).toBe('number');
         expect(typeof app.eyeColor).toBe('number');
         // hairStyle + baseOutfit must exist in the pack's catalog.
         expect(
-          pack.hairStyles?.[app.hairStyle],
+          pack.hairStyles?.[app.hairStyle!],
           `${s.id}: hairStyle '${app.hairStyle}' is missing from ${pack.id}.hairStyles`
         ).toBeDefined();
         expect(
-          pack.baseOutfits?.[app.baseOutfit],
+          pack.baseOutfits?.[app.baseOutfit!],
           `${s.id}: baseOutfit '${app.baseOutfit}' is missing from ${pack.id}.baseOutfits`
         ).toBeDefined();
       }
