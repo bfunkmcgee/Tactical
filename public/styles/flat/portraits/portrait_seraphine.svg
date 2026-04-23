@@ -73,10 +73,10 @@
   <path d="M 64 68 L 63 80 L 64 82 L 65 80 Z" fill="#d4a888" opacity="0.5"/>
   <path d="M 62 80 Q 64 81 66 80" stroke="#8a6844" stroke-width="0.4" fill="none"/>
 
-  <!-- Mouth: warm, clearly-readable soft smile. Wider arc with the
-       control pulled higher so the upturn reads at thumbnail size. -->
-  <path d="M 55 89 Q 64 85 73 89" stroke="#8a4848" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-  <path d="M 55 89 Q 64 87 73 89" stroke="#c8888a" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <!-- Mouth: single-stroke soft smile. Two-stroke version formed an
+       accidental crescent — single upward arc reads cleanly as a warm
+       smile at thumbnail size. -->
+  <path d="M 55 89 Q 64 83 73 89" stroke="#8a4848" stroke-width="1.8" fill="none" stroke-linecap="round"/>
 
   <!-- Cheek highlight. -->
   <ellipse cx="51" cy="74" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.5"/>

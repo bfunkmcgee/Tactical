@@ -64,11 +64,10 @@
   <path d="M 64 70 L 62 80 L 64 82 L 67 80 Z" fill="#a86838" opacity="0.6"/>
   <path d="M 62 80 Q 64 81 67 80" stroke="#6a4030" stroke-width="0.5" fill="none"/>
 
-  <!-- Mouth: confident smirk — wider arc, stronger upward curve. The
-       right corner lands higher than the left for asymmetric smirk. -->
-  <path d="M 54 89 Q 62 85 74 85" stroke="#4a2818" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  <!-- Lower-lip shading along the same curve. -->
-  <path d="M 54 89 Q 62 86 72 86" stroke="#c48a6a" stroke-width="0.6" fill="none" opacity="0.6"/>
+  <!-- Mouth: single-stroke asymmetric smirk. Left corner at y=89, right
+       corner lifted to y=85 for the asymmetry. Two-stroke version made
+       a pursed crescent; single stroke reads as a clear smirk. -->
+  <path d="M 54 89 Q 62 83 74 85" stroke="#4a2818" stroke-width="2" fill="none" stroke-linecap="round"/>
   <!-- Dimple at the higher (right) corner to sell the smirk. -->
   <circle cx="74" cy="85" r="0.7" fill="#6a4030" opacity="0.6"/>
 

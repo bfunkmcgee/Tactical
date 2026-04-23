@@ -67,12 +67,11 @@
   <path d="M 64 68 L 62 80 L 64 82 L 66 80 Z" fill="#d4a888" opacity="0.6"/>
   <path d="M 62 80 Q 64 81 66 80" stroke="#8a6844" stroke-width="0.5" fill="none"/>
 
-  <!-- Mouth: a clear confident smile. Wider than before (54→74 instead
-       of 58→70), control point pulled up to y=85 for a pronounced
-       upward curve that actually reads as a smile at thumbnail size. -->
-  <path d="M 54 89 Q 64 85 74 89" stroke="#4a2818" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  <!-- Lower-lip curve following the same smile. -->
-  <path d="M 54 89 Q 64 87 74 89" stroke="#c48a6a" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <!-- Mouth: single-stroke clear smile. Previous two-stroke version
+       (main + lower-lip shading) accidentally formed a closed crescent
+       between the curves and read as pursed/grim. Single stroke with a
+       strong upward Q control reads unambiguously as a smile. -->
+  <path d="M 54 89 Q 64 83 74 89" stroke="#4a2818" stroke-width="2" fill="none" stroke-linecap="round"/>
 
   <!-- Cheekbone highlight — subtle for warmth. -->
   <ellipse cx="50" cy="76" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.4"/>
