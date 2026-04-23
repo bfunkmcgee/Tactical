@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Rust Troll — legs rig part. Massive stance: bulky thighs with
+  layered scrap plates (rust left, metal right), chains wrapped
+  around the thighs, thick shins, and huge splayed toes with claws
+  that reach to the bottom of the frame.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="t-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a6a50"/><stop offset="1" stop-color="#2a2418"/>
+    </linearGradient>
+    <linearGradient id="t-skin-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#5a4a38"/><stop offset="1" stop-color="#1a1408"/>
+    </linearGradient>
+    <linearGradient id="t-rust" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a5028"/><stop offset="1" stop-color="#2a1408"/>
+    </linearGradient>
+    <linearGradient id="t-metal" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a6a6e"/><stop offset="1" stop-color="#1a1a1c"/>
+    </linearGradient>
+  </defs>
+  <path d="M22 78 Q16 112 26 118 L42 120 L42 78 Z" fill="url(#t-skin)"/>
+  <path d="M74 78 Q80 112 70 118 L54 120 L54 78 Z" fill="url(#t-skin)"/>
+  <path d="M22 84 L42 84 L42 98 L22 98 Z" fill="url(#t-rust)"/>
+  <path d="M74 84 L54 84 L54 98 L74 98 Z" fill="url(#t-metal)"/>
+  <circle cx="26" cy="88" r="1" fill="#c87030"/>
+  <circle cx="38" cy="88" r="1" fill="#c87030"/>
+  <circle cx="26" cy="94" r="1" fill="#c87030"/>
+  <circle cx="38" cy="94" r="1" fill="#c87030"/>
+  <circle cx="58" cy="88" r="1" fill="#4a4a4e"/>
+  <circle cx="70" cy="88" r="1" fill="#4a4a4e"/>
+  <circle cx="58" cy="94" r="1" fill="#4a4a4e"/>
+  <circle cx="70" cy="94" r="1" fill="#4a4a4e"/>
+  <path d="M22 102 L42 102 M22 106 L42 106" stroke="#2a2010" stroke-width="1.5"/>
+  <path d="M54 102 L74 102 M54 106 L74 106" stroke="#2a2010" stroke-width="1.5"/>
+  <circle cx="26" cy="102" r="0.7" fill="#4a4a4e"/>
+  <circle cx="32" cy="102" r="0.7" fill="#4a4a4e"/>
+  <circle cx="38" cy="102" r="0.7" fill="#4a4a4e"/>
+  <circle cx="58" cy="102" r="0.7" fill="#4a4a4e"/>
+  <circle cx="64" cy="102" r="0.7" fill="#4a4a4e"/>
+  <circle cx="70" cy="102" r="0.7" fill="#4a4a4e"/>
+  <path d="M24 112 L42 112 L42 120 L28 124 Q24 120 24 112 Z" fill="url(#t-skin-dark)"/>
+  <path d="M72 112 L54 112 L54 120 L68 124 Q72 120 72 112 Z" fill="url(#t-skin-dark)"/>
+  <path d="M24 124 L22 128 L26 128 Z" fill="#e8ddc0"/>
+  <path d="M30 124 L28 128 L32 128 Z" fill="#e8ddc0"/>
+  <path d="M36 124 L34 128 L38 128 Z" fill="#e8ddc0"/>
+  <path d="M42 124 L40 128 L44 128 Z" fill="#e8ddc0"/>
+  <path d="M54 124 L52 128 L56 128 Z" fill="#e8ddc0"/>
+  <path d="M60 124 L58 128 L62 128 Z" fill="#e8ddc0"/>
+  <path d="M66 124 L64 128 L68 128 Z" fill="#e8ddc0"/>
+  <path d="M72 124 L70 128 L74 128 Z" fill="#e8ddc0"/>
+</svg>

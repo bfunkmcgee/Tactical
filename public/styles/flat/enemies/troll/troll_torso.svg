@@ -1,10 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Rust Troll — torso rig part. Huge barrel chest covered in riveted
+  scrap sheets (rust + metal), massive belt with buckle + hanging
+  skull trophy + choir bell, broken megaphone strapped to chest, and
+  giant spiked/plated pauldrons on both shoulders.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
   <defs>
     <linearGradient id="t-skin" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="#7a6a50"/><stop offset="1" stop-color="#2a2418"/>
-    </linearGradient>
-    <linearGradient id="t-skin-dark" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#5a4a38"/><stop offset="1" stop-color="#1a1408"/>
     </linearGradient>
     <linearGradient id="t-rust" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="#8a5028"/><stop offset="1" stop-color="#2a1408"/>
@@ -15,83 +19,26 @@
     <linearGradient id="t-metal" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="#6a6a6e"/><stop offset="1" stop-color="#1a1a1c"/>
     </linearGradient>
-    <linearGradient id="t-rag" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#6a5838"/><stop offset="1" stop-color="#2a2010"/>
-    </linearGradient>
-    <radialGradient id="t-eye" cx=".5" cy=".5" r=".5">
-      <stop offset="0" stop-color="#ff5a3c"/>
-      <stop offset=".5" stop-color="#c82810"/>
-      <stop offset="1" stop-color="#3a0808" stop-opacity="0"/>
-    </radialGradient>
   </defs>
-
-  <!-- MASSIVE STANCE: wider legs, fills frame -->
-  <!-- thighs (bulky) -->
-  <path d="M22 78 Q16 112 26 118 L42 120 L42 78 Z" fill="url(#t-skin)"/>
-  <path d="M74 78 Q80 112 70 118 L54 120 L54 78 Z" fill="url(#t-skin)"/>
-  <!-- thigh armor plates (layered scrap) -->
-  <path d="M22 84 L42 84 L42 98 L22 98 Z" fill="url(#t-rust)"/>
-  <path d="M74 84 L54 84 L54 98 L74 98 Z" fill="url(#t-metal)"/>
-  <circle cx="26" cy="88" r="1" fill="#c87030"/>
-  <circle cx="38" cy="88" r="1" fill="#c87030"/>
-  <circle cx="26" cy="94" r="1" fill="#c87030"/>
-  <circle cx="38" cy="94" r="1" fill="#c87030"/>
-  <circle cx="58" cy="88" r="1" fill="#4a4a4e"/>
-  <circle cx="70" cy="88" r="1" fill="#4a4a4e"/>
-  <circle cx="58" cy="94" r="1" fill="#4a4a4e"/>
-  <circle cx="70" cy="94" r="1" fill="#4a4a4e"/>
-  <!-- chains wrapped around thighs -->
-  <path d="M22 102 L42 102 M22 106 L42 106" stroke="#2a2010" stroke-width="1.5"/>
-  <path d="M54 102 L74 102 M54 106 L74 106" stroke="#2a2010" stroke-width="1.5"/>
-  <circle cx="26" cy="102" r="0.7" fill="#4a4a4e"/>
-  <circle cx="32" cy="102" r="0.7" fill="#4a4a4e"/>
-  <circle cx="38" cy="102" r="0.7" fill="#4a4a4e"/>
-  <circle cx="58" cy="102" r="0.7" fill="#4a4a4e"/>
-  <circle cx="64" cy="102" r="0.7" fill="#4a4a4e"/>
-  <circle cx="70" cy="102" r="0.7" fill="#4a4a4e"/>
-  <!-- shins -->
-  <path d="M24 112 L42 112 L42 120 L28 124 Q24 120 24 112 Z" fill="url(#t-skin-dark)"/>
-  <path d="M72 112 L54 112 L54 120 L68 124 Q72 120 72 112 Z" fill="url(#t-skin-dark)"/>
-  <!-- huge splayed toes with claws -->
-  <path d="M24 124 L22 128 L26 128 Z" fill="#e8ddc0"/>
-  <path d="M30 124 L28 128 L32 128 Z" fill="#e8ddc0"/>
-  <path d="M36 124 L34 128 L38 128 Z" fill="#e8ddc0"/>
-  <path d="M42 124 L40 128 L44 128 Z" fill="#e8ddc0"/>
-  <path d="M54 124 L52 128 L56 128 Z" fill="#e8ddc0"/>
-  <path d="M60 124 L58 128 L62 128 Z" fill="#e8ddc0"/>
-  <path d="M66 124 L64 128 L68 128 Z" fill="#e8ddc0"/>
-  <path d="M72 124 L70 128 L74 128 Z" fill="#e8ddc0"/>
-
-  <!-- BIG BELT -->
   <path d="M18 72 L78 72 L78 84 L18 84 Z" fill="#1a1410"/>
-  <!-- massive buckle -->
   <rect x="40" y="70" width="16" height="14" fill="url(#t-rust)"/>
   <rect x="44" y="74" width="8" height="8" fill="#0a0a0c"/>
-  <!-- crude hymn symbol on buckle -->
   <path d="M45 76 L51 76 M48 74 L48 80 M45 80 L51 80" stroke="#c87030" stroke-width="0.8"/>
-  <!-- skull trophy hanging from belt -->
   <path d="M30 80 L30 88" stroke="#2a2010" stroke-width="0.7"/>
   <circle cx="30" cy="90" r="3" fill="#e8ddc0"/>
   <circle cx="28.5" cy="89.5" r="0.7" fill="#0a0a0c"/>
   <circle cx="31.5" cy="89.5" r="0.7" fill="#0a0a0c"/>
   <path d="M28 92 L32 92" stroke="#0a0a0c" stroke-width="0.4"/>
-  <!-- big bell hanging (choir motif) -->
   <path d="M64 80 L64 86" stroke="#2a2010" stroke-width="0.7"/>
   <path d="M60 86 L68 86 L66 94 L62 94 Z" fill="url(#t-rust-hl)"/>
   <path d="M64 94 L64 98" stroke="#2a1408" stroke-width="0.5"/>
   <path d="M62 88 L66 88" stroke="#2a1408" stroke-width="0.3"/>
-
-  <!-- TORSO: huge barrel chest, covered in riveted scrap -->
   <path d="M10 36 Q6 32 14 28 L82 28 Q90 32 86 36 L86 78 Q86 82 82 82 L14 82 Q10 82 10 78 Z" fill="url(#t-skin)"/>
-  <!-- giant heavy scrap chest plate (multiple welded sheets) -->
   <path d="M14 34 L48 34 L48 64 L14 64 Z" fill="url(#t-rust)"/>
   <path d="M48 34 L82 34 L82 64 L48 64 Z" fill="url(#t-metal)"/>
-  <!-- horizontal band welded across -->
   <path d="M14 52 L82 52" stroke="#0a0a0c" stroke-width="1.2"/>
-  <!-- smaller plates welded over gaps -->
   <path d="M18 64 L40 64 L40 78 L18 78 Z" fill="url(#t-metal)"/>
   <path d="M56 64 L78 64 L78 78 L56 78 Z" fill="url(#t-rust)"/>
-  <!-- rivets (many, across all plates) -->
   <circle cx="17" cy="37" r="1" fill="#c87030"/>
   <circle cx="30" cy="37" r="1" fill="#c87030"/>
   <circle cx="45" cy="37" r="1" fill="#c87030"/>
@@ -112,39 +59,26 @@
   <circle cx="75" cy="68" r="0.9" fill="#c87030"/>
   <circle cx="59" cy="76" r="0.9" fill="#c87030"/>
   <circle cx="75" cy="76" r="0.9" fill="#c87030"/>
-
-  <!-- big jagged CHOIR HYMN painted across both plates -->
   <path d="M16 44 L22 40 L28 46 L34 40 L40 46 L46 42" fill="none" stroke="#c87030" stroke-width="1.2"/>
   <path d="M52 44 L58 48 L64 42 L70 48 L76 42 L80 46" fill="none" stroke="#c87030" stroke-width="1"/>
-  <!-- rust streaks -->
   <path d="M22 54 L20 62" stroke="#2a1408" stroke-width="0.4"/>
   <path d="M38 54 L40 62" stroke="#2a1408" stroke-width="0.4"/>
   <path d="M56 54 L58 62" stroke="url(#t-rust-hl)" stroke-width="0.4" opacity=".7"/>
   <path d="M72 54 L74 62" stroke="url(#t-rust-hl)" stroke-width="0.4" opacity=".7"/>
-
-  <!-- BROKEN MEGAPHONE strapped to chest (Rust Choir signature) -->
   <path d="M30 56 L28 60 L28 68 L30 72 L40 70 L40 58 Z" fill="url(#t-rust-hl)"/>
-  <!-- megaphone opening (conical) -->
   <path d="M40 58 L48 56 L48 72 L40 70 Z" fill="url(#t-rust)"/>
   <ellipse cx="48" cy="64" rx="1.5" ry="8" fill="#2a1408"/>
-  <!-- megaphone handle -->
   <rect x="24" y="62" width="4" height="4" fill="#0a0a0c"/>
-  <!-- wire coming out of megaphone -->
   <path d="M28 68 Q24 74 22 80" stroke="#2a2010" stroke-width="0.8" fill="none"/>
-
-  <!-- MASSIVE PAULDRONS with big spikes -->
-  <!-- left (rusted pot-lid with long spikes) -->
   <path d="M4 32 Q0 50 14 54 L22 48 L24 32 Q16 26 8 26 Q4 26 4 32 Z" fill="url(#t-rust)"/>
   <path d="M6 28 L4 18 L10 28 Z" fill="#2a1408"/>
   <path d="M14 26 L12 14 L18 26 Z" fill="#2a1408"/>
   <path d="M22 28 L20 18 L24 28 Z" fill="#2a1408"/>
   <circle cx="14" cy="42" r="1.2" fill="#c87030"/>
-  <!-- right (salvaged car-door plate riveted) -->
   <path d="M92 32 Q96 50 82 54 L74 48 L72 32 Q80 26 88 26 Q92 26 92 32 Z" fill="url(#t-metal)"/>
   <path d="M76 30 L92 32" stroke="#0a0a0c" stroke-width="0.5"/>
   <path d="M76 38 L92 40" stroke="#0a0a0c" stroke-width="0.5"/>
   <path d="M76 46 L92 48" stroke="#0a0a0c" stroke-width="0.5"/>
   <circle cx="82" cy="42" r="1" fill="#4a4a4e"/>
   <circle cx="88" cy="42" r="1" fill="#4a4a4e"/>
-
 </svg>

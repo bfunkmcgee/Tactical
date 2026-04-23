@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Rust Goblin — legs rig part. Short hunched stance: skinny green
+  legs with ragged shin wraps + bare clawed feet. Extracted from the
+  pre-6e enemy_goblin_torso.svg; the torso path file now carries only
+  the upper-body paths so foot-plant squash animates the legs alone.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="g-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#9aa054"/><stop offset="1" stop-color="#4a5028"/>
+    </linearGradient>
+    <linearGradient id="g-skin-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a7038"/><stop offset="1" stop-color="#2a3018"/>
+    </linearGradient>
+    <linearGradient id="g-rag" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a5838"/><stop offset="1" stop-color="#2a2010"/>
+    </linearGradient>
+  </defs>
+
+  <!-- legs (skin showing, knobby) -->
+  <path d="M38 86 Q36 108 42 114 L46 114 L47 86 Z" fill="url(#g-skin)"/>
+  <path d="M58 86 Q60 108 54 114 L50 114 L49 86 Z" fill="url(#g-skin)"/>
+  <!-- shin wraps (dirty rags) -->
+  <path d="M38 96 L47 96 L47 108 L38 108 Z" fill="url(#g-rag)"/>
+  <path d="M58 96 L49 96 L49 108 L58 108 Z" fill="url(#g-rag)"/>
+  <path d="M39 99 L46 99 M39 103 L46 103 M39 107 L46 107" stroke="#2a2010" stroke-width="0.4"/>
+  <path d="M50 99 L57 99 M50 103 L57 103 M50 107 L57 107" stroke="#2a2010" stroke-width="0.4"/>
+  <!-- bare feet with toe claws -->
+  <path d="M36 112 L48 112 L48 118 L38 118 Z" fill="url(#g-skin-dark)"/>
+  <path d="M60 112 L48 112 L48 118 L58 118 Z" fill="url(#g-skin-dark)"/>
+  <path d="M37 118 L36 121 L39 121 Z" fill="#e8ddc0"/>
+  <path d="M41 118 L40 121 L43 121 Z" fill="#e8ddc0"/>
+  <path d="M45 118 L44 121 L47 121 Z" fill="#e8ddc0"/>
+  <path d="M49 118 L48 121 L51 121 Z" fill="#e8ddc0"/>
+  <path d="M53 118 L52 121 L55 121 Z" fill="#e8ddc0"/>
+  <path d="M57 118 L56 121 L59 121 Z" fill="#e8ddc0"/>
+</svg>

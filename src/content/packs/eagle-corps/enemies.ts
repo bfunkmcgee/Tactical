@@ -5,26 +5,30 @@ import type { EnemyTemplate } from '../../../game/types';
  * Goblins form the backbone of every band; orcs lead squads; trolls are rare
  * war-priests heralded by the clang of their massive bells.
  *
- * Phase 6e migration: every enemy now routes through the rig renderer
- * via `appearance.partOverrides`. The bespoke enemy torso + arms SVGs
- * (authored at the shared 96×128 rig frame) map directly onto the rig's
- * 'torso' + 'arms-front' slots; the remaining parts (legs / head /
- * arms-back) use a transparent placeholder so the shared human-rig
- * fallback art doesn't bleed through the bespoke silhouette.
+ * Every enemy routes through the rig renderer via `appearance.partOverrides`.
+ * Pre-6e the bespoke SVGs were monolithic (`enemy_goblin_torso.svg` + a
+ * paired `_arms.svg` that also contained the head + helmet); post follow-up,
+ * each enemy now ships a proper 4-part split (`legs`, `torso`, `head`,
+ * `arms-front`) under `public/styles/flat/enemies/<name>/`. The
+ * arms-back slot stays transparent — these creatures fire from the
+ * front so the "back arm sway" animation channel has no art to carry.
+ * Per-part animation (legs squash on foot-plant, torso lean, head
+ * counter-lean, weapon aim rotating only the arms) now works on
+ * enemies exactly the way it does on heroes.
  *
  * skinTone is identity (0xffffff) by default — the bespoke SVGs carry
  * baked art with their own colours; tinting through skinTone would
  * double-darken them. Hair + baseOutfit are omitted (both optional on
- * HumanAppearance) since the bespoke torso already contains whatever
+ * HumanAppearance) since the bespoke art already contains whatever
  * headgear / clothing the creature wears.
  */
 const TRANSPARENT = '/styles/flat/human/rig_transparent.svg';
-const enemyOverrides = (torsoSvg: string, armsSvg: string) => ({
-  legs: TRANSPARENT,
-  'arms-back': TRANSPARENT,
-  torso: torsoSvg,
-  head: TRANSPARENT,
-  'arms-front': armsSvg,
+const enemyOverrides = (dir: string, prefix: string) => ({
+  legs:         `/styles/flat/enemies/${dir}/${prefix}_legs.svg`,
+  'arms-back':  TRANSPARENT,
+  torso:        `/styles/flat/enemies/${dir}/${prefix}_torso.svg`,
+  head:         `/styles/flat/enemies/${dir}/${prefix}_head.svg`,
+  'arms-front': `/styles/flat/enemies/${dir}/${prefix}_arms_front.svg`,
 });
 
 export const ENEMIES: Record<string, EnemyTemplate> = {
@@ -42,10 +46,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,
-      partOverrides: enemyOverrides(
-        '/styles/flat/enemy_goblin_torso.svg',
-        '/styles/flat/enemy_goblin_arms.svg',
-      ),
+      partOverrides: enemyOverrides('goblin', 'goblin'),
     },
   },
   rust_orc: {
@@ -65,10 +66,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,
-      partOverrides: enemyOverrides(
-        '/styles/flat/enemy_orc_torso.svg',
-        '/styles/flat/enemy_orc_arms.svg',
-      ),
+      partOverrides: enemyOverrides('orc', 'orc'),
     },
   },
   rust_troll: {
@@ -86,10 +84,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,
-      partOverrides: enemyOverrides(
-        '/styles/flat/enemy_troll_torso.svg',
-        '/styles/flat/enemy_troll_arms.svg',
-      ),
+      partOverrides: enemyOverrides('troll', 'troll'),
     },
   },
   rust_berserker: {
@@ -110,10 +105,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     appearance: {
       rig: 'human',
       skinTone: 0xffa888,
-      partOverrides: enemyOverrides(
-        '/styles/flat/enemy_goblin_torso.svg',
-        '/styles/flat/enemy_goblin_arms.svg',
-      ),
+      partOverrides: enemyOverrides('goblin', 'goblin'),
     },
   },
 };

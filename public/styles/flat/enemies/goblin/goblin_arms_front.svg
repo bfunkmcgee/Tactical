@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Rust Goblin — arms-front rig part. Long skinny green arms with rope
+  wraps, clawed hands with finger claws. Rides inside the weapon wrap
+  so they track the weapon grip during aim / recoil animations.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="g-skin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#9aa054"/><stop offset="1" stop-color="#4a5028"/>
+    </linearGradient>
+    <linearGradient id="g-skin-dark" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a7038"/><stop offset="1" stop-color="#2a3018"/>
+    </linearGradient>
+  </defs>
+
+  <!-- left arm raised (holding gun forestock) -->
+  <path d="M26 42 Q20 44 18 50 L24 62 L30 60 L30 44 Z" fill="url(#g-skin)"/>
+  <!-- right arm at side (trigger) -->
+  <path d="M70 42 Q76 44 78 50 L72 62 L66 60 L66 44 Z" fill="url(#g-skin)"/>
+  <!-- muscle shadow -->
+  <path d="M22 52 L26 56" stroke="#2a3018" stroke-width="0.4" opacity=".7"/>
+  <path d="M74 52 L70 56" stroke="#2a3018" stroke-width="0.4" opacity=".7"/>
+  <!-- bicep rope wraps -->
+  <path d="M22 48 L28 50" stroke="#2a2010" stroke-width="1"/>
+  <path d="M74 48 L68 50" stroke="#2a2010" stroke-width="1"/>
+  <!-- clawed hands -->
+  <path d="M20 60 Q18 66 22 68 L28 66 Q30 62 28 60 Z" fill="url(#g-skin-dark)"/>
+  <path d="M76 60 Q78 66 74 68 L68 66 Q66 62 68 60 Z" fill="url(#g-skin-dark)"/>
+  <!-- finger claws -->
+  <path d="M22 68 L21 71 L23 71 Z" fill="#e8ddc0"/>
+  <path d="M26 68 L25 71 L27 71 Z" fill="#e8ddc0"/>
+  <path d="M74 68 L75 71 L73 71 Z" fill="#e8ddc0"/>
+  <path d="M70 68 L71 71 L69 71 Z" fill="#e8ddc0"/>
+</svg>

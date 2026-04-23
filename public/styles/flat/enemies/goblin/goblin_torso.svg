@@ -1,10 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128">
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Rust Goblin — torso rig part. Scrawny green body under an asymmetric
+  scrap chest plate, bandolier, belt, tattered loincloth, and one
+  shoulder pad with a choir horn. No legs / no head / no arms — each
+  of those lives in its own per-part SVG so the rig can animate them
+  independently (torso lean doesn't bob the head, foot-plant squash
+  only affects the legs).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
   <defs>
     <linearGradient id="g-skin" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="#9aa054"/><stop offset="1" stop-color="#4a5028"/>
-    </linearGradient>
-    <linearGradient id="g-skin-dark" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#6a7038"/><stop offset="1" stop-color="#2a3018"/>
     </linearGradient>
     <linearGradient id="g-rust" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="#8a5028"/><stop offset="1" stop-color="#2a1408"/>
@@ -15,34 +21,7 @@
     <linearGradient id="g-rag" x1="0" x2="0" y1="0" y2="1">
       <stop offset="0" stop-color="#6a5838"/><stop offset="1" stop-color="#2a2010"/>
     </linearGradient>
-    <linearGradient id="g-metal" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#4a4a4e"/><stop offset="1" stop-color="#1a1a1c"/>
-    </linearGradient>
-    <radialGradient id="g-eye" cx=".5" cy=".5" r=".5">
-      <stop offset="0" stop-color="#fff4c0"/>
-      <stop offset=".5" stop-color="#ff9a3c"/>
-      <stop offset="1" stop-color="#8a3010" stop-opacity="0"/>
-    </radialGradient>
   </defs>
-
-  <!-- SHORT HUNCHED STANCE: legs are short + bent -->
-  <!-- legs (skin showing, knobby) -->
-  <path d="M38 86 Q36 108 42 114 L46 114 L47 86 Z" fill="url(#g-skin)"/>
-  <path d="M58 86 Q60 108 54 114 L50 114 L49 86 Z" fill="url(#g-skin)"/>
-  <!-- shin wraps (dirty rags) -->
-  <path d="M38 96 L47 96 L47 108 L38 108 Z" fill="url(#g-rag)"/>
-  <path d="M58 96 L49 96 L49 108 L58 108 Z" fill="url(#g-rag)"/>
-  <path d="M39 99 L46 99 M39 103 L46 103 M39 107 L46 107" stroke="#2a2010" stroke-width="0.4"/>
-  <path d="M50 99 L57 99 M50 103 L57 103 M50 107 L57 107" stroke="#2a2010" stroke-width="0.4"/>
-  <!-- bare feet with toe claws -->
-  <path d="M36 112 L48 112 L48 118 L38 118 Z" fill="url(#g-skin-dark)"/>
-  <path d="M60 112 L48 112 L48 118 L58 118 Z" fill="url(#g-skin-dark)"/>
-  <path d="M37 118 L36 121 L39 121 Z" fill="#e8ddc0"/>
-  <path d="M41 118 L40 121 L43 121 Z" fill="#e8ddc0"/>
-  <path d="M45 118 L44 121 L47 121 Z" fill="#e8ddc0"/>
-  <path d="M49 118 L48 121 L51 121 Z" fill="#e8ddc0"/>
-  <path d="M53 118 L52 121 L55 121 Z" fill="#e8ddc0"/>
-  <path d="M57 118 L56 121 L59 121 Z" fill="#e8ddc0"/>
 
   <!-- TATTERED LOINCLOTH -->
   <path d="M32 80 L64 80 L66 98 L30 98 Z" fill="url(#g-rag)"/>
@@ -55,6 +34,7 @@
   <path d="M34 84 L34 90" stroke="#2a2010" stroke-width="0.5"/>
   <path d="M31 90 L37 90 L36 95 L32 95 Z" fill="url(#g-rust-hl)"/>
   <path d="M33 95 L35 97" stroke="#2a1408" stroke-width="0.5"/>
+
   <!-- bandolier of scrap bullets -->
   <path d="M26 42 L72 60" stroke="#2a2010" stroke-width="3"/>
   <rect x="30" y="44" width="2.5" height="4" fill="#8a6030"/>
@@ -68,35 +48,29 @@
   <rect x="60" y="56" width="2.5" height="4" fill="#8a6030"/>
   <rect x="60" y="56" width="2.5" height="1" fill="#c8a868"/>
 
-  <!-- TORSO: scrawny green body visible underneath scrap plate -->
+  <!-- TORSO: scrawny green body -->
   <path d="M28 44 Q28 40 32 40 L62 40 Q66 40 66 44 L66 78 Q66 82 62 82 L32 82 Q28 82 28 78 Z" fill="url(#g-skin)"/>
   <!-- ribs hint -->
   <path d="M34 58 Q40 60 46 58" fill="none" stroke="#2a3018" stroke-width="0.4" opacity=".7"/>
   <path d="M50 58 Q56 60 62 58" fill="none" stroke="#2a3018" stroke-width="0.4" opacity=".7"/>
-  <!-- ASYMMETRIC SCRAP CHEST PLATE (only covers half chest) -->
+  <!-- ASYMMETRIC SCRAP CHEST PLATE -->
   <path d="M30 44 L48 44 L52 60 L48 70 L30 66 Z" fill="url(#g-rust)"/>
-  <!-- plate rivets -->
   <circle cx="32" cy="46" r="0.8" fill="#c87030"/>
   <circle cx="46" cy="46" r="0.8" fill="#c87030"/>
   <circle cx="32" cy="64" r="0.8" fill="#c87030"/>
   <circle cx="48" cy="64" r="0.8" fill="#c87030"/>
-  <!-- scratched rust pitting -->
   <path d="M34 50 L38 54" stroke="#2a1408" stroke-width="0.4"/>
   <path d="M38 60 L44 62" stroke="#2a1408" stroke-width="0.4"/>
   <path d="M36 56 Q38 58 36 60" fill="none" stroke="#c87030" stroke-width="0.3"/>
-  <!-- crudely painted choir sigil (jagged hymn lines) -->
   <path d="M34 52 L38 50 L42 52 L44 50" fill="none" stroke="#c87030" stroke-width="0.6"/>
   <path d="M34 56 L42 56" stroke="#c87030" stroke-width="0.4"/>
-  <!-- scrap strap holding plate -->
   <path d="M28 44 L50 46 L50 48 L28 46 Z" fill="#2a2010"/>
 
-  <!-- ONE ASYMMETRIC SCRAP SHOULDER PAD (on other shoulder) -->
+  <!-- ASYMMETRIC SCRAP SHOULDER PAD + choir horn -->
   <path d="M60 38 Q70 38 70 46 L66 50 L60 48 Z" fill="url(#g-rust)"/>
   <circle cx="63" cy="42" r="0.8" fill="#c87030"/>
   <circle cx="67" cy="42" r="0.8" fill="#c87030"/>
   <path d="M62 44 L66 46" stroke="#2a1408" stroke-width="0.3"/>
-  <!-- little rusty horn/bell on shoulder (choir) -->
   <path d="M68 38 L72 30 L74 38 Z" fill="url(#g-rust-hl)"/>
   <path d="M71 32 L71 36" stroke="#2a1408" stroke-width="0.4"/>
-
 </svg>
