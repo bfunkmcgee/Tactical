@@ -1,9 +1,12 @@
-# Eagle Corps Portrait Mockups — Review
+# Eagle Corps Portrait Mockups — Review (v3)
 
-Review these mockup portraits for each of the 4 hero soldiers.  GitHub
-renders SVGs inline, so each portrait should display directly below
-when you open this file on GitHub. Tap / click any image to open it
-full-size.
+Rebuilt from scratch. Consistent visual language across all four:
+cleaner head silhouettes, single-stroke smiles, outer-raised eyebrows,
+layered hair with highlights, stronger eye irises with catchlights, and
+character-specific accessories (scar, tattoo, rune, grease smudge).
+GitHub renders SVGs inline, so each portrait should display directly
+below when you open this file on GitHub. Tap / click any image to open
+it full-size.
 
 The mockups are **review art only** — they're not wired into the game.
 Once you approve (or request changes to) a design, I'll push the
@@ -38,7 +41,7 @@ soldier (e.g. "Kestrel: longer hair", "Brannock: softer mouth",
 
 ---
 
-## Brannock — Warden (v2)
+## Brannock — Warden
 
 ![Brannock, Warden](../public/styles/flat/portraits/portrait_brannock.svg)
 

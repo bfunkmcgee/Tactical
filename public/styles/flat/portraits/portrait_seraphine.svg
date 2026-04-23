@@ -1,93 +1,128 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  MOCKUP for review — Seraphine, Mystic.
-  Fair skin, white hair in a long ponytail, grey eyes, small violet
-  rune on the forehead. Slender, ethereal, thoughtful. Displayed at
-  128×128 for legibility. Review art only.
+  Seraphine — Mystic. Portrait mockup v3 (rebuild from scratch).
+  Pale fair skin, long white hair center-parted with a ponytail draped
+  over the right shoulder, thoughtful grey eyes, delicate features.
+  Signature violet forehead rune with a soft glow halo. Violet robe
+  with a gold sash. Review art only.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <radialGradient id="bg-seraphine" cx="50%" cy="50%" r="65%">
-      <stop offset="0%" stop-color="#3a2a4a"/>
+    <radialGradient id="bg-s" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#3e2a54"/>
       <stop offset="100%" stop-color="#1a0e24"/>
     </radialGradient>
+    <linearGradient id="skin-s" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4d8be"/>
+      <stop offset="100%" stop-color="#e0bc98"/>
+    </linearGradient>
+    <linearGradient id="hair-s" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0ece0"/>
+      <stop offset="100%" stop-color="#cfc8b8"/>
+    </linearGradient>
+    <radialGradient id="rune-halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c79aff" stop-opacity="0.9"/>
+      <stop offset="70%" stop-color="#c79aff" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#c79aff" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="128" height="128" fill="url(#bg-seraphine)"/>
 
-  <!-- Shoulders + robe silhouette, narrow. -->
-  <path d="M 22 128 L 28 106 Q 64 100 100 106 L 106 128 Z" fill="#4a3854"/>
-  <!-- Gold sash running across the collarbone. -->
-  <rect x="28" y="108" width="72" height="3" fill="#c4a468"/>
-  <rect x="28" y="111" width="72" height="0.8" fill="#2a1a30" opacity="0.7"/>
-  <!-- V-neck showing undershirt — pale cream. -->
-  <path d="M 56 104 L 64 118 L 72 104 Z" fill="#2a1a30"/>
-  <path d="M 60 110 L 64 118 L 68 110 Z" fill="#e8c4a4"/>
-  <!-- Gold neckline trim. -->
+  <rect width="128" height="128" fill="url(#bg-s)"/>
+
+  <!-- Shoulders / robe silhouette -->
+  <path d="M 20 128 L 26 104 Q 64 98 102 104 L 108 128 Z" fill="#4a3460"/>
+  <!-- Robe shadow -->
+  <path d="M 20 128 L 26 104 Q 44 100 58 104 L 58 128 Z" fill="#2e1e3e" opacity="0.45"/>
+
+  <!-- Gold sash -->
+  <rect x="26" y="108" width="76" height="3" fill="#c4a468"/>
+  <rect x="26" y="111" width="76" height="0.8" fill="#3a2a1c" opacity="0.6"/>
+  <!-- Sash clasp (center) -->
+  <circle cx="64" cy="109.5" r="1.6" fill="#e8c488" stroke="#3a2a1c" stroke-width="0.3"/>
+
+  <!-- V-neck showing inner garment -->
+  <path d="M 56 104 L 64 118 L 72 104 Z" fill="#2e1e3e"/>
+  <path d="M 60 110 L 64 118 L 68 110 Z" fill="#e8d8c0"/>
   <line x1="56" y1="104" x2="64" y2="118" stroke="#c4a468" stroke-width="0.5"/>
   <line x1="72" y1="104" x2="64" y2="118" stroke="#c4a468" stroke-width="0.5"/>
 
-  <!-- Ponytail tail draped over the right shoulder, visible behind. -->
-  <path d="M 82 88 Q 96 94 100 108 L 94 110 Q 90 96 80 90 Z" fill="#e8e4d8"/>
-  <!-- Tail detail lines. -->
-  <path d="M 86 94 Q 94 102 96 108" stroke="#b8b0a0" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <!-- Ponytail tail draped over right shoulder (behind face) -->
+  <path d="M 80 84 Q 98 92 104 112 L 96 114 Q 92 96 78 88 Z" fill="url(#hair-s)"/>
+  <path d="M 84 90 Q 96 102 100 112" stroke="#b0a898" stroke-width="0.6" fill="none" opacity="0.6"/>
+  <path d="M 88 94 Q 96 104 98 112" stroke="#b0a898" stroke-width="0.4" fill="none" opacity="0.5"/>
 
-  <!-- Neck — slender. -->
-  <rect x="58" y="88" width="12" height="18" fill="#e8c4a4"/>
+  <!-- Neck (slender) -->
+  <path d="M 58 88 L 58 106 L 70 106 L 70 88 Z" fill="url(#skin-s)"/>
+  <!-- Neck shadow -->
+  <path d="M 58 88 L 58 106 L 61 106 L 61 88 Z" fill="#d4b098" opacity="0.4"/>
 
-  <!-- Head: fair skin 0xe8c4a4. Oval, delicate. -->
-  <path d="M 46 58 Q 46 30 64 26 Q 82 30 82 58 Q 82 84 64 92 Q 46 84 46 58 Z"
-        fill="#e8c4a4" stroke="#8a6844" stroke-width="0.5"/>
+  <!-- Head: oval, delicate -->
+  <path d="M 46 56 Q 46 28 64 24 Q 82 28 82 56 Q 82 78 76 86 Q 70 92 64 93 Q 58 92 52 86 Q 46 78 46 56 Z"
+        fill="url(#skin-s)"/>
+  <!-- Face edge shadow -->
+  <path d="M 46 56 Q 46 78 52 86 Q 58 92 64 93" stroke="#c49878" stroke-width="0.5" fill="none" opacity="0.4"/>
 
-  <!-- Hair: white 0xe8e4d8. Center-parted, pulled back smoothly into ponytail. -->
-  <!-- Crown + center part. -->
-  <path d="M 46 46 Q 46 22 64 20 Q 82 22 82 46 L 82 52 Q 76 42 64 40 Q 52 42 46 52 Z" fill="#e8e4d8"/>
-  <!-- Center part line. -->
-  <line x1="64" y1="22" x2="64" y2="44" stroke="#b8b0a0" stroke-width="0.8"/>
-  <!-- Side strands framing the face (sleek). -->
-  <path d="M 46 52 L 46 68 L 50 70 Q 48 60 50 52 Z" fill="#e8e4d8"/>
-  <path d="M 82 52 L 82 68 L 78 70 Q 80 60 78 52 Z" fill="#e8e4d8"/>
-  <!-- Base of the ponytail at the back. -->
-  <ellipse cx="78" cy="80" rx="6" ry="8" fill="#e8e4d8"/>
-  <path d="M 78 86 L 82 88" stroke="#c4a468" stroke-width="0.8"/>
+  <!-- Ear (left) -->
+  <path d="M 45 66 Q 43 72 46 78 L 48 76 L 48 68 Z" fill="url(#skin-s)"/>
 
-  <!-- Eyebrows — thin, gently arched with the high point over the
-       outer half of each eye (not the inner — inner-high reads sad).
-       Pale to match her white hair. -->
-  <path d="M 50 59 Q 55 56 58 58" stroke="#b8b0a0" stroke-width="1.3" stroke-linecap="round" fill="none"/>
-  <path d="M 70 58 Q 73 56 78 59" stroke="#b8b0a0" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+  <!-- Hair: center-parted crown, side sweeps, pulled back. Drawn over head/neck. -->
+  <!-- Crown (fills above + down sides) -->
+  <path d="M 46 50 Q 46 22 64 20 Q 82 22 82 50 L 82 56 Q 76 44 64 42 Q 52 44 46 56 Z" fill="url(#hair-s)"/>
+  <!-- Center part -->
+  <line x1="64" y1="22" x2="64" y2="46" stroke="#b0a898" stroke-width="0.8"/>
+  <!-- Side hair sweeps along temples -->
+  <path d="M 46 50 Q 44 62 46 72 L 49 72 Q 48 60 49 50 Z" fill="url(#hair-s)"/>
+  <path d="M 82 50 Q 84 62 82 72 L 79 72 Q 80 60 79 50 Z" fill="url(#hair-s)"/>
+  <!-- Tail-base knot at back right of head -->
+  <ellipse cx="78" cy="82" rx="7" ry="9" fill="url(#hair-s)"/>
+  <!-- Gold hair tie -->
+  <path d="M 74 82 Q 78 80 82 82 Q 82 84 78 85 Q 74 84 74 82 Z" fill="#c4a468" stroke="#3a2a1c" stroke-width="0.3"/>
+  <!-- Loose wisp across forehead -->
+  <path d="M 52 44 Q 60 40 68 44" stroke="#cfc8b8" stroke-width="0.9" fill="none" opacity="0.8"/>
 
-  <!-- Eyes: grey 0x6a7078. Wider, thoughtful. -->
-  <ellipse cx="54" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
-  <ellipse cx="74" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
-  <circle cx="54" cy="66" r="2.2" fill="#6a7078"/>
-  <circle cx="74" cy="66" r="2.2" fill="#6a7078"/>
-  <circle cx="54" cy="66" r="0.9" fill="#0a0a0c"/>
-  <circle cx="74" cy="66" r="0.9" fill="#0a0a0c"/>
-  <circle cx="55" cy="65" r="0.6" fill="#ffffff"/>
-  <circle cx="75" cy="65" r="0.6" fill="#ffffff"/>
-  <!-- Subtle upper eyelash accent. -->
-  <path d="M 50 65 Q 54 64 58 65" stroke="#0a0a0c" stroke-width="0.4" fill="none" opacity="0.6"/>
-  <path d="M 70 65 Q 74 64 78 65" stroke="#0a0a0c" stroke-width="0.4" fill="none" opacity="0.6"/>
+  <!-- Eyebrows: pale, outer-raised, gentle -->
+  <path d="M 49 57 Q 54 54 60 58" stroke="#b0a898" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+  <path d="M 68 58 Q 74 54 79 57" stroke="#b0a898" stroke-width="1.4" stroke-linecap="round" fill="none"/>
 
-  <!-- Nose: small, straight, elegant. -->
-  <path d="M 64 68 L 63 80 L 64 82 L 65 80 Z" fill="#d4a888" opacity="0.5"/>
-  <path d="M 62 80 Q 64 81 66 80" stroke="#8a6844" stroke-width="0.4" fill="none"/>
+  <!-- Eyes: wide, thoughtful -->
+  <path d="M 48 65 Q 54 62 60 65 Q 54 68 48 65 Z" fill="#ffffff" stroke="#6a5a50" stroke-width="0.4"/>
+  <path d="M 68 65 Q 74 62 80 65 Q 74 68 68 65 Z" fill="#ffffff" stroke="#6a5a50" stroke-width="0.4"/>
+  <!-- Upper-lid lash hint -->
+  <path d="M 48 63 Q 54 61.5 60 63" stroke="#6a5a50" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <path d="M 68 63 Q 74 61.5 80 63" stroke="#6a5a50" stroke-width="0.5" fill="none" opacity="0.7"/>
+  <!-- Iris: grey -->
+  <circle cx="54" cy="65" r="2.3" fill="#6a7078"/>
+  <circle cx="74" cy="65" r="2.3" fill="#6a7078"/>
+  <circle cx="54" cy="65" r="2.3" fill="none" stroke="#8a9098" stroke-width="0.3"/>
+  <circle cx="74" cy="65" r="2.3" fill="none" stroke="#8a9098" stroke-width="0.3"/>
+  <!-- Pupil -->
+  <circle cx="54" cy="65" r="0.9" fill="#0a0808"/>
+  <circle cx="74" cy="65" r="0.9" fill="#0a0808"/>
+  <!-- Catchlight -->
+  <circle cx="55" cy="64.2" r="0.5" fill="#ffffff"/>
+  <circle cx="75" cy="64.2" r="0.5" fill="#ffffff"/>
 
-  <!-- Mouth: single-stroke soft smile. Two-stroke version formed an
-       accidental crescent — single upward arc reads cleanly as a warm
-       smile at thumbnail size. -->
-  <path d="M 55 89 Q 64 83 73 89" stroke="#8a4848" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- Nose: small, elegant -->
+  <path d="M 63 70 Q 62 76 62 80" stroke="#c49878" stroke-width="0.5" fill="none" opacity="0.6"/>
+  <path d="M 65 70 Q 66 76 66 80" stroke="#c49878" stroke-width="0.5" fill="none" opacity="0.5"/>
+  <path d="M 61 80 Q 64 82 67 80" stroke="#8a6844" stroke-width="0.5" fill="none"/>
 
-  <!-- Cheek highlight. -->
-  <ellipse cx="51" cy="74" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.5"/>
-  <ellipse cx="77" cy="74" rx="3" ry="1.6" fill="#f0d0b0" opacity="0.5"/>
+  <!-- Cheek warmth: subtle, pinkish -->
+  <ellipse cx="51" cy="75" rx="3.5" ry="2" fill="#f0b8a8" opacity="0.4"/>
+  <ellipse cx="77" cy="75" rx="3.5" ry="2" fill="#f0b8a8" opacity="0.4"/>
 
-  <!-- Violet mystic rune on the forehead — signature detail. -->
-  <circle cx="64" cy="44" r="1.8" fill="#c79aff" opacity="0.9"/>
-  <circle cx="64" cy="44" r="2.8" fill="none" stroke="#c79aff" stroke-width="0.5" opacity="0.6"/>
-  <!-- Rune-glow halo. -->
-  <circle cx="64" cy="44" r="4.2" fill="none" stroke="#c79aff" stroke-width="0.3" opacity="0.3"/>
+  <!-- Mouth: single-stroke warm soft smile -->
+  <path d="M 55 87 Q 64 84 73 87" stroke="#8a4848" stroke-width="1.6" stroke-linecap="round" fill="none"/>
 
-  <!-- Name label. -->
-  <text x="64" y="122" text-anchor="middle" font-family="system-ui" font-size="8" fill="#e8c488" font-weight="bold">SERAPHINE · Mystic</text>
+  <!-- Forehead rune: violet sigil with glow halo -->
+  <circle cx="64" cy="42" r="6" fill="url(#rune-halo)"/>
+  <!-- Rune mark: simple six-pointed star-sigil -->
+  <g transform="translate(64 42)">
+    <path d="M 0 -2.4 L 1.2 -0.7 L 2.4 -0.7 L 1.5 0.5 L 2 2.4 L 0 1.3 L -2 2.4 L -1.5 0.5 L -2.4 -0.7 L -1.2 -0.7 Z"
+          fill="#c79aff" opacity="0.95"/>
+    <circle r="0.7" fill="#f4dcff"/>
+  </g>
+
+  <!-- Name label -->
+  <text x="64" y="124" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7" fill="#e8c488" font-weight="bold">SERAPHINE · MYSTIC</text>
 </svg>

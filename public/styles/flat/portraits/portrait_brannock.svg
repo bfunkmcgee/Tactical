@@ -1,130 +1,132 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  MOCKUP for review — Brannock, Warden. v2 (less awkward).
-  Tan skin, cleanly shaved head with a natural 5-o'clock shadow,
-  hazel eyes, strong but proportionate features. Reads as stoic
-  veteran rather than exaggerated meat-head. Review art only.
+  Brannock — Warden. Portrait mockup v3 (rebuild from scratch).
+  Tan skin, cleanly shaved head with natural scalp shine, hazel eyes,
+  heavy brow, thick moustache, diagonal scar on the left cheek, and a
+  faded Eagle Corps sigil tattoo on the right side of the neck.
+  Henley-collared undershirt + broad shoulders. Review art only.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <radialGradient id="bg-brannock" cx="50%" cy="50%" r="65%">
+    <radialGradient id="bg-b" cx="50%" cy="45%" r="70%">
       <stop offset="0%" stop-color="#4a3020"/>
       <stop offset="100%" stop-color="#1a0a04"/>
     </radialGradient>
-    <!-- Subtle skin-shading gradient for a bit of dimensionality. -->
-    <radialGradient id="brannock-skin" cx="40%" cy="35%" r="80%">
+    <radialGradient id="skin-b" cx="42%" cy="36%" r="85%">
       <stop offset="0%" stop-color="#a87a5a"/>
-      <stop offset="100%" stop-color="#8a5a3a"/>
+      <stop offset="100%" stop-color="#865838"/>
     </radialGradient>
-    <!-- Shadow gradient for the shaved head shine. -->
-    <linearGradient id="brannock-scalp-shine" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#c48a6a" stop-opacity="0.5"/>
+    <linearGradient id="scalp-b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c48a6a" stop-opacity="0.55"/>
       <stop offset="100%" stop-color="#c48a6a" stop-opacity="0"/>
     </linearGradient>
   </defs>
-  <rect width="128" height="128" fill="url(#bg-brannock)"/>
 
-  <!-- Shoulders — broad, dark canvas undershirt with a slight collar. -->
-  <path d="M 12 128 L 18 104 Q 64 96 110 104 L 116 128 Z" fill="#3a3228"/>
-  <!-- Henley neckline — two-button instead of a weird stretched scoop. -->
-  <path d="M 58 104 L 58 118 L 70 118 L 70 104 Z" fill="#2a241c"/>
-  <line x1="64" y1="106" x2="64" y2="118" stroke="#5a4a38" stroke-width="0.4"/>
-  <circle cx="64" cy="108" r="0.8" fill="#8a6a48"/>
-  <circle cx="64" cy="114" r="0.8" fill="#8a6a48"/>
-  <!-- Shoulder-line subtle highlight to sell bulk without a hard ridge. -->
-  <path d="M 18 108 Q 38 102 58 104" stroke="#5a4a38" stroke-width="0.6" fill="none" opacity="0.6"/>
-  <path d="M 70 104 Q 90 102 110 108" stroke="#5a4a38" stroke-width="0.6" fill="none" opacity="0.6"/>
+  <rect width="128" height="128" fill="url(#bg-b)"/>
 
-  <!-- Thick neck — proportioned, not stubby. -->
-  <path d="M 52 88 L 52 106 L 76 106 L 76 88 Z" fill="url(#brannock-skin)"/>
-  <!-- Subtle collarbone shading. -->
-  <path d="M 52 104 Q 64 110 76 104" stroke="#5a3020" stroke-width="0.6" fill="none" opacity="0.5"/>
+  <!-- Broad shoulders: dark canvas shirt -->
+  <path d="M 8 128 L 16 102 Q 64 94 112 102 L 120 128 Z" fill="#3a3228"/>
+  <!-- Shoulder-seam highlights -->
+  <path d="M 18 108 Q 40 103 58 103" stroke="#5a4a38" stroke-width="0.8" fill="none" opacity="0.6"/>
+  <path d="M 70 103 Q 88 103 110 108" stroke="#5a4a38" stroke-width="0.8" fill="none" opacity="0.6"/>
 
-  <!-- Head: tan skin. Egg-shaped with a strong but not exaggerated jaw. -->
-  <path d="M 42 58 Q 42 30 64 24 Q 86 30 86 58 Q 86 78 82 84 Q 74 92 64 92 Q 54 92 46 84 Q 42 78 42 58 Z"
-        fill="url(#brannock-skin)"/>
-  <!-- Face silhouette edge for definition. -->
-  <path d="M 42 58 Q 42 30 64 24 Q 86 30 86 58 Q 86 78 82 84 Q 74 92 64 92 Q 54 92 46 84 Q 42 78 42 58 Z"
-        fill="none" stroke="#5a3020" stroke-width="0.8"/>
+  <!-- Henley collar: two-button placket -->
+  <path d="M 56 102 L 56 120 L 72 120 L 72 102 Z" fill="#2a241c"/>
+  <line x1="64" y1="104" x2="64" y2="120" stroke="#5a4a38" stroke-width="0.4"/>
+  <circle cx="64" cy="107" r="0.9" fill="#8a6a48"/>
+  <circle cx="64" cy="114" r="0.9" fill="#8a6a48"/>
 
-  <!-- Shaved-head shine on the crown (natural light). -->
-  <ellipse cx="64" cy="36" rx="16" ry="8" fill="url(#brannock-scalp-shine)"/>
+  <!-- Thick neck -->
+  <path d="M 52 88 L 50 106 L 78 106 L 76 88 Z" fill="url(#skin-b)"/>
+  <!-- Neck shadow under jaw -->
+  <path d="M 52 92 Q 64 95 76 92" stroke="#5a3020" stroke-width="0.6" fill="none" opacity="0.6"/>
+  <!-- Collarbone hint -->
+  <path d="M 52 104 Q 64 108 76 104" stroke="#5a3020" stroke-width="0.6" fill="none" opacity="0.5"/>
 
-  <!-- 5-o'clock shadow on the chin/jaw — NOT a ring. Follows the jaw
-       line naturally, fading as it approaches the ears. -->
-  <path d="M 48 76 Q 64 90 80 76 Q 78 86 64 90 Q 50 86 48 76 Z" fill="#4a2818" opacity="0.35"/>
-  <!-- Mustache-stubble hint above the lip. -->
-  <path d="M 56 82 Q 64 83 72 82" stroke="#4a2818" stroke-width="1" stroke-linecap="round" opacity="0.35" fill="none"/>
+  <!-- Head: broader than Kestrel's, strong jaw but not exaggerated -->
+  <path d="M 42 56 Q 42 28 64 22 Q 86 28 86 56 Q 86 76 82 84 Q 74 92 64 93 Q 54 92 46 84 Q 42 76 42 56 Z"
+        fill="url(#skin-b)"/>
+  <!-- Face edge shadow -->
+  <path d="M 42 56 Q 42 76 46 84 Q 54 92 64 93" stroke="#5a3020" stroke-width="0.5" fill="none" opacity="0.5"/>
 
-  <!-- Brow ridge: heavy but angled so the outer corners sit slightly
-       higher than the inner corners. Reads as grizzled-determined
-       rather than sad/worried (inner-brow-up = pleading). -->
-  <path d="M 48 58 Q 52 57 58 60" stroke="#3a1a0c" stroke-width="2.4" stroke-linecap="round" fill="none"/>
-  <path d="M 70 60 Q 76 57 80 58" stroke="#3a1a0c" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <!-- Ear (left) -->
+  <path d="M 41 64 Q 39 72 42 80 L 44 78 L 44 66 Z" fill="url(#skin-b)"/>
+  <path d="M 42 70 Q 43 74 42 76" stroke="#5a3020" stroke-width="0.4" fill="none"/>
+  <!-- Ear (right) -->
+  <path d="M 87 64 Q 89 72 86 80 L 84 78 L 84 66 Z" fill="url(#skin-b)"/>
 
-  <!-- Eyes: hazel. Open, steady — not squinting. -->
-  <ellipse cx="54" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
-  <ellipse cx="74" cy="66" rx="4" ry="2.6" fill="#ffffff"/>
-  <!-- Upper-lid shadow from the heavy brow. -->
-  <path d="M 50 64 Q 54 63 58 64" stroke="#3a1a0c" stroke-width="0.8" fill="none" opacity="0.6"/>
-  <path d="M 70 64 Q 74 63 78 64" stroke="#3a1a0c" stroke-width="0.8" fill="none" opacity="0.6"/>
-  <circle cx="54" cy="66.5" r="2" fill="#6a4a28"/>
-  <circle cx="74" cy="66.5" r="2" fill="#6a4a28"/>
-  <circle cx="54" cy="66.5" r="0.8" fill="#0a0a0c"/>
-  <circle cx="74" cy="66.5" r="0.8" fill="#0a0a0c"/>
-  <circle cx="55" cy="65.5" r="0.5" fill="#ffffff"/>
-  <circle cx="75" cy="65.5" r="0.5" fill="#ffffff"/>
+  <!-- Shaved scalp shine -->
+  <ellipse cx="64" cy="34" rx="18" ry="9" fill="url(#scalp-b)"/>
+  <!-- Stubble tone on the scalp sides -->
+  <path d="M 42 42 Q 42 50 44 54 Q 48 48 56 46 Q 64 44 72 46 Q 80 48 84 54 Q 86 50 86 42 Q 64 36 42 42 Z"
+        fill="#3a1a0c" opacity="0.22"/>
 
-  <!-- Nose: broad Roman nose, clean line. No broken-bend weirdness. -->
-  <path d="M 62 68 Q 60 74 60 80 L 62 82 L 66 82 L 68 80 Q 68 74 66 68 Z"
-        fill="#8a5a3a" opacity="0.5"/>
-  <!-- Nose bridge highlight. -->
-  <line x1="64" y1="68" x2="64" y2="80" stroke="#c48a6a" stroke-width="0.5" opacity="0.7"/>
-  <!-- Nostrils. -->
-  <ellipse cx="61.5" cy="80.5" rx="1" ry="0.6" fill="#5a3020" opacity="0.7"/>
-  <ellipse cx="66.5" cy="80.5" rx="1" ry="0.6" fill="#5a3020" opacity="0.7"/>
+  <!-- Heavy brow ridge -->
+  <path d="M 46 56 Q 54 52 60 58" stroke="#3a1a0c" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+  <path d="M 68 58 Q 74 52 82 56" stroke="#3a1a0c" stroke-width="2.8" stroke-linecap="round" fill="none"/>
 
-  <!-- Mouth: single-stroke stoic half-smile. Two-stroke version made a
-       crescent between main + lower-lip curves — read as pursed. Single
-       stroke with a stronger upward Q control reads as a composed smile. -->
-  <path d="M 52 90 Q 64 84 76 90" stroke="#2a1408" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <!-- Eyes: steady, open, not squinting -->
+  <path d="M 48 65 Q 54 62 60 65 Q 54 68 48 65 Z" fill="#ffffff" stroke="#3a1a0c" stroke-width="0.5"/>
+  <path d="M 68 65 Q 74 62 80 65 Q 74 68 68 65 Z" fill="#ffffff" stroke="#3a1a0c" stroke-width="0.5"/>
+  <!-- Upper-lid shadow from heavy brow -->
+  <path d="M 48 63 Q 54 62 60 63" stroke="#3a1a0c" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <path d="M 68 63 Q 74 62 80 63" stroke="#3a1a0c" stroke-width="0.8" fill="none" opacity="0.7"/>
+  <!-- Iris: hazel -->
+  <circle cx="54" cy="65" r="2.2" fill="#6a4a28"/>
+  <circle cx="74" cy="65" r="2.2" fill="#6a4a28"/>
+  <circle cx="54" cy="65" r="2.2" fill="none" stroke="#8a6a38" stroke-width="0.3"/>
+  <circle cx="74" cy="65" r="2.2" fill="none" stroke="#8a6a38" stroke-width="0.3"/>
+  <!-- Pupil -->
+  <circle cx="54" cy="65" r="0.9" fill="#0a0806"/>
+  <circle cx="74" cy="65" r="0.9" fill="#0a0806"/>
+  <!-- Catchlight -->
+  <circle cx="55" cy="64.2" r="0.5" fill="#ffffff"/>
+  <circle cx="75" cy="64.2" r="0.5" fill="#ffffff"/>
 
-  <!-- Cheekbone highlight — gives the face structure without a harsh
-       contour line. -->
-  <ellipse cx="50" cy="72" rx="4" ry="2" fill="#c48a6a" opacity="0.35"/>
-  <ellipse cx="78" cy="72" rx="4" ry="2" fill="#c48a6a" opacity="0.35"/>
+  <!-- Nose: broad Roman, clean bridge + nostrils -->
+  <path d="M 60 68 Q 58 76 58 80 L 60 82 L 64 83 L 68 82 L 70 80 Q 70 76 68 68 Z"
+        fill="#8a5a3a" opacity="0.45"/>
+  <line x1="64" y1="68" x2="64" y2="80" stroke="#c48a6a" stroke-width="0.6" opacity="0.7"/>
+  <ellipse cx="61" cy="81" rx="1.1" ry="0.6" fill="#3a1a0c" opacity="0.8"/>
+  <ellipse cx="67" cy="81" rx="1.1" ry="0.6" fill="#3a1a0c" opacity="0.8"/>
 
-  <!-- Character detail: a long diagonal scar across the left cheek,
-       running from just under the outer corner of the eye down to the
-       corner of the jaw. Double-stroked (light raised scar over a
-       dark outline) so it reads as a healed cut, not a skin mark. -->
-  <path d="M 48 70 Q 46 78 48 86" stroke="#5a3020" stroke-width="1.2" fill="none" opacity="0.7"/>
-  <path d="M 48 70 Q 46 78 48 86" stroke="#e0a888" stroke-width="0.8" fill="none" opacity="0.9"/>
-  <!-- Tiny cross-hatch suture marks along the scar for texture. -->
-  <line x1="46.6" y1="74" x2="48.6" y2="73.2" stroke="#4a2818" stroke-width="0.3" opacity="0.6"/>
-  <line x1="46" y1="78" x2="48" y2="77.4" stroke="#4a2818" stroke-width="0.3" opacity="0.6"/>
-  <line x1="46.3" y1="82" x2="48.3" y2="81.4" stroke="#4a2818" stroke-width="0.3" opacity="0.6"/>
+  <!-- Cheekbone highlight -->
+  <ellipse cx="48" cy="72" rx="4" ry="2" fill="#c48a6a" opacity="0.35"/>
+  <ellipse cx="80" cy="72" rx="4" ry="2" fill="#c48a6a" opacity="0.35"/>
 
-  <!-- Neck tattoo: stylized double-headed Eagle Corps sigil on the
-       right side of the neck, in dark ink. Faded slightly to read as
-       older ink. -->
-  <!-- Twin eagle heads. -->
-  <path d="M 72 96 L 71 93 L 72 91.5 L 73 93 Z M 74 96 L 73 93 L 74 91.5 L 75 93 Z" fill="#1a0804" opacity="0.78"/>
-  <!-- Beaks. -->
-  <path d="M 71.5 92 L 70 91 L 71.5 91.2 Z" fill="#1a0804" opacity="0.78"/>
-  <path d="M 73.5 92 L 75 91 L 73.5 91.2 Z" fill="#1a0804" opacity="0.78"/>
-  <!-- Wings spread horizontally beneath the heads. -->
-  <path d="M 67 97 L 72 95.5 L 77 97 L 76 98.5 L 72 97.5 L 68 98.5 Z" fill="#1a0804" opacity="0.78"/>
-  <!-- Body + tail. -->
-  <path d="M 72 97 L 73 97 L 74 100.5 L 72.5 101.5 L 71 100.5 Z" fill="#1a0804" opacity="0.78"/>
-  <!-- Small motto dash beneath the sigil. -->
-  <line x1="70" y1="103" x2="76" y2="103" stroke="#1a0804" stroke-width="0.5" opacity="0.6"/>
+  <!-- Moustache: thick horseshoe -->
+  <path d="M 50 86 Q 54 84 58 85 L 60 88 Q 55 89 51 90 Z" fill="#2a1408"/>
+  <path d="M 78 86 Q 74 84 70 85 L 68 88 Q 73 89 77 90 Z" fill="#2a1408"/>
+  <path d="M 58 85 Q 64 84 70 85 L 70 87 Q 64 86 58 87 Z" fill="#2a1408"/>
 
-  <!-- Small ear hint (left side, peeks out from head shape). -->
-  <ellipse cx="43" cy="66" rx="2" ry="4" fill="url(#brannock-skin)" stroke="#5a3020" stroke-width="0.4"/>
-  <!-- Ear interior detail. -->
-  <path d="M 43 64 Q 44 66 43 68" stroke="#5a3020" stroke-width="0.4" fill="none"/>
+  <!-- Mouth: single-stroke stoic half-smile, tucked under the moustache -->
+  <path d="M 54 90 Q 64 86 74 90" stroke="#1a0a04" stroke-width="2" stroke-linecap="round" fill="none"/>
 
-  <!-- Name label. -->
-  <text x="64" y="122" text-anchor="middle" font-family="system-ui" font-size="8" fill="#e8c488" font-weight="bold">BRANNOCK · Warden</text>
+  <!-- Chin stubble shadow along the jaw -->
+  <path d="M 48 84 Q 64 94 80 84 Q 78 90 64 92 Q 50 90 48 84 Z" fill="#3a1a0c" opacity="0.32"/>
+
+  <!-- Scar: diagonal on left cheek, raised-scar dual stroke -->
+  <path d="M 46 70 Q 44 78 46 86" stroke="#3a1a0c" stroke-width="1.2" fill="none" opacity="0.75"/>
+  <path d="M 46 70 Q 44 78 46 86" stroke="#e8c4a4" stroke-width="0.8" fill="none" opacity="0.9"/>
+  <line x1="45" y1="74" x2="47" y2="73.4" stroke="#2a1408" stroke-width="0.3" opacity="0.6"/>
+  <line x1="44.4" y1="78" x2="46.4" y2="77.6" stroke="#2a1408" stroke-width="0.3" opacity="0.6"/>
+  <line x1="44.8" y1="82" x2="46.8" y2="81.6" stroke="#2a1408" stroke-width="0.3" opacity="0.6"/>
+
+  <!-- Eagle Corps sigil tattoo on right neck: stylized double-headed eagle -->
+  <g opacity="0.8">
+    <!-- Eagle heads + beaks -->
+    <path d="M 72 96 L 71 92.5 L 72.8 91 L 73 93 Z" fill="#1a0804"/>
+    <path d="M 75 96 L 75.2 93 L 77 91 L 76 92.5 Z" fill="#1a0804"/>
+    <path d="M 71.5 92 L 69.5 91 L 71.5 91.5 Z" fill="#1a0804"/>
+    <path d="M 76.5 92 L 78.5 91 L 76.5 91.5 Z" fill="#1a0804"/>
+    <!-- Wings spread -->
+    <path d="M 66 98 L 72 95.5 L 74 95.5 L 76 95.5 L 82 98 L 80 99.5 L 74 98 L 68 99.5 Z" fill="#1a0804"/>
+    <!-- Body + tail -->
+    <path d="M 73 97 L 75 97 L 75.5 101 L 74 102 L 72.5 101 Z" fill="#1a0804"/>
+    <!-- Motto dash below -->
+    <line x1="70" y1="103.5" x2="78" y2="103.5" stroke="#1a0804" stroke-width="0.5"/>
+  </g>
+
+  <!-- Name label -->
+  <text x="64" y="124" text-anchor="middle" font-family="system-ui, sans-serif" font-size="7.5" fill="#e8c488" font-weight="bold">BRANNOCK · WARDEN</text>
 </svg>
