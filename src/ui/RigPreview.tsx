@@ -24,10 +24,17 @@ export interface RigPreviewProps {
   /** Canvas size in CSS pixels. Defaults to 180×240. */
   width?: number;
   height?: number;
+  /**
+   * Camera framing.
+   *   - 'full'     — default. Whole figure centered, feet near the bottom.
+   *   - 'portrait' — zoomed + translated so the head fills the frame.
+   *     Used by SoldierPortrait for richer roster thumbnails.
+   */
+  framing?: 'full' | 'portrait';
 }
 
 export default function RigPreview({
-  appearance, loadout, width = 180, height = 240,
+  appearance, loadout, width = 180, height = 240, framing = 'full',
 }: RigPreviewProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   // Refs to the mounted Pixi app + the current rig composition's root.
@@ -115,10 +122,11 @@ export default function RigPreview({
       if (destroyed) return;
 
       // Center the rig in the canvas. The rig's foot origin sits at
-      // the Container's (0, 4) — push the world container down by ~80%
-      // of canvas height so the feet land toward the bottom of the frame.
+      // the world Container's (0, 4); the head joint sits at
+      // (0, -44.5 * scale). `framing` decides whether we frame the
+      // whole figure or zoom in on the head.
       const world = new Container();
-      world.position.set(width / 2, height * 0.88);
+      applyFraming(world, framing, width, height);
       app.stage.addChild(world);
       rebuild(world, appearance, loadout);
     })();
@@ -142,6 +150,34 @@ export default function RigPreview({
     if (!world) return;
     rebuild(world, appearance, loadout);
   }, [appearance, loadout]);
+
+  // Re-frame when the framing prop flips between 'full' and 'portrait'.
+  useEffect(() => {
+    const app = appRef.current;
+    if (!app) return;
+    const world = app.stage.children[0] as Container | undefined;
+    if (!world) return;
+    applyFraming(world, framing, width, height);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [framing, width, height]);
+
+  /**
+   * Place + scale the world Container so the rig is framed as requested.
+   * Values derived from SPRITE_SCALE = 0.42 in humanRigBody.ts — the
+   * head joint sits at ~y = -44.5 relative to world origin at scale 1.
+   */
+  function applyFraming(world: Container, mode: 'full' | 'portrait',
+    w: number, h: number): void {
+    if (mode === 'portrait') {
+      const headY = -44.5; // head joint offset from world origin at scale 1
+      const scale = 2.4;
+      world.scale.set(scale);
+      world.position.set(w / 2, h / 2 - headY * scale);
+    } else {
+      world.scale.set(1);
+      world.position.set(w / 2, h * 0.88);
+    }
+  }
 
   function rebuild(world: Container, appr: HumanAppearance, ld: Loadout | undefined): void {
     // Tear down the previous composition.

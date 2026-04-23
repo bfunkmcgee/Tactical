@@ -10,6 +10,7 @@ import { SIDEARM_MOD_SLOTS } from '../game/types';
 import ModPicker from './components/ModPicker';
 import CharacterCreationScreen from './CharacterCreationScreen';
 import SoldierPortrait from './SoldierPortrait';
+import RigPreview from './RigPreview';
 
 const MAX_UTILITIES = 2;
 const PRIMARY_SLOTS: ModSlot[] = ['optic', 'magazine', 'muzzle', 'stock'];
@@ -123,7 +124,18 @@ export default function LoadoutScreen() {
 
       <div className="panel stack" style={{ flexShrink: 0 }}>
         <div className="row" style={{ gap: 'var(--s-4)', alignItems: 'flex-start' }}>
-          <SoldierPortrait template={soldier} size={48} />
+          {/* Live rig preview — updates when any picker changes so the
+              player sees the composed figure they're assembling. Falls
+              back to the DOM head portrait for legacy templates with
+              no `appearance`. */}
+          {soldier.appearance
+            ? <RigPreview
+                appearance={soldier.appearance}
+                loadout={current}
+                width={120} height={180}
+                framing="full"
+              />
+            : <SoldierPortrait template={soldier} size={48} />}
           <div className="stack" style={{ gap: 4, flex: 1 }}>
             <h2>{soldier.name}</h2>
             <p>{soldier.class}</p>
