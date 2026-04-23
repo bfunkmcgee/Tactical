@@ -87,8 +87,6 @@ export type UnitNode = {
  * placeholder rectangle) when a weapon is absent.
  */
 export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): Promise<void> {
-  const bodyResolve = pack.theme?.spritePath;
-  const armsResolve = pack.theme?.armsPath;
   const weaponResolve = pack.theme?.weaponPath;
   const templates = [...Object.keys(pack.soldierTemplates), ...Object.keys(pack.enemyTemplates)];
   const loads: Array<Promise<void>> = [];
@@ -103,10 +101,11 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
       }
     })());
   };
-  // Per-template body / arms / template-owned weapon (enemies).
+  // Template-owned weapon sprites (for enemies — their template carries
+  // its own weapon id path rather than routing through a Loadout).
+  // Soldier / rig-composed unit weapon sprites are preloaded per-weapon
+  // below and resolved at composition time via `w:${weaponId}`.
   for (const id of templates) {
-    pushLoad(`${id}:body`, bodyResolve?.(id));
-    pushLoad(`${id}:arms`, armsResolve?.(id));
     pushLoad(`${id}:weapon`, weaponResolve?.(id));
   }
   // Weapon sprites keyed by weapon id — same weapon looks the same on any

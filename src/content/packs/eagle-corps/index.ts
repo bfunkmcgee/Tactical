@@ -77,47 +77,20 @@ export const pack: ContentPack = {
     },
   },
 
+  // Template-owned weapon sprites. Phase 6e retired the bespoke
+  // spritePath / armsPath body-layer resolvers — every template now
+  // ships `appearance` + routes through the rig. What remains is the
+  // weapon-sprite resolver for enemies whose weapon is template-bound
+  // rather than loadout-driven. (Soldiers resolve their weapon sprite
+  // through Loadout.primaryId → Weapon.spritePath.)
   theme: {
-    /** Torso-only SVG (head + chest + legs; no arms). */
-    spritePath: (templateId) => TORSOS[templateId],
-    /** Arms SVG — rendered inside the weapon wrap so it tracks with the gun. */
-    armsPath: (templateId) => ARMS_SVG[templateId],
-    /** Weapon-layer SVG, rendered + rotated independently of the torso. */
-    weaponPath: (templateId) => WEAPONS_SVG[templateId],
+    weaponPath: (templateId) => ENEMY_WEAPONS_SVG[templateId],
   },
 };
 
-const TORSOS: Record<string, string> = {
-  ranger_kestrel:    '/styles/flat/soldier_torso.svg',
-  warden_brannock:   '/styles/flat/soldier_warden_torso.svg',
-  mystic_seraphine:  '/styles/flat/soldier_mystic_torso.svg',
-  sapper_orin:       '/styles/flat/soldier_sapper_torso.svg',
-  rust_goblin:       '/styles/flat/enemy_goblin_torso.svg',
-  rust_orc:          '/styles/flat/enemy_orc_torso.svg',
-  rust_troll:        '/styles/flat/enemy_troll_torso.svg',
-  // Berserker uses the goblin silhouette — keeps scope tight; colour
-  // tint sets him apart.
-  rust_berserker:    '/styles/flat/enemy_goblin_torso.svg',
-};
-
-const ARMS_SVG: Record<string, string> = {
-  ranger_kestrel:    '/styles/flat/soldier_arms.svg',
-  warden_brannock:   '/styles/flat/soldier_warden_arms.svg',
-  mystic_seraphine:  '/styles/flat/soldier_mystic_arms.svg',
-  sapper_orin:       '/styles/flat/soldier_sapper_arms.svg',
-  rust_goblin:       '/styles/flat/enemy_goblin_arms.svg',
-  rust_orc:          '/styles/flat/enemy_orc_arms.svg',
-  rust_troll:        '/styles/flat/enemy_troll_arms.svg',
-  rust_berserker:    '/styles/flat/enemy_goblin_arms.svg',
-};
-
-const WEAPONS_SVG: Record<string, string> = {
-  ranger_kestrel:    '/styles/flat/soldier_weapon.svg',
-  warden_brannock:   '/styles/flat/soldier_warden_weapon.svg',
-  mystic_seraphine:  '/styles/flat/soldier_mystic_weapon.svg',
-  sapper_orin:       '/styles/flat/soldier_sapper_weapon.svg',
-  rust_goblin:       '/styles/flat/enemy_goblin_weapon.svg',
-  rust_orc:          '/styles/flat/enemy_orc_weapon.svg',
-  rust_troll:        '/styles/flat/enemy_troll_weapon.svg',
-  rust_berserker:    '/styles/flat/enemy_goblin_weapon.svg',
+const ENEMY_WEAPONS_SVG: Record<string, string> = {
+  rust_goblin:    '/styles/flat/enemy_goblin_weapon.svg',
+  rust_orc:       '/styles/flat/enemy_orc_weapon.svg',
+  rust_troll:     '/styles/flat/enemy_troll_weapon.svg',
+  rust_berserker: '/styles/flat/enemy_goblin_weapon.svg',
 };

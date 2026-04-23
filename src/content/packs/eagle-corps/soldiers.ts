@@ -1,21 +1,20 @@
 import type { SoldierTemplate } from '../../../game/types';
 
 /**
- * Eagle Corps soldier templates. As of Phase 5b each template carries an
- * `appearance` block so the renderer composes the unit via the human rig
- * rather than the legacy bespoke `${id}:body/arms/weapon` SVG path. The
+ * Eagle Corps soldier templates. Each template carries an `appearance`
+ * block so the renderer composes the unit via the human rig. The
  * per-soldier identity (Kestrel's blue-scout energy, Seraphine's robed
  * mystic silhouette, etc.) is encoded in two layers:
  *
  *   1. appearance.baseOutfit + hair + palette — what they look like
  *      without armor: civvies, hair, skin tone, eyes.
- *   2. defaultLoadout.armor → per-slot Armor pieces — what their class-canonical
- *      armor looks like bolted on top. See armor.ts for the overlay SVGs
- *      (they re-use the existing per-class torso/arms files).
+ *   2. defaultLoadout.armor → per-slot Armor pieces — what their
+ *      class-canonical armor looks like bolted on top. See armor.ts
+ *      for the overlay SVGs (they re-use the existing per-class
+ *      torso/arms files as Visual.overlays).
  *
- * The legacy bespoke SVGs are still in the tree as fallback. A template
- * without `appearance` continues to render through pack.theme.spritePath
- * unchanged.
+ * Per Phase 6e, the rig renderer is the only code path for shipping
+ * templates — the legacy bespoke body/arms fallback has been retired.
  */
 export const SOLDIERS: Record<string, SoldierTemplate> = {
   ranger_kestrel: {

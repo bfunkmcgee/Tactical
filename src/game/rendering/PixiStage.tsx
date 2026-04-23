@@ -74,9 +74,9 @@ export default function PixiStage() {
       drawMap(tileLayer, initialState.map);
       applyCam();
 
-      // Defer unit rendering until sprite preload settles. For packs without
-      // theme.spritePath (e.g. Void-Watch), ensureSpritesLoaded resolves on
-      // the next microtask, so the unit layer still populates quickly.
+      // Defer unit rendering until sprite preload settles. A pack with a
+      // sparse rig/appearance catalog still preloads in a microtask, so
+      // the unit layer populates quickly either way.
       let spritesReady = false;
       ensureSpritesLoaded(useContent()).then(() => {
         if (destroyed) return;

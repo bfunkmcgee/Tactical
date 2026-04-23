@@ -76,23 +76,16 @@ export interface PackTheme {
   /** Override tile palette per kind. Falls back to engine defaults. */
   tileColors?: Partial<Record<TileKind, number>>;
   /**
-   * Body sprite path resolver. When `armsPath` is ALSO set, this should
-   * point at a torso-only sprite (head + chest + legs, no arms) — arms
-   * get their own independent layer. With only `spritePath` set the
-   * sprite is assumed to be the full body.
-   */
-  spritePath?: (templateId: string) => string;
-  /**
-   * Optional weapon-layer resolver. When provided, the renderer layers
-   * the weapon sprite on top of `spritePath` and animates it
-   * independently (aim windup, recoil).
+   * Template-owned weapon sprite resolver. Used for enemies whose
+   * weapon sprite is bound to their template rather than to a Loadout
+   * (players resolve their primary via Loadout.primaryId →
+   * Weapon.spritePath instead). The returned URL is cached under
+   * `${templateId}:weapon` and read at rendering time in UnitNode.
+   *
+   * Pre-6e this type also carried `spritePath` + `armsPath` for the
+   * bespoke body/arms render path; those are gone along with that
+   * code path (Phase 6e retired it — every template now ships
+   * `appearance` and routes through the rig renderer).
    */
   weaponPath?: (templateId: string) => string | undefined;
-  /**
-   * Optional arms-layer resolver. When provided alongside `weaponPath`,
-   * the arms sprite is mounted inside the weapon wrap so the arms move
-   * with the gun — lifting to eye level during aim, dropping on death.
-   * `spritePath` should then point at the torso-only sprite.
-   */
-  armsPath?: (templateId: string) => string | undefined;
 }
