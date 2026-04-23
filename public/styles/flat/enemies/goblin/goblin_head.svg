@@ -30,17 +30,20 @@
     </radialGradient>
   </defs>
 
-  <!-- HEAD (big relative to body) -->
-  <ellipse cx="48" cy="26" rx="14" ry="12" fill="url(#g-skin)"/>
+  <!-- HEAD (big relative to body). class="skin" on every bare-skin
+       shape (skull, jaw, ears, nose) so the skin-mask pass recolors
+       only those with appearance.skinTone — helmet / eyes / teeth
+       keep their authored look. -->
+  <ellipse class="skin" cx="48" cy="26" rx="14" ry="12" fill="url(#g-skin)"/>
   <!-- jaw/chin -->
-  <path d="M40 30 Q48 38 56 30 L56 34 Q48 40 40 34 Z" fill="url(#g-skin-dark)"/>
+  <path class="skin" d="M40 30 Q48 38 56 30 L56 34 Q48 40 40 34 Z" fill="url(#g-skin-dark)"/>
   <!-- BIG POINTED EARS -->
-  <path d="M34 22 L26 18 L30 28 L36 26 Z" fill="url(#g-skin)"/>
-  <path d="M62 22 L70 18 L66 28 L60 26 Z" fill="url(#g-skin)"/>
+  <path class="skin" d="M34 22 L26 18 L30 28 L36 26 Z" fill="url(#g-skin)"/>
+  <path class="skin" d="M62 22 L70 18 L66 28 L60 26 Z" fill="url(#g-skin)"/>
   <path d="M28 20 L32 24" stroke="#2a3018" stroke-width="0.3"/>
   <path d="M68 20 L64 24" stroke="#2a3018" stroke-width="0.3"/>
   <!-- hooked nose -->
-  <path d="M48 26 L46 32 L50 32 Z" fill="url(#g-skin-dark)"/>
+  <path class="skin" d="M48 26 L46 32 L50 32 Z" fill="url(#g-skin-dark)"/>
   <!-- eye sockets (deep) -->
   <ellipse cx="42" cy="25" rx="3" ry="2" fill="#1a1a0c"/>
   <ellipse cx="54" cy="25" rx="3" ry="2" fill="#1a1a0c"/>

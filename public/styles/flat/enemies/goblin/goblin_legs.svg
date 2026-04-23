@@ -18,17 +18,20 @@
     </linearGradient>
   </defs>
 
-  <!-- legs (skin showing, knobby) -->
-  <path d="M38 86 Q36 108 42 114 L46 114 L47 86 Z" fill="url(#g-skin)"/>
-  <path d="M58 86 Q60 108 54 114 L50 114 L49 86 Z" fill="url(#g-skin)"/>
+  <!-- legs (skin showing, knobby). class="skin" tags the bare-skin
+       paths so the partOverrides skin-mask pass recolors them with
+       appearance.skinTone (berserker's rage wash, etc.) without
+       touching armor / rag / claw fills. -->
+  <path class="skin" d="M38 86 Q36 108 42 114 L46 114 L47 86 Z" fill="url(#g-skin)"/>
+  <path class="skin" d="M58 86 Q60 108 54 114 L50 114 L49 86 Z" fill="url(#g-skin)"/>
   <!-- shin wraps (dirty rags) -->
   <path d="M38 96 L47 96 L47 108 L38 108 Z" fill="url(#g-rag)"/>
   <path d="M58 96 L49 96 L49 108 L58 108 Z" fill="url(#g-rag)"/>
   <path d="M39 99 L46 99 M39 103 L46 103 M39 107 L46 107" stroke="#2a2010" stroke-width="0.4"/>
   <path d="M50 99 L57 99 M50 103 L57 103 M50 107 L57 107" stroke="#2a2010" stroke-width="0.4"/>
   <!-- bare feet with toe claws -->
-  <path d="M36 112 L48 112 L48 118 L38 118 Z" fill="url(#g-skin-dark)"/>
-  <path d="M60 112 L48 112 L48 118 L58 118 Z" fill="url(#g-skin-dark)"/>
+  <path class="skin" d="M36 112 L48 112 L48 118 L38 118 Z" fill="url(#g-skin-dark)"/>
+  <path class="skin" d="M60 112 L48 112 L48 118 L58 118 Z" fill="url(#g-skin-dark)"/>
   <path d="M37 118 L36 121 L39 121 Z" fill="#e8ddc0"/>
   <path d="M41 118 L40 121 L43 121 Z" fill="#e8ddc0"/>
   <path d="M45 118 L44 121 L47 121 Z" fill="#e8ddc0"/>

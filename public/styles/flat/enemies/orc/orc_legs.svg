@@ -22,8 +22,8 @@
       <stop offset="0" stop-color="#6a5838"/><stop offset="1" stop-color="#2a2010"/>
     </linearGradient>
   </defs>
-  <path d="M32 82 Q28 112 38 116 L46 116 L48 82 Z" fill="url(#o-skin)"/>
-  <path d="M64 82 Q68 112 58 116 L50 116 L48 82 Z" fill="url(#o-skin)"/>
+  <path d="M32 82 Q28 112 38 116 L46 116 L48 82 Z" class="skin" fill="url(#o-skin)"/>
+  <path d="M64 82 Q68 112 58 116 L50 116 L48 82 Z" class="skin" fill="url(#o-skin)"/>
   <path d="M36 90 L36 110" stroke="#1a2010" stroke-width="0.5" opacity=".7"/>
   <path d="M60 90 L60 110" stroke="#1a2010" stroke-width="0.5" opacity=".7"/>
   <path d="M30 92 L46 92 L46 108 L32 108 Z" fill="url(#o-rust)"/>
@@ -37,8 +37,8 @@
   <circle cx="58" cy="102" r="0.7" fill="#4a4a4e"/>
   <path d="M32 108 L47 108 L47 112 L32 112 Z" fill="url(#o-rag)"/>
   <path d="M64 108 L49 108 L49 112 L64 112 Z" fill="url(#o-rag)"/>
-  <path d="M30 112 L48 112 L48 118 L34 120 Q30 116 30 112 Z" fill="url(#o-skin-dark)"/>
-  <path d="M66 112 L48 112 L48 118 L62 120 Q66 116 66 112 Z" fill="url(#o-skin-dark)"/>
+  <path d="M30 112 L48 112 L48 118 L34 120 Q30 116 30 112 Z" class="skin" fill="url(#o-skin-dark)"/>
+  <path d="M66 112 L48 112 L48 118 L62 120 Q66 116 66 112 Z" class="skin" fill="url(#o-skin-dark)"/>
   <path d="M32 120 L31 123 L34 122 Z" fill="#e8ddc0"/>
   <path d="M38 120 L37 123 L40 122 Z" fill="#e8ddc0"/>
   <path d="M44 120 L43 123 L46 122 Z" fill="#e8ddc0"/>

@@ -48,8 +48,10 @@
   <rect x="60" y="56" width="2.5" height="4" fill="#8a6030"/>
   <rect x="60" y="56" width="2.5" height="1" fill="#c8a868"/>
 
-  <!-- TORSO: scrawny green body -->
-  <path d="M28 44 Q28 40 32 40 L62 40 Q66 40 66 44 L66 78 Q66 82 62 82 L32 82 Q28 82 28 78 Z" fill="url(#g-skin)"/>
+  <!-- TORSO: scrawny green body. class="skin" so the skin-mask pass
+       recolors the bare torso with appearance.skinTone — armor plate
+       / bandolier / belt stay at their authored colours. -->
+  <path class="skin" d="M28 44 Q28 40 32 40 L62 40 Q66 40 66 44 L66 78 Q66 82 62 82 L32 82 Q28 82 28 78 Z" fill="url(#g-skin)"/>
   <!-- ribs hint -->
   <path d="M34 58 Q40 60 46 58" fill="none" stroke="#2a3018" stroke-width="0.4" opacity=".7"/>
   <path d="M50 58 Q56 60 62 58" fill="none" stroke="#2a3018" stroke-width="0.4" opacity=".7"/>

@@ -28,11 +28,11 @@
       <stop offset="1" stop-color="#4a1808" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <ellipse cx="48" cy="22" rx="14" ry="14" fill="url(#o-skin)"/>
-  <path d="M38 26 Q48 36 58 26 L58 32 Q48 38 38 32 Z" fill="url(#o-skin-dark)"/>
-  <path d="M34 18 Q48 10 62 18 L60 22 Q48 16 36 22 Z" fill="url(#o-skin-dark)"/>
-  <path d="M34 20 L28 16 L32 28 L36 26 Z" fill="url(#o-skin)"/>
-  <path d="M62 20 L68 16 L64 28 L60 26 Z" fill="url(#o-skin)"/>
+  <ellipse cx="48" cy="22" rx="14" ry="14" class="skin" fill="url(#o-skin)"/>
+  <path d="M38 26 Q48 36 58 26 L58 32 Q48 38 38 32 Z" class="skin" fill="url(#o-skin-dark)"/>
+  <path d="M34 18 Q48 10 62 18 L60 22 Q48 16 36 22 Z" class="skin" fill="url(#o-skin-dark)"/>
+  <path d="M34 20 L28 16 L32 28 L36 26 Z" class="skin" fill="url(#o-skin)"/>
+  <path d="M62 20 L68 16 L64 28 L60 26 Z" class="skin" fill="url(#o-skin)"/>
   <path d="M30 20 L34 24" stroke="#1a2010" stroke-width="0.3"/>
   <path d="M66 20 L62 24" stroke="#1a2010" stroke-width="0.3"/>
   <circle cx="30" cy="22" r="1.2" fill="none" stroke="#c87030" stroke-width="0.6"/>
@@ -43,7 +43,7 @@
   <circle cx="54" cy="21" r="1.3" fill="url(#o-eye)"/>
   <circle cx="42" cy="21" r="0.6" fill="#fff4c0"/>
   <circle cx="54" cy="21" r="0.6" fill="#fff4c0"/>
-  <path d="M46 22 L44 28 L48 30 L50 28 Z" fill="url(#o-skin-dark)"/>
+  <path d="M46 22 L44 28 L48 30 L50 28 Z" class="skin" fill="url(#o-skin-dark)"/>
   <path d="M45 24 L48 26" stroke="#1a2010" stroke-width="0.4"/>
   <path d="M38 14 L46 22" stroke="#1a0a08" stroke-width="0.7"/>
   <path d="M58 18 L54 28" stroke="#1a0a08" stroke-width="0.6"/>

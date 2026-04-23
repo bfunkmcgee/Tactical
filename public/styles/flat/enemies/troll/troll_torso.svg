@@ -33,7 +33,7 @@
   <path d="M60 86 L68 86 L66 94 L62 94 Z" fill="url(#t-rust-hl)"/>
   <path d="M64 94 L64 98" stroke="#2a1408" stroke-width="0.5"/>
   <path d="M62 88 L66 88" stroke="#2a1408" stroke-width="0.3"/>
-  <path d="M10 36 Q6 32 14 28 L82 28 Q90 32 86 36 L86 78 Q86 82 82 82 L14 82 Q10 82 10 78 Z" fill="url(#t-skin)"/>
+  <path d="M10 36 Q6 32 14 28 L82 28 Q90 32 86 36 L86 78 Q86 82 82 82 L14 82 Q10 82 10 78 Z" class="skin" fill="url(#t-skin)"/>
   <path d="M14 34 L48 34 L48 64 L14 64 Z" fill="url(#t-rust)"/>
   <path d="M48 34 L82 34 L82 64 L48 64 Z" fill="url(#t-metal)"/>
   <path d="M14 52 L82 52" stroke="#0a0a0c" stroke-width="1.2"/>
