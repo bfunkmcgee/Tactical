@@ -4,6 +4,7 @@ import { resolveBlast } from './utilities';
 import { previewShot, resolveShot } from './combat';
 import { getCoverState } from './los';
 import { makeRng } from './rng';
+import { deriveSoldierStats } from './stats';
 import { unitArmor } from '../../state/combatStore';
 import type { GridMap, Tile, TileKind, Unit, Weapon, WeaponMod, Armor, ShotPreview } from '../types';
 
@@ -370,5 +371,70 @@ describe('previewShot: cover arithmetic + piercing DR', () => {
     // Piercing drops effective DR from 3 → 1, so dmgMin = 4-1 = 3.
     expect(p.dmgMin).toBe(3);
     expect(p.dmgMax).toBe(5);
+  });
+});
+
+// ---- deriveSoldierStats clamps (mkSoldierUnit spawn-time math) ------
+
+describe('deriveSoldierStats: hpMax + mobility clamps', () => {
+  const EMPTY_KIT: SoldierStatsInput['kitEffects'] = {};
+
+  // Shared builder — keeps the tests short.
+  type SoldierStatsInput = Parameters<typeof deriveSoldierStats>[0];
+  function mk(partial: Partial<SoldierStatsInput>): SoldierStatsInput {
+    return {
+      baseHp: 10, baseMobility: 4, baseAim: 0,
+      primaryAmmoBase: 4, sidearmAmmoBase: 2,
+      armorHpBonus: 0, armorMobility: 0,
+      kitEffects: EMPTY_KIT, modMobility: 0,
+      ...partial,
+    };
+  }
+
+  it('hpMax clamps to a minimum of 1 no matter how negative the stack goes', () => {
+    // baseHp 2 + armor -5 + kit -4 = -7 → clamped to 1.
+    const s = deriveSoldierStats(mk({
+      baseHp: 2, armorHpBonus: -5, kitEffects: { hpBonus: -4 },
+    }));
+    expect(s.hpMax).toBe(1);
+  });
+
+  it('mobility clamps to a minimum of 2 (the soldier can always walk 2 tiles)', () => {
+    // baseMobility 3 + armor -2 + kit -2 + mods -1 = -2 → clamped to 2.
+    const s = deriveSoldierStats(mk({
+      baseMobility: 3, armorMobility: -2,
+      kitEffects: { mobilityBonus: -2 }, modMobility: -1,
+    }));
+    expect(s.mobility).toBe(2);
+  });
+
+  it('positive stacks sum normally without any cap on the upper end', () => {
+    // hpMax: 10 + 3 (armor) + 2 (kit) = 15; mobility: 4 + 1 + 2 + 1 = 8.
+    const s = deriveSoldierStats(mk({
+      baseHp: 10, armorHpBonus: 3,
+      baseMobility: 4, armorMobility: 1,
+      kitEffects: { hpBonus: 2, mobilityBonus: 2 }, modMobility: 1,
+    }));
+    expect(s.hpMax).toBe(15);
+    expect(s.mobility).toBe(8);
+  });
+
+  it('ammo caps sum without clamping — pack content guarantees non-negative', () => {
+    // The ammo bumps in kit effects add directly to the weapon's cap.
+    // No Math.max wrap here — if a future mod introduces negative ammo
+    // effects, they would produce sub-zero caps (visible via this test).
+    const s = deriveSoldierStats(mk({
+      primaryAmmoBase: 4, sidearmAmmoBase: 2,
+      kitEffects: { extraAmmoPrimary: 3, extraAmmoSidearm: 1 },
+    }));
+    expect(s.ammoPrimaryMax).toBe(7);
+    expect(s.ammoSidearmMax).toBe(3);
+  });
+
+  it('aim adds the kit aim bonus without clamping — any sign survives', () => {
+    const s = deriveSoldierStats(mk({
+      baseAim: 15, kitEffects: { aimBonus: -5 },
+    }));
+    expect(s.aim).toBe(10);
   });
 });

@@ -10,6 +10,7 @@ import {
   getKit, resolveSpawn, getAbility,
 } from '../content/registry';
 import { modsFromIds, totalMobilityDeltaFromMods } from '../game/engine/loadout';
+import { deriveSoldierStats } from '../game/engine/stats';
 import type { ModSlot } from '../game/types';
 import { useGameStore } from './gameStore';
 import { reachable, findPath } from '../game/engine/pathing';
@@ -205,24 +206,32 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
   const loadout = store.loadouts[templateId] ?? t.defaultLoadout;
   const primary = getWeapon(loadout.primaryId);
   const sidearm = getWeapon(loadout.sidearmId);
-  const armorHp = aggregateArmorStat(loadout.armor, 'hpBonus');
-  const armorMobility = aggregateArmorStat(loadout.armor, 'mobility');
   const kit = loadout.kitId ? getKit(loadout.kitId) : null;
   const k = kit?.effects ?? {};
-  // Kit folds into spawn-time stats — no runtime hooks needed in phase 1.
-  const hpMax = Math.max(1, t.hpMax + armorHp + (k.hpBonus ?? 0));
+  // Mods can also nudge wielder mobility (heavy stock −1, folding +1, etc.).
+  const modMobility = totalMobilityDeltaFromMods(loadout.primaryMods, loadout.sidearmMods);
+  // Pure stat derivation — clamps (hpMax floor 1, mobility floor 2)
+  // + ammo cap math live in src/game/engine/stats.ts so they're
+  // testable without the store + content registry.
+  const stats = deriveSoldierStats({
+    baseHp: t.hpMax,
+    baseMobility: t.mobility,
+    baseAim: t.aim,
+    primaryAmmoBase: primary.ammo,
+    sidearmAmmoBase: sidearm.ammo,
+    armorHpBonus: aggregateArmorStat(loadout.armor, 'hpBonus'),
+    armorMobility: aggregateArmorStat(loadout.armor, 'mobility'),
+    kitEffects: k,
+    modMobility,
+  });
   const utilityChargesMax = loadout.utilityIds.map((id) =>
     (useContent().utilities[id]?.charges ?? 0) + (k.extraUtilityCharges ?? 0)
   );
   // Apply excursion carry-over if provided — otherwise full HP / full magazines.
-  const startHp = carry?.hp !== undefined ? Math.max(1, Math.min(hpMax, carry.hp)) : hpMax;
+  const startHp = carry?.hp !== undefined ? Math.max(1, Math.min(stats.hpMax, carry.hp)) : stats.hpMax;
   const utilityCharges = carry?.utilityCharges
     ? utilityChargesMax.map((max, i) => Math.min(max, carry.utilityCharges?.[i] ?? max))
     : utilityChargesMax;
-  // Mods can also nudge wielder mobility (heavy stock −1, folding +1, etc.).
-  const modMobility = totalMobilityDeltaFromMods(loadout.primaryMods, loadout.sidearmMods);
-  const primaryCap = primary.ammo + (k.extraAmmoPrimary ?? 0);
-  const sidearmCap = sidearm.ammo + (k.extraAmmoSidearm ?? 0);
   return {
     id: nextUnitId(),
     faction: 'player',
@@ -230,13 +239,13 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
     name: t.name,
     pos: { x: 0, y: 0 },
     hp: startHp,
-    hpMax,
-    aim: t.aim + (k.aimBonus ?? 0),
-    mobility: Math.max(2, t.mobility + armorMobility + (k.mobilityBonus ?? 0) + modMobility),
+    hpMax: stats.hpMax,
+    aim: stats.aim,
+    mobility: stats.mobility,
     ap: 2, apMax: 2,
     loadout,
-    ammo: carry?.ammoPrimary !== undefined ? Math.min(primaryCap, carry.ammoPrimary) : primaryCap,
-    sidearmAmmo: carry?.ammoSidearm !== undefined ? Math.min(sidearmCap, carry.ammoSidearm) : sidearmCap,
+    ammo: carry?.ammoPrimary !== undefined ? Math.min(stats.ammoPrimaryMax, carry.ammoPrimary) : stats.ammoPrimaryMax,
+    sidearmAmmo: carry?.ammoSidearm !== undefined ? Math.min(stats.ammoSidearmMax, carry.ammoSidearm) : stats.ammoSidearmMax,
     utilityCharges,
     // Players don't use innate attack stats — combat resolves through their weapon.
     dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
