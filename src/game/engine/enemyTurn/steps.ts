@@ -1,6 +1,7 @@
 import type { CombatState, FireEvent, Floater } from '../../../state/combatStore';
 import type { LogEntry, Unit, UnitId, Vec2, WeaponClass } from '../../types';
 import type { AiGrenade } from '../ai';
+import type { EngineDeps } from '../deps';
 import { resolveEnemyAttack } from '../combat';
 import { resolveBlast } from '../utilities';
 import { triggerPlayerOverwatch, type OverwatchDeps } from '../overwatch';
@@ -45,9 +46,8 @@ export type StepResult = {
 };
 
 /** Deps the step resolvers need. Pack-aware helpers come from the store. */
-export type StepDeps = {
+export type StepDeps = EngineDeps & {
   overwatch: OverwatchDeps;
-  armorOf: (u: Unit) => number;
   floaterFor: (pos: Vec2, text: string, color: number) => Floater;
   fireClassFor: (u: Unit, weapon: null) => WeaponClass;
   burstShotsForTemplate: (tid: string) => number | undefined;
@@ -144,7 +144,11 @@ function resolveAttack(state: CombatState, step: EnemyStep & { kind: 'attack' },
   const actor = state.units.find((u) => u.id === step.unitId && u.alive);
   const target = state.units.find((u) => u.id === step.targetId && u.alive);
   if (!actor || !target) return { patch: {}, applied: false, delayMs: 0 };
-  const armorDr = target.faction === 'player' ? deps.armorOf(target) : 0;
+  // deps.armorOf returns 0 for any unit without a loadout — see
+  // EngineDeps contract in src/game/engine/deps.ts. No faction gate
+  // needed (though in practice the enemy-turn target is always a
+  // player unit).
+  const armorDr = deps.armorOf(target);
   const burst = deps.burstShotsForTemplate(actor.templateId);
   const smokeSet = new Set(state.smokeTiles.keys());
   const result = resolveEnemyAttack(state.map, actor, target, armorDr, state.rng, smokeSet, burst);
@@ -229,10 +233,12 @@ function resolveThrow(state: CombatState, step: EnemyStep & { kind: 'throw' }, d
   const actor = state.units.find((u) => u.id === step.unitId && u.alive);
   if (!actor) return { patch: {}, applied: false, delayMs: 0 };
 
+  // `deps.armorOf` already returns 0 for units without a loadout — see
+  // EngineDeps in src/game/engine/deps.ts. No faction gate needed.
   const blast = resolveBlast(
     state, step.center,
     { dmgMin: step.grenade.dmgMin, dmgMax: step.grenade.dmgMax, radius: step.grenade.radius },
-    (o) => (o.faction === 'player' ? deps.armorOf(o) : 0),
+    deps.armorOf,
     state.rng,
   );
   const units = blast.units.map((o) => o.id === actor.id ? { ...o, ap: o.ap - 1 } : o);

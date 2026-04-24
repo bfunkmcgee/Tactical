@@ -1,6 +1,7 @@
 import type { CombatState } from '../../state/combatStore';
 import type { GridMap, Unit, UnitId, Utility, UtilityKind, Vec2 } from '../types';
 import type { RNG } from './rng';
+import type { EngineDeps } from './deps';
 import { chebyshev, keyOf } from './grid';
 
 /**
@@ -21,15 +22,12 @@ export const SMOKE_DURATION = 2;
 /** Floater emitted by a resolver; store turns these into real Floater entries. */
 export type UtilityFloater = { pos: Vec2; text: string; color: number };
 
-export type UtilityContext = {
+export type UtilityContext = EngineDeps & {
   actor: Unit;
   center: Vec2;
   utility: Utility;
   state: CombatState;
   rng: RNG;
-  /** Damage reduction resolver — armor of the unit taking the hit. Supplied
-   *  by the store since unit armor depends on pack lookups. */
-  armorOf: (u: Unit) => number;
 };
 
 export type UtilityResult = {

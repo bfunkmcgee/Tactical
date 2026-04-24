@@ -334,8 +334,13 @@ function mkVipUnit(pos: Vec2): Unit {
  * per-shot from resolveShot / previewShot, so it re-reads content on
  * every call — cheap (bounded map iteration) and keeps the Unit struct
  * free of derived state that would go stale after tryRefit.
+ *
+ * Returns 0 for any unit without a loadout (every enemy today). Exported
+ * so tests can pin the "enemy DR = 0" invariant — several engine call
+ * sites rely on this to skip defensive `faction === 'player'` wrappers
+ * around `deps.armorOf` (see src/game/engine/deps.ts).
  */
-function unitArmor(u: Unit): number {
+export function unitArmor(u: Unit): number {
   if (!u.loadout) return 0;
   return aggregateArmorStat(u.loadout.armor, 'dr');
 }
@@ -839,9 +844,13 @@ function resolvePlayerUtility(set: Setter, get: Getter, userId: UnitId, center: 
   // Dispatch into the per-kind resolver. The resolver handles the actual
   // damage/heal/smoke/flashbang math; we wrap the result with AP spend,
   // charge decrement, log-entry construction, and floater IDs.
+  // `unitArmor(o)` returns 0 for any unit without a loadout (enemies);
+  // no faction gate needed — the dep contract pinned in deps.ts + the
+  // enemy-armor-zero test in combatStore.test.ts guarantees the same
+  // behaviour as the pre-cleanup `faction === 'player' ? ... : 0` wrap.
   const result = resolveUtility({
     actor: u, center, utility: util, state: st, rng: st.rng,
-    armorOf: (o) => (o.faction === 'player' ? unitArmor(o) : 0),
+    armorOf: unitArmor,
   });
 
   // Append resolver floaters with fresh IDs/TTL.

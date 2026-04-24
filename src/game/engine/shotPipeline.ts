@@ -1,6 +1,7 @@
 import type { CombatState, FireEvent, Floater } from '../../state/combatStore';
 import type { LogEntry, Unit, UnitId, Weapon } from '../types';
 import type { WeaponMod } from '../types';
+import type { EngineDeps } from './deps';
 import { previewShot, resolveShot } from './combat';
 import { hasLineOfSight } from './los';
 import { nextFireEventId, nextFloaterId, nextLogId } from './runtimeIds';
@@ -19,8 +20,7 @@ import { pushEvents } from './events';
  * skip the `endsTurn` flag on heavy primaries.
  */
 
-export type ShotPipelineDeps = {
-  armorOf: (u: Unit) => number;
+export type ShotPipelineDeps = EngineDeps & {
   modsOf: (u: Unit, useSidearm: boolean) => WeaponMod[];
   fireClassFor: (u: Unit, weapon: Weapon | null) => FireEvent['fireClass'];
   /** Optional floater factory hook. Supplied by the store so floaters get

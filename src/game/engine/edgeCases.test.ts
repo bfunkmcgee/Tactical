@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { resolveWeapon } from './loadout';
 import { resolveBlast } from './utilities';
 import { makeRng } from './rng';
+import { unitArmor } from '../../state/combatStore';
 import type { GridMap, Tile, TileKind, Unit, Weapon, WeaponMod } from '../types';
 
 /**
@@ -168,6 +169,18 @@ describe('resolveBlast: radius + damage edges', () => {
     const same = r.units.find((u) => u.id === 1)!;
     expect(same.alive).toBe(false);
     expect(same.hp).toBe(0);
+  });
+
+  it('unitArmor returns 0 for units without a loadout — EngineDeps invariant', () => {
+    // Phase-C cross-cut: engine modules pass any unit to `deps.armorOf`
+    // without a faction wrapper because the store's `unitArmor`
+    // guarantees 0 for loadout-less units. If future code attaches a
+    // loadout to an enemy, or changes unitArmor semantics, this test
+    // forces the faction-gating wrappers that were removed back onto
+    // the audit table. See src/game/engine/deps.ts.
+    const enemy = mkUnit({ id: 1, faction: 'enemy', pos: { x: 0, y: 0 } });
+    expect(enemy.loadout).toBeUndefined();
+    expect(unitArmor(enemy)).toBe(0);
   });
 
   it('counts kills only for enemy faction (player blast on a player ally does not count)', () => {

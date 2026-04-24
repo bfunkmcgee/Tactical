@@ -1,5 +1,6 @@
 import type { CombatState, FireEvent, Floater } from '../../state/combatStore';
 import type { LogEntry, ShotPreview, Unit, UnitId, Weapon, WeaponMod } from '../types';
+import type { EngineDeps } from './deps';
 import { previewShot, resolveShot, resolveEnemyAttack } from './combat';
 import { hasLineOfSight } from './los';
 import { nextFireEventId, nextLogId } from './runtimeIds';
@@ -22,8 +23,7 @@ const HIT_PENALTY = 15;
 const CRIT_PENALTY = 10;
 
 /** Common deps — small surface, pack lookups live in the store. */
-export type OverwatchDeps = {
-  armorOf: (u: Unit) => number;
+export type OverwatchDeps = EngineDeps & {
   modsOf: (u: Unit, useSidearm: boolean) => WeaponMod[];
   primaryOf: (u: Unit) => Weapon | null;
   fireClassFor: (u: Unit, weapon: Weapon | null) => FireEvent['fireClass'];
