@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Hollow Wraith — torso rig part. Translucent slate-cyan robe-like
+  silhouette. No belt, no plate, no sigils — just an echo of a
+  human form draped in cold light. Two shoulder wisps trail outward.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <radialGradient id="w-torso" cx="50%" cy="50%" r="55%">
+      <stop offset="0" stop-color="#c8d8e8" stop-opacity="0.7"/>
+      <stop offset="0.6" stop-color="#7a8fb0" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3a4860" stop-opacity="0.2"/>
+    </radialGradient>
+    <linearGradient id="w-shoulder-fade" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#b8c8d8" stop-opacity="0.0"/>
+      <stop offset="0.5" stop-color="#7a8fb0" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#b8c8d8" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+  <!-- robe-like silhouette: narrow at the neck, broad at the waist,
+       fading at the bottom into the legs tendril -->
+  <path d="M36 42 Q26 60 28 80 L68 80 Q70 60 60 42 Q54 38 48 38 Q42 38 36 42 Z"
+        fill="url(#w-torso)"/>
+  <!-- shoulder wisps trailing outward (left + right) -->
+  <path d="M22 50 Q14 54 12 62 L18 60 Q24 56 28 54 Z"
+        fill="url(#w-shoulder-fade)" opacity="0.7"/>
+  <path d="M74 50 Q82 54 84 62 L78 60 Q72 56 68 54 Z"
+        fill="url(#w-shoulder-fade)" opacity="0.7"/>
+  <!-- inner brighter core -->
+  <ellipse cx="48" cy="62" rx="14" ry="18" fill="#c8d8e8" opacity="0.18"/>
+  <!-- collarbone wisp -->
+  <path d="M42 42 Q48 46 54 42" stroke="#b8c8d8" stroke-width="0.6" fill="none" opacity="0.6"/>
+</svg>

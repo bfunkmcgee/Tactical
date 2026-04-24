@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Hollow Wraith — head rig part. Hooded skull-shape: a translucent
+  cowl with two glowing cyan eye-points where the face would be. No
+  mouth, no nose — wraiths don't have features beyond the gaze.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <radialGradient id="w-hood" cx="50%" cy="50%" r="55%">
+      <stop offset="0" stop-color="#c8d8e8" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#7a8fb0" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#3a4860" stop-opacity="0.15"/>
+    </radialGradient>
+    <radialGradient id="w-eye" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#e8f4ff"/>
+      <stop offset="0.4" stop-color="#6ab0e0"/>
+      <stop offset="1" stop-color="#1a3050" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="w-cowl-edge" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#5a7090" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#3a4860" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer hooded silhouette -->
+  <path d="M30 14 Q26 36 36 42 L60 42 Q70 36 66 14 Q56 6 48 6 Q40 6 30 14 Z"
+        fill="url(#w-hood)"/>
+  <!-- Cowl shadow inside the hood -->
+  <path d="M34 16 Q32 32 38 38 L58 38 Q64 32 62 16 Q56 12 48 12 Q40 12 34 16 Z"
+        fill="#1a2840" opacity="0.55"/>
+  <!-- Glowing cyan eye-points -->
+  <circle cx="42" cy="26" r="3" fill="url(#w-eye)"/>
+  <circle cx="54" cy="26" r="3" fill="url(#w-eye)"/>
+  <circle cx="42" cy="26" r="0.9" fill="#e8f4ff"/>
+  <circle cx="54" cy="26" r="0.9" fill="#e8f4ff"/>
+  <!-- Trailing cowl tatters at the base -->
+  <path d="M30 36 L28 44 L32 42 L34 44 L36 40 Z" fill="url(#w-cowl-edge)"/>
+  <path d="M66 36 L68 44 L64 42 L62 44 L60 40 Z" fill="url(#w-cowl-edge)"/>
+</svg>

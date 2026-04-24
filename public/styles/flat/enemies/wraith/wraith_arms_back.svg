@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Hollow Wraith — arms-back rig part. A trailing wisp behind the
+  torso suggesting the silhouette of a back arm. Sways gently with
+  the rig's arms-back animation channel.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="w-arm-back" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a8fb0" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3a4860" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+  <!-- Single tendril behind the torso, slightly off-center to read
+       as one back arm. -->
+  <path d="M64 48 Q72 60 70 76 L62 78 Q60 60 56 48 Z" fill="url(#w-arm-back)"/>
+</svg>

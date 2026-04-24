@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Hollow Wraith — legs rig part. The wraith doesn't really have legs;
+  the lower body trails into a wispy tendril of blue plasma that fades
+  toward the ground. No solid feet, no shin armor — just diffuse glow
+  ramping down through the rig's bottom edge.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="w-fade-down" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#7a8fb0" stop-opacity="0.65"/>
+      <stop offset="0.6" stop-color="#5a7090" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#1a2840" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="w-core-down" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b8d0e8" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#5a7090" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- main wisp tendril (where the legs would be) -->
+  <path d="M30 80 Q26 100 34 122 L62 122 Q70 100 66 80 Z" fill="url(#w-fade-down)"/>
+  <!-- inner brighter core -->
+  <path d="M40 84 Q38 104 44 120 L52 120 Q58 104 56 84 Z" fill="url(#w-core-down)"/>
+  <!-- a few drifting motes trailing off the bottom -->
+  <circle cx="38" cy="118" r="0.8" fill="#b8d0e8" opacity="0.55"/>
+  <circle cx="58" cy="120" r="0.7" fill="#b8d0e8" opacity="0.45"/>
+  <circle cx="48" cy="124" r="0.6" fill="#b8d0e8" opacity="0.35"/>
+</svg>

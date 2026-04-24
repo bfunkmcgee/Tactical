@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Hollow Wraith — arms-front rig part. The wisp that grips the
+  weapon. Translucent like the rest of the body, with a slightly
+  brighter "claw" at the wrist where the weapon mounts. Rides
+  inside the weaponWrap so it tracks aim animations.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="w-arm-front" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#a8c0d8" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#5a7090" stop-opacity="0.4"/>
+    </linearGradient>
+    <radialGradient id="w-claw" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#e8f4ff"/>
+      <stop offset="1" stop-color="#3a4860" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- left arm wisp -->
+  <path d="M28 46 Q22 56 22 66 L30 70 L34 56 Z" fill="url(#w-arm-front)"/>
+  <!-- right arm wisp -->
+  <path d="M68 46 Q74 56 74 66 L66 70 L62 56 Z" fill="url(#w-arm-front)"/>
+  <!-- glowing wrist-claw glints at the grip -->
+  <circle cx="26" cy="68" r="2.6" fill="url(#w-claw)"/>
+  <circle cx="70" cy="68" r="2.6" fill="url(#w-claw)"/>
+  <circle cx="26" cy="68" r="0.7" fill="#e8f4ff"/>
+  <circle cx="70" cy="68" r="0.7" fill="#e8f4ff"/>
+</svg>

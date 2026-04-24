@@ -6,11 +6,17 @@ import type { EnemyTemplate } from '../../../game/types';
  * template, so a Void-Watch deployment on the Ruined Market spawns four
  * Hollows instead of the goblin/orc/troll mix. Validates map reuse.
  *
- * Phase 6e: the Wraith rides the shared human rig with a cold slate
- * skinTone to read as a translucent echo. No bespoke per-part art yet;
- * a dedicated ghost rig variant (non-human silhouette, alpha blending)
- * is tracked as future content work.
+ * Phase 6e initially shipped the Wraith on the human rig with a slate
+ * skinTone — readable but not really ghost-like. The follow-up gives
+ * it dedicated per-part art under public/styles/flat/enemies/wraith/:
+ * translucent cyan-blue silhouettes, a hooded cowl head with two
+ * glowing eye-points, no solid feet (the legs trail off into a wisp).
+ * Still rig-composed via partOverrides so the standard rig animations
+ * (foot-plant, torso lean, head counter-lean, arms-back sway, arms-
+ * front aim) still drive its movement. skinTone stays identity since
+ * the bespoke art carries its own palette.
  */
+const WRAITH_DIR = '/styles/flat/enemies/wraith';
 export const ENEMIES: Record<string, EnemyTemplate> = {
   hollow_wraith: {
     id: 'hollow_wraith',
@@ -25,11 +31,14 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     fireClass: 'rifle',
     appearance: {
       rig: 'human',
-      skinTone: 0x7a8fb0,       // cold slate — matches the template color
-      hairStyle: 'bald',
-      hairColor: 0x7a8fb0,
-      eyeColor: 0xb8c8d8,
-      baseOutfit: 'fatigues',
+      skinTone: 0xffffff,
+      partOverrides: {
+        legs:         `${WRAITH_DIR}/wraith_legs.svg`,
+        torso:        `${WRAITH_DIR}/wraith_torso.svg`,
+        head:         `${WRAITH_DIR}/wraith_head.svg`,
+        'arms-back':  `${WRAITH_DIR}/wraith_arms_back.svg`,
+        'arms-front': `${WRAITH_DIR}/wraith_arms_front.svg`,
+      },
     },
   },
 };
