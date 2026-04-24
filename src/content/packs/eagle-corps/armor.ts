@@ -16,8 +16,11 @@ import type { Armor } from '../../../game/types';
  * "set" match the legacy stats so mid-run migrations don't quietly
  * buff or nerf squads (see src/state/gameStore.ts V1_TO_V2_ARMOR).
  *
- * Visual URLs reuse the existing bespoke soldier_*_torso / soldier_*_arms
- * files for Kestrel/Brannock/Seraphine/Orin's class-canonical pieces.
+ * Class-canonical chest pieces (warded_plate / mithril_vest /
+ * swiftstep_greaves / oakheart_helm) reference torso-only overlays
+ * under /styles/flat/armor/class/. Gauntlet overlays still reuse the
+ * legacy soldier_*_arms.svg files, which are arms-local and don't
+ * bleed outside the arms-front sprite.
  */
 export const ARMOR: Record<string, Armor> = {
   // ---- warded_plate (Brannock's Heavy Plate): hp 4 / dr 2 / mob -1 ----
@@ -28,7 +31,7 @@ export const ARMOR: Record<string, Armor> = {
     slot: 'chest',
     hpBonus: 2, dr: 1, mobility: 0, tag: 'runic',
     visual: { overlays: {
-      torso: { svg: '/styles/flat/soldier_warden_torso.svg' },
+      torso: { svg: '/styles/flat/armor/class/warden_plate_chest.svg' },
     }},
   },
   warded_plate_gauntlets: {
@@ -60,7 +63,7 @@ export const ARMOR: Record<string, Armor> = {
     slot: 'chest',
     hpBonus: 2, dr: 1, mobility: 0, tag: 'mundane',
     visual: { overlays: {
-      torso: { svg: '/styles/flat/soldier_torso.svg' },
+      torso: { svg: '/styles/flat/armor/class/ranger_carapace_chest.svg' },
     }},
   },
   mithril_vest_gauntlets: {
@@ -92,7 +95,7 @@ export const ARMOR: Record<string, Armor> = {
     slot: 'chest',
     hpBonus: 0, dr: 0, mobility: 0, tag: 'fae',
     visual: { overlays: {
-      torso: { svg: '/styles/flat/soldier_mystic_torso.svg' },
+      torso: { svg: '/styles/flat/armor/class/mystic_robes_chest.svg' },
     }},
   },
   swiftstep_greaves_gauntlets: {
@@ -124,7 +127,7 @@ export const ARMOR: Record<string, Armor> = {
     slot: 'chest',
     hpBonus: 3, dr: 1, mobility: 0, tag: 'alchemical',
     visual: { overlays: {
-      torso: { svg: '/styles/flat/soldier_sapper_torso.svg' },
+      torso: { svg: '/styles/flat/armor/class/sapper_rig_chest.svg' },
     }},
   },
   oakheart_helm_gauntlets: {

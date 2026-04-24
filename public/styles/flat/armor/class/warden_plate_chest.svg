@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Warden Plate — torso-only overlay for Brannock's class-canonical
+  chest piece. Heavy runic plate carrier with Warden sigil. All
+  drawn content clipped to the torso band (y ~ 36-82) so it never
+  bleeds into head/legs. See plan: armor-overlay fix.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="wp-plate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#36363c"/><stop offset="1" stop-color="#14141a"/>
+    </linearGradient>
+    <linearGradient id="wp-plate-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#56565e"/><stop offset="1" stop-color="#28282e"/>
+    </linearGradient>
+    <linearGradient id="wp-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8c488"/><stop offset="1" stop-color="#8a6838"/>
+    </linearGradient>
+  </defs>
+  <!-- Breastplate body -->
+  <path d="M 31 46 L 65 46 L 67 80 L 29 80 Z" fill="url(#wp-plate)" stroke="#060608" stroke-width="0.5"/>
+  <!-- Sternum rib highlight -->
+  <path d="M 48 47 L 48 79" stroke="#5a5a62" stroke-width="0.6" opacity="0.7"/>
+  <!-- Upper plate rim (collar arc, below neck, above collarbone at y~40) -->
+  <path d="M 33 46 Q 48 42 63 46" fill="none" stroke="url(#wp-plate-hl)" stroke-width="1.2"/>
+  <!-- Shoulder pauldron straps (shoulder band y=36-44) -->
+  <path d="M 31 46 L 29 42 L 34 40 L 38 44 Z" fill="url(#wp-plate)" stroke="#060608" stroke-width="0.4"/>
+  <path d="M 65 46 L 67 42 L 62 40 L 58 44 Z" fill="url(#wp-plate)" stroke="#060608" stroke-width="0.4"/>
+  <!-- Central runic sigil (Warden eagle, simplified) -->
+  <g transform="translate(48 62)">
+    <ellipse cx="0" cy="0" rx="3.5" ry="5" fill="url(#wp-gold)" stroke="#5a4020" stroke-width="0.3"/>
+    <circle cx="-3.2" cy="-4.5" r="1.6" fill="url(#wp-gold)"/>
+    <circle cx="3.2" cy="-4.5" r="1.6" fill="url(#wp-gold)"/>
+    <path d="M -3 0 L -10 -1 L -12 3 L -10 4 L -4 3 Z" fill="url(#wp-gold)"/>
+    <path d="M 3 0 L 10 -1 L 12 3 L 10 4 L 4 3 Z" fill="url(#wp-gold)"/>
+    <path d="M -1 5 L 0 7 L 1 5 Z" fill="url(#wp-gold)"/>
+  </g>
+  <!-- Horizontal rune bands on breastplate -->
+  <line x1="33" y1="52" x2="63" y2="52" stroke="#3a3a42" stroke-width="0.4"/>
+  <line x1="33" y1="72" x2="63" y2="72" stroke="#3a3a42" stroke-width="0.4"/>
+  <!-- Small rune stamps -->
+  <circle cx="36" cy="52" r="0.8" fill="#8a6838"/>
+  <circle cx="60" cy="52" r="0.8" fill="#8a6838"/>
+  <circle cx="36" cy="72" r="0.8" fill="#8a6838"/>
+  <circle cx="60" cy="72" r="0.8" fill="#8a6838"/>
+  <!-- Cummerbund / belt rim just above legs band -->
+  <rect x="30" y="76" width="36" height="4" fill="#1a1a22" stroke="#060608" stroke-width="0.4"/>
+  <rect x="45" y="77" width="6" height="2.5" fill="url(#wp-gold)" stroke="#5a4020" stroke-width="0.3"/>
+</svg>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mystic Robes — torso-only overlay for Seraphine's class-canonical
+  chest piece. Violet robe drape with gold sash and rune trim. No
+  hood (hood would bleed into head band; reserved for a future
+  helmet slot). All drawn content clipped to the torso band
+  (y ~ 36-82).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="mr-robe" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#5a3d7a"/><stop offset="1" stop-color="#2a1840"/>
+    </linearGradient>
+    <linearGradient id="mr-robe-hl" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a5db0"/><stop offset="1" stop-color="#3a1f52"/>
+    </linearGradient>
+    <linearGradient id="mr-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f0d088"/><stop offset="1" stop-color="#8a6838"/>
+    </linearGradient>
+    <linearGradient id="mr-sash" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d8b058"/><stop offset="1" stop-color="#6a4820"/>
+    </linearGradient>
+  </defs>
+  <!-- Robe body (slightly flared toward hem) -->
+  <path d="M 29 44 L 67 44 L 70 80 L 26 80 Z" fill="url(#mr-robe)" stroke="#10081a" stroke-width="0.5"/>
+  <!-- Robe shoulder folds -->
+  <path d="M 32 46 L 34 78" stroke="#6a4880" stroke-width="0.4" opacity="0.55"/>
+  <path d="M 64 46 L 62 78" stroke="#6a4880" stroke-width="0.4" opacity="0.55"/>
+  <!-- Robe center pleat (darker) -->
+  <path d="M 48 46 L 48 80" stroke="#1a0828" stroke-width="0.4" opacity="0.7"/>
+  <!-- Robe collar V-neck -->
+  <path d="M 38 44 L 48 58 L 58 44" fill="url(#mr-robe-hl)" stroke="#10081a" stroke-width="0.5"/>
+  <!-- Gold trim down V-neck -->
+  <line x1="38.5" y1="44" x2="48" y2="57" stroke="url(#mr-gold)" stroke-width="0.6"/>
+  <line x1="57.5" y1="44" x2="48" y2="57" stroke="url(#mr-gold)" stroke-width="0.6"/>
+  <!-- Center-chest sigil (arcane star) -->
+  <g transform="translate(48 62)">
+    <circle cx="0" cy="0" r="2.4" fill="url(#mr-gold)" stroke="#5a4020" stroke-width="0.3"/>
+    <path d="M 0 -3.2 L 0.9 -0.9 L 3.2 0 L 0.9 0.9 L 0 3.2 L -0.9 0.9 L -3.2 0 L -0.9 -0.9 Z" fill="url(#mr-gold)" stroke="#5a4020" stroke-width="0.2"/>
+  </g>
+  <!-- Gold sash wrapping waist -->
+  <path d="M 29 72 L 67 72 L 69 78 L 28 78 Z" fill="url(#mr-sash)" stroke="#3a2810" stroke-width="0.4"/>
+  <!-- Sash knot -->
+  <rect x="45" y="72" width="6" height="7" fill="#a88038" stroke="#3a2810" stroke-width="0.3"/>
+  <!-- Rune stitches along sash -->
+  <circle cx="36" cy="75" r="0.6" fill="#3a2810"/>
+  <circle cx="42" cy="75" r="0.6" fill="#3a2810"/>
+  <circle cx="54" cy="75" r="0.6" fill="#3a2810"/>
+  <circle cx="60" cy="75" r="0.6" fill="#3a2810"/>
+</svg>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sapper Rig — torso-only overlay for Orin's class-canonical chest
+  piece (Heartwood Vest). Utility vest with pouches, bandolier, and
+  heartwood reinforcement plate. All drawn content clipped to the
+  torso band (y ~ 36-82).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="sr-vest" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a3820"/><stop offset="1" stop-color="#261810"/>
+    </linearGradient>
+    <linearGradient id="sr-wood" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a6a3a"/><stop offset="1" stop-color="#3a2810"/>
+    </linearGradient>
+    <linearGradient id="sr-brass" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d8a848"/><stop offset="1" stop-color="#6a4818"/>
+    </linearGradient>
+    <linearGradient id="sr-pouch" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6a5028"/><stop offset="1" stop-color="#382410"/>
+    </linearGradient>
+  </defs>
+  <!-- Utility vest body -->
+  <path d="M 32 46 L 64 46 L 66 80 L 30 80 Z" fill="url(#sr-vest)" stroke="#0a0a06" stroke-width="0.5"/>
+  <!-- Center seam / zipper -->
+  <line x1="48" y1="46" x2="48" y2="80" stroke="#1a1208" stroke-width="0.4"/>
+  <!-- Shoulder strap loops -->
+  <rect x="34" y="44" width="6" height="4" fill="#382410" stroke="#0a0a06" stroke-width="0.3"/>
+  <rect x="56" y="44" width="6" height="4" fill="#382410" stroke="#0a0a06" stroke-width="0.3"/>
+  <!-- Bandolier diagonal across chest (right shoulder -> left hip) -->
+  <path d="M 62 46 L 34 78 L 30 76 L 58 44 Z" fill="url(#sr-pouch)" stroke="#1a1208" stroke-width="0.3"/>
+  <!-- Bandolier loops (small pouches / shell cartridges) -->
+  <rect x="52" y="48" width="2.5" height="3" fill="url(#sr-brass)" stroke="#3a2810" stroke-width="0.2" transform="rotate(-40 53 50)"/>
+  <rect x="46" y="56" width="2.5" height="3" fill="url(#sr-brass)" stroke="#3a2810" stroke-width="0.2" transform="rotate(-40 47 57)"/>
+  <rect x="40" y="64" width="2.5" height="3" fill="url(#sr-brass)" stroke="#3a2810" stroke-width="0.2" transform="rotate(-40 41 66)"/>
+  <rect x="34" y="72" width="2.5" height="3" fill="url(#sr-brass)" stroke="#3a2810" stroke-width="0.2" transform="rotate(-40 35 74)"/>
+  <!-- Heartwood reinforcement plate (center-right chest) -->
+  <path d="M 50 54 L 60 54 L 61 68 L 49 68 Z" fill="url(#sr-wood)" stroke="#1a1208" stroke-width="0.4"/>
+  <!-- Wood grain lines -->
+  <line x1="51" y1="58" x2="59" y2="58" stroke="#2a1a0c" stroke-width="0.3" opacity="0.6"/>
+  <line x1="51" y1="62" x2="59" y2="62" stroke="#2a1a0c" stroke-width="0.3" opacity="0.6"/>
+  <!-- Brass rivets on wood plate -->
+  <circle cx="51" cy="55.5" r="0.6" fill="url(#sr-brass)"/>
+  <circle cx="59" cy="55.5" r="0.6" fill="url(#sr-brass)"/>
+  <circle cx="51" cy="66.5" r="0.6" fill="url(#sr-brass)"/>
+  <circle cx="59" cy="66.5" r="0.6" fill="url(#sr-brass)"/>
+  <!-- Tool pouches along lower vest (left side) -->
+  <rect x="34" y="62" width="5" height="7" fill="url(#sr-pouch)" stroke="#0a0a06" stroke-width="0.3"/>
+  <rect x="39.5" y="62" width="5" height="7" fill="url(#sr-pouch)" stroke="#0a0a06" stroke-width="0.3"/>
+  <!-- Pouch buckle flaps -->
+  <rect x="34" y="62" width="5" height="2" fill="#2a1a0c" stroke="#0a0a06" stroke-width="0.2"/>
+  <rect x="39.5" y="62" width="5" height="2" fill="#2a1a0c" stroke="#0a0a06" stroke-width="0.2"/>
+  <!-- Waist belt -->
+  <rect x="31" y="76" width="34" height="3" fill="#2a1a0c" stroke="#0a0a06" stroke-width="0.3"/>
+  <rect x="46" y="76.5" width="4" height="2" fill="url(#sr-brass)" stroke="#3a2810" stroke-width="0.2"/>
+</svg>
