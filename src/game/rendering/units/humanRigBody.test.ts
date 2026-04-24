@@ -405,4 +405,38 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     const hairSprite = comp.headSlot.children[0] as { tint: number };
     expect(hairSprite.tint).toBe(0x4a3020);
   });
+
+  it('gauntlet-front overlay child anchor matches GRIP_ANCHOR so it rides with the post-attach re-anchor in UnitNode', async () => {
+    // Regression pin. arms-front starts at anchor (0,0) but UnitNode
+    // re-anchors it to GRIP_ANCHOR after buildHumanRigBody returns.
+    // Pixi children don't follow anchor changes, so the child must
+    // author its own anchor to match — otherwise it shifts ~one iso
+    // tile SE of the hand and shows as a ghost silhouette on the ground.
+    const { GRIP_ANCHOR } = await import('./constants');
+    const cache = new Map<string, Texture>();
+    const dummyTex = {} as unknown as Texture;
+    cache.set('overlay:/fake/gauntlets_front.svg', dummyTex);
+
+    const gauntlets: Armor = {
+      id: 'test_gauntlets', name: 'Test Gauntlets', flavor: 'Pin.',
+      slot: 'gauntlets', hpBonus: 0, dr: 0, mobility: 0, tag: 'mundane',
+      visual: { overlays: {
+        'gauntlet-front': { svg: '/fake/gauntlets_front.svg' },
+      }},
+    };
+
+    const comp = buildHumanRigBody(
+      HUMAN_RIG,
+      mkAppearance(),
+      mkLoadout({ armor: { gauntlets: 'test_gauntlets' } }),
+      cache,
+      { armorOf: (id) => (id === 'test_gauntlets' ? gauntlets : undefined), clothingOf: () => undefined },
+    );
+
+    const armsFront = comp.parts['arms-front'];
+    expect(armsFront.children.length).toBe(1);
+    const child = armsFront.children[0] as unknown as { anchor: { x: number; y: number } };
+    expect(child.anchor.x).toBe(GRIP_ANCHOR.x);
+    expect(child.anchor.y).toBe(GRIP_ANCHOR.y);
+  });
 });

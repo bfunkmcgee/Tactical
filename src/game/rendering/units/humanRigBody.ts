@@ -1,6 +1,7 @@
 import { Container, Sprite, type Texture } from 'pixi.js';
 import type { Rig, RigPartId } from '../../engine/rig';
 import type { Armor, Clothing, HumanAppearance, Kit, Loadout } from '../../types';
+import { GRIP_ANCHOR } from './constants';
 
 /**
  * Rigged body composition — the return value of `buildHumanRigBody`.
@@ -178,11 +179,14 @@ export function buildHumanRigBody(
     s.tint = appearance.skinTone;
     if (partId === 'arms-front') {
       // arms-front is re-parented into weaponWrap by the caller and
-      // has its anchor/scale reset to GRIP_ANCHOR + 0.42 there. Parent
-      // the skin sprite under it at local (0,0) with scale 1 so it
-      // rides along with the parent's transform (same pattern as the
-      // gauntlet-front dispatch case below).
-      s.anchor.set(0, 0);
+      // has its anchor reset to GRIP_ANCHOR there. Mirror that anchor
+      // on the child so the child's texture anchor point coincides
+      // with the parent's — otherwise Pixi's per-sprite anchor leaves
+      // this child at parent-local (0, 0) and the visible texture
+      // shifts by (GRIP_ANCHOR.x * texW, GRIP_ANCHOR.y * texH) in
+      // parent local space (~one iso tile SE) once the parent's
+      // anchor is mutated after child attach.
+      s.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
       s.scale.set(1);
       s.position.set(0, 0);
       parts['arms-front']!.addChild(s);
@@ -359,14 +363,17 @@ export function buildHumanRigBody(
           break;
         case 'gauntlet-front': {
           // gauntlet-front composites onto the arms-front sprite, which
-          // lives inside the weapon wrap (set up by the caller). Stash
-          // as a child of arms-front at local (0,0).
+          // lives inside the weapon wrap (set up by the caller). The
+          // caller mutates arms-front's anchor to GRIP_ANCHOR after we
+          // return, so mirror that anchor here — otherwise the gauntlet
+          // texture renders at parent-local (0, 0) and shifts ~one iso
+          // tile SE of the hand once the parent is re-anchored.
           const frontSprite = parts['arms-front'];
           if (!frontSprite) break;
           const tex = cache.get(`overlay:${layer.svg}`);
           if (!tex) break;
           const s = new Sprite(tex);
-          s.anchor.set(0, 0);
+          s.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
           s.scale.set(1);
           s.position.set(0, 0);
           if (layer.tint !== undefined) s.tint = layer.tint;
