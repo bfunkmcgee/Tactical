@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { resolveWeapon } from './loadout';
 import { resolveBlast } from './utilities';
+import { previewShot, resolveShot } from './combat';
+import { getCoverState } from './los';
 import { makeRng } from './rng';
 import { unitArmor } from '../../state/combatStore';
-import type { GridMap, Tile, TileKind, Unit, Weapon, WeaponMod } from '../types';
+import type { GridMap, Tile, TileKind, Unit, Weapon, WeaponMod, Armor, ShotPreview } from '../types';
 
 /**
  * Combat engine edge-case coverage. Each test here pins behaviour that
@@ -198,5 +200,175 @@ describe('resolveBlast: radius + damage edges', () => {
     const deadFoe = r.units.find((u) => u.id === 2)!;
     expect(deadAlly.alive).toBe(false); // friendly fire still kills
     expect(deadFoe.alive).toBe(false);
+  });
+});
+
+// ---- resolveShot burst + crit + piercing edges ----------------------
+
+describe('resolveShot: burst + crit + piercing composition', () => {
+  // A narrow-band burst weapon: 3 rounds, per-round damage fixed at 4
+  // (dmgMin=dmgMax=12, divided by 3 = 4 per round). Keeps the math
+  // predictable so we can assert exact totals.
+  const BURST_RIFLE: Weapon = {
+    id: 'burst', name: 'Burst', flavor: '', class: 'rifle', slot: 'primary',
+    dmgMin: 12, dmgMax: 12, aim: 0, crit: 10,
+    rangeShort: 7, rangeLong: 14, ammo: 9, apCost: 1, tag: 'mundane',
+    burstShots: 3,
+  };
+
+  function mkPreview(overrides: Partial<ShotPreview> = {}): ShotPreview {
+    return {
+      hitChance: 100, critChance: 0, cover: 'none',
+      dmgMin: 0, dmgMax: 0, inRange: true, hasLOS: true, modifiers: [],
+      ...overrides,
+    };
+  }
+
+  it('piercing flag reduces DR by 2 per round on every burst round', () => {
+    // DR 3 with piercing → effectiveDr = max(0, 3 - 2) = 1. Per-round
+    // damage = 4 - 1 = 3. Three hits → total 9.
+    const armor: Armor = {
+      id: 'a', name: '', flavor: '', slot: 'chest',
+      hpBonus: 0, dr: 3, mobility: 0, tag: 'mundane',
+    };
+    const piercing: WeaponMod = {
+      id: 'p', name: 'p', flavor: '', slot: 'magazine', fits: ['rifle'],
+      effects: { flags: ['piercing'] }, tag: 'mundane',
+    };
+    const r = resolveShot(mkPreview({ hitChance: 100 }), BURST_RIFLE, armor, makeRng(7), [piercing]);
+    expect(r.kind).toBe('hit');
+    if (r.kind !== 'hit') return;
+    expect(r.hits).toBe(3);
+    expect(r.burstRounds).toBe(3);
+    expect(r.damage).toBe(9); // (4 - 1) * 3 rounds
+  });
+
+  it('per-round min 1 damage clamp holds when DR exceeds per-round max', () => {
+    // DR 99 vs per-round damage 4 → every round clamps to 1, total = 3.
+    // Pins the `Math.max(1, raw - effectiveDr)` guard at combat.ts:132.
+    const armor: Armor = {
+      id: 'a', name: '', flavor: '', slot: 'chest',
+      hpBonus: 0, dr: 99, mobility: 0, tag: 'mundane',
+    };
+    const r = resolveShot(mkPreview({ hitChance: 100 }), BURST_RIFLE, armor, makeRng(7));
+    expect(r.kind).toBe('hit');
+    if (r.kind !== 'hit') return;
+    expect(r.hits).toBe(3);
+    expect(r.damage).toBe(3); // 1 + 1 + 1
+  });
+
+  it('burst `anyCrit` flag is true iff AT LEAST ONE round critted', () => {
+    // Force guaranteed crits: hitChance 100 + critChance 100 → every
+    // round's crit roll <= 100 succeeds, so anyCrit must flip true.
+    // Pins the `if (critical) anyCrit = true;` branch.
+    const r = resolveShot(
+      mkPreview({ hitChance: 100, critChance: 100 }),
+      BURST_RIFLE, null, makeRng(13),
+    );
+    expect(r.kind).toBe('hit');
+    if (r.kind !== 'hit') return;
+    expect(r.critical).toBe(true);
+    // 3 crit rounds × round(4 * 1.5) = 6 per round = 18 total.
+    expect(r.damage).toBe(18);
+  });
+
+  it('burst miss returns miss kind + carries burstRounds for HUD ("0/3 rounds hit")', () => {
+    // hitChance 0 → every roll fails. Pins the
+    // `burstShots > 1 ? { miss + burstRounds } : { miss }` branch.
+    const r = resolveShot(
+      mkPreview({ hitChance: 0 }),
+      BURST_RIFLE, null, makeRng(17),
+    );
+    expect(r.kind).toBe('miss');
+    if (r.kind !== 'miss') return;
+    expect(r.burstRounds).toBe(3);
+  });
+});
+
+// ---- previewShot cover + piercing composition ----------------------
+
+describe('previewShot: cover arithmetic + piercing DR', () => {
+  function mkMap2(rows: string[]): GridMap {
+    const width = rows[0].length, height = rows.length;
+    const tiles: Tile[] = [];
+    for (const r of rows) for (const ch of r) {
+      const kind: TileKind =
+        ch === '#' ? 'wall' : ch === 'H' ? 'cover_full' : ch === 'h' ? 'cover_half' : 'floor';
+      tiles.push({ kind });
+    }
+    return { id: 't', name: 't', width, height, tiles, playerSpawns: [], enemySpawns: [] };
+  }
+
+  const RIFLE: Weapon = {
+    id: 'rifle', name: 'Rifle', flavor: '', class: 'rifle', slot: 'primary',
+    dmgMin: 4, dmgMax: 6, aim: 0, crit: 10,
+    rangeShort: 7, rangeLong: 14, ammo: 4, apCost: 1, tag: 'mundane',
+  };
+
+  it('diagonal shot: cover tile axis-adjacent to the target (on x-side) supplies full cover', () => {
+    // getCoverState (los.ts:49-64) evaluates target.x+dx AND target.y+dy
+    // for the shooter-direction signs, so a diagonal shot reads cover
+    // from EITHER axis-neighbour. Shooter at (0,0), target at (4,4):
+    // dx = sign(0-4) = -1 → candidate (3, 4). Placing cover at (3, 4)
+    // must resolve to 'full'.
+    const m = mkMap2([
+      '......',
+      '......',
+      '......',
+      '......',
+      '...HT.',   // target at (4, 4); cover_full at (3, 4) → x-side adj
+      '......',
+    ]);
+    const state = getCoverState(m, { x: 0, y: 0 }, { x: 4, y: 4 });
+    expect(state).toBe('full');
+  });
+
+  it('diagonal shot: cover_full on one axis + cover_half on the other resolves `full` (best wins)', () => {
+    // Target at (4, 4) with half cover on x-side (3, 4) and full cover
+    // on y-side (4, 3). Shooter at (0, 0). Best-of wins: 'full'.
+    const m = mkMap2([
+      '......',
+      '......',
+      '......',
+      '....H.',   // cover_full at (4, 3) → y-side adj
+      '...hT.',   // cover_half at (3, 4) → x-side adj; target at (4, 4)
+      '......',
+    ]);
+    const state = getCoverState(m, { x: 0, y: 0 }, { x: 4, y: 4 });
+    expect(state).toBe('full');
+  });
+
+  it('piercing flag shows up in dmg{Min,Max} and cover penalty still appears in hitChance modifiers', () => {
+    // Independence test: piercing touches damage math, cover touches
+    // hit-chance math. Both apply together without interference.
+    // Shooter at (5, 1), target at (2, 1). dx = sign(5-2) = 1, dy = 0.
+    // Candidate = (3, 1). Place cover_full at (3, 1).
+    const m2 = mkMap2([
+      '......',   // row 0
+      '..TH.S',   // row 1: target(2,1), cover(3,1), shooter(5,1)
+      '......',   // row 2
+    ]);
+    const shooter = {
+      id: 1, faction: 'player', templateId: 't', name: 'S',
+      pos: { x: 5, y: 1 },
+      hp: 10, hpMax: 10, aim: 0, mobility: 4, ap: 2, apMax: 2, ammo: 4,
+      sidearmAmmo: 0, utilityCharges: [],
+      dmgMin: 0, dmgMax: 0, rangeShort: 0, rangeLong: 0,
+      status: { overwatch: false, blinded: false, suppressed: false, marked: false, seeThroughSmoke: false },
+      alive: true, color: '#fff',
+    } as Unit;
+    const target = { ...shooter, id: 2, faction: 'enemy', pos: { x: 2, y: 1 }, name: 'T' } as Unit;
+
+    const piercing: WeaponMod = {
+      id: 'p', name: 'p', flavor: '', slot: 'magazine', fits: ['rifle'],
+      effects: { flags: ['piercing'] }, tag: 'mundane',
+    };
+    const p = previewShot(m2, shooter, target, RIFLE, /* targetArmorDr */ 3, undefined, [piercing]);
+
+    expect(p.cover).toBe('full');
+    expect(p.modifiers.some((x) => x.label.includes('cover'))).toBe(true);
+    // Piercing drops effective DR from 3 → 1, so dmgMin = 4-1 = 3.
+    expect(p.dmgMin).toBe(3);
+    expect(p.dmgMax).toBe(5);
   });
 });
