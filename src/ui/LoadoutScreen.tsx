@@ -9,6 +9,7 @@ import type { ArmorSlot, Loadout, ModSlot, SoldierTemplate, WeaponClass } from '
 import { SIDEARM_MOD_SLOTS } from '../game/types';
 import ModPicker from './components/ModPicker';
 import CharacterCreationScreen from './CharacterCreationScreen';
+import BarracksScreen from './BarracksScreen';
 import SoldierPortrait from './SoldierPortrait';
 import RigPreview from './RigPreview';
 
@@ -30,6 +31,9 @@ export default function LoadoutScreen() {
    *  drops the new custom soldier into the currently-viewed roster slot
    *  so the player can immediately loadout + deploy them. */
   const [creating, setCreating] = useState<boolean>(false);
+  /** When true, BarracksScreen modal is open — lists custom soldiers
+   *  with a delete affordance. */
+  const [barracks, setBarracks] = useState<boolean>(false);
 
   function handleCreateSoldier(tpl: SoldierTemplate): void {
     addCustomSoldier(tpl);
@@ -86,6 +90,9 @@ export default function LoadoutScreen() {
         <button onClick={() => setScreen('menu')}>Back</button>
         <h2>Loadout</h2>
         <div className="row" style={{ gap: 'var(--s-2)' }}>
+          <button onClick={() => setBarracks(true)} title="Manage custom soldiers">
+            Barracks
+          </button>
           <button onClick={() => setCreating(true)} title="Replace current slot with a custom soldier">
             + Create Soldier
           </button>
@@ -97,6 +104,9 @@ export default function LoadoutScreen() {
           onCreate={handleCreateSoldier}
           onCancel={() => setCreating(false)}
         />
+      )}
+      {barracks && (
+        <BarracksScreen onClose={() => setBarracks(false)} />
       )}
 
       <div className="row scroll-x" style={{ gap: 'var(--s-2)', paddingBottom: 4 }}>
