@@ -96,4 +96,48 @@ describe('customSoldiers: lookup override + lifecycle', () => {
     expect(kestrel.name).toBe('Kestrel');
     expect(kestrel.appearance).toBeDefined(); // migrated in Phase 5b
   });
+
+  it('renameCustomSoldier updates the name + persists; trims + clamps input', () => {
+    const tpl = mkCustom('custom_test_5', 'Original');
+    useGameStore.getState().addCustomSoldier(tpl);
+    // Normal rename
+    useGameStore.getState().renameCustomSoldier('custom_test_5', 'Renamed');
+    expect(useGameStore.getState().customSoldiers['custom_test_5'].name).toBe('Renamed');
+    // Whitespace trim
+    useGameStore.getState().renameCustomSoldier('custom_test_5', '   Padded   ');
+    expect(useGameStore.getState().customSoldiers['custom_test_5'].name).toBe('Padded');
+    // Long input clamps to 32 chars
+    const long = 'x'.repeat(50);
+    useGameStore.getState().renameCustomSoldier('custom_test_5', long);
+    expect(useGameStore.getState().customSoldiers['custom_test_5'].name.length).toBe(32);
+    // Blank is a no-op (keeps previous name)
+    useGameStore.getState().renameCustomSoldier('custom_test_5', '   ');
+    expect(useGameStore.getState().customSoldiers['custom_test_5'].name.length).toBe(32);
+    // Unknown id is a no-op (no throw)
+    useGameStore.getState().renameCustomSoldier('no_such_id', 'Ghost');
+    expect(useGameStore.getState().customSoldiers['no_such_id']).toBeUndefined();
+  });
+
+  it('rerollCustomSoldierAppearance replaces palette fields + preserves name/class/loadout', () => {
+    const tpl = mkCustom('custom_test_6', 'Roller');
+    useGameStore.getState().addCustomSoldier(tpl);
+    const before = useGameStore.getState().customSoldiers['custom_test_6'];
+    useGameStore.getState().rerollCustomSoldierAppearance('custom_test_6');
+    const after = useGameStore.getState().customSoldiers['custom_test_6'];
+    // Identity-preserving fields stay.
+    expect(after.name).toBe(before.name);
+    expect(after.class).toBe(before.class);
+    expect(after.hpMax).toBe(before.hpMax);
+    expect(after.defaultLoadout).toEqual(before.defaultLoadout);
+    // Appearance still set, rig unchanged.
+    expect(after.appearance).toBeDefined();
+    expect(after.appearance!.rig).toBe('human');
+    // At least one palette field is present. (Randomness could pick the
+    // same swatch twice — assert the shape, not a specific change.)
+    expect(typeof after.appearance!.skinTone).toBe('number');
+    expect(typeof after.appearance!.hairColor).toBe('number');
+    expect(typeof after.appearance!.eyeColor).toBe('number');
+    expect(typeof after.appearance!.hairStyle).toBe('string');
+    expect(typeof after.appearance!.baseOutfit).toBe('string');
+  });
 });

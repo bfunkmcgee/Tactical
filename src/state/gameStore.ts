@@ -3,6 +3,7 @@ import type { ArmorSlot, Loadout, SoldierTemplate } from '../game/types';
 import {
   useContent, allSoldierTemplates, onPackChange, registerCustomSoldierLookup,
 } from '../content/registry';
+import { SKIN_TONES, HAIR_COLORS, EYE_COLORS } from '../content/rigs/palettes';
 
 type Screen =
   | 'menu' | 'loadout' | 'mapRoom'
@@ -197,6 +198,12 @@ type GameState = {
   addCustomSoldier: (tpl: SoldierTemplate) => void;
   /** Remove a custom soldier (+ its loadout). No-op for pack-default ids. */
   removeCustomSoldier: (id: string) => void;
+  /** Rename a custom soldier. Trims + clamps to 1–32 chars; a blank
+   *  value or pack-default id is a no-op. */
+  renameCustomSoldier: (id: string, name: string) => void;
+  /** Randomize the custom soldier's appearance palette (skin / hair /
+   *  eye / baseOutfit). Leaves name + class + loadout untouched. */
+  rerollCustomSoldierAppearance: (id: string) => void;
   /** Reset roster + loadouts to the active pack's defaults. Called on pack swap. */
   reloadFromActivePack: () => void;
 };
@@ -256,6 +263,39 @@ export const useGameStore = create<GameState>((set) => ({
       const fallback = useContent().defaultRoster[0];
       const nextRoster = st.roster.map((rid) => (rid === id ? fallback : rid));
       return { customSoldiers: nextCustom, loadouts: nextLoadouts, roster: nextRoster };
+    }),
+  renameCustomSoldier: (id, name) =>
+    set((st) => {
+      const tpl = st.customSoldiers[id];
+      if (!tpl) return {};
+      const trimmed = name.trim().slice(0, 32);
+      if (!trimmed || trimmed === tpl.name) return {};
+      const nextCustom = { ...st.customSoldiers, [id]: { ...tpl, name: trimmed } };
+      persistCustomSoldiers(nextCustom);
+      return { customSoldiers: nextCustom };
+    }),
+  rerollCustomSoldierAppearance: (id) =>
+    set((st) => {
+      const tpl = st.customSoldiers[id];
+      if (!tpl || !tpl.appearance) return {};
+      const pack = useContent();
+      const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+      const hairIds = pack.hairStyles ? Object.keys(pack.hairStyles) : [];
+      const outfitIds = pack.baseOutfits ? Object.keys(pack.baseOutfits) : [];
+      const nextAppearance = {
+        ...tpl.appearance,
+        skinTone: pick(SKIN_TONES).color,
+        hairColor: pick(HAIR_COLORS).color,
+        eyeColor: pick(EYE_COLORS).color,
+        hairStyle: hairIds.length ? pick(hairIds) : tpl.appearance.hairStyle,
+        baseOutfit: outfitIds.length ? pick(outfitIds) : tpl.appearance.baseOutfit,
+      };
+      const nextCustom = {
+        ...st.customSoldiers,
+        [id]: { ...tpl, appearance: nextAppearance },
+      };
+      persistCustomSoldiers(nextCustom);
+      return { customSoldiers: nextCustom };
     }),
   reloadFromActivePack: () =>
     set(() => ({

@@ -26,6 +26,8 @@ export interface BarracksScreenProps {
 export default function BarracksScreen({ onClose }: BarracksScreenProps) {
   const customSoldiers = useGameStore((s) => s.customSoldiers);
   const removeCustomSoldier = useGameStore((s) => s.removeCustomSoldier);
+  const renameCustomSoldier = useGameStore((s) => s.renameCustomSoldier);
+  const rerollCustomSoldierAppearance = useGameStore((s) => s.rerollCustomSoldierAppearance);
   const roster = useGameStore((s) => s.roster);
 
   const entries: SoldierTemplate[] = Object.values(customSoldiers);
@@ -41,6 +43,13 @@ export default function BarracksScreen({ onClose }: BarracksScreenProps) {
       : `Delete ${tpl.name}? This can't be undone.`;
     if (typeof window !== 'undefined' && !window.confirm(warning)) return;
     removeCustomSoldier(tpl.id);
+  }
+
+  function handleRename(tpl: SoldierTemplate): void {
+    if (typeof window === 'undefined') return;
+    const next = window.prompt(`Rename ${tpl.name} to:`, tpl.name);
+    if (next === null) return; // user cancelled
+    renameCustomSoldier(tpl.id, next);
   }
 
   return (
@@ -100,13 +109,28 @@ export default function BarracksScreen({ onClose }: BarracksScreenProps) {
                   HP {tpl.hpMax} · Aim {tpl.aim >= 0 ? '+' : ''}{tpl.aim} · Move {tpl.mobility}
                 </div>
               </div>
-              <button
-                onClick={() => handleDelete(tpl)}
-                style={{ color: 'var(--danger, #d26a6a)' }}
-                title="Remove this custom soldier"
-              >
-                Delete
-              </button>
+              <div className="row" style={{ gap: 'var(--s-2)' }}>
+                <button
+                  onClick={() => handleRename(tpl)}
+                  title="Rename this custom soldier"
+                >
+                  Rename
+                </button>
+                <button
+                  onClick={() => rerollCustomSoldierAppearance(tpl.id)}
+                  title="Randomize skin / hair / eye color + outfit"
+                  disabled={!tpl.appearance}
+                >
+                  Re-roll
+                </button>
+                <button
+                  onClick={() => handleDelete(tpl)}
+                  style={{ color: 'var(--danger, #d26a6a)' }}
+                  title="Remove this custom soldier"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
