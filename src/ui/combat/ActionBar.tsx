@@ -28,6 +28,11 @@ function buttonStyle(d: ActionDescriptor, primary: boolean): React.CSSProperties
 
 function renderButton(d: ActionDescriptor, onAction: (id: ActionId) => void, opts: { primary?: boolean } = {}) {
   const primary = d.id === 'endTurn';
+  // Render the short label so the bar fits in 1-2 rows on a 360px
+  // viewport. The full label (e.g. "Fire · Hexbore Scattergun 3/3")
+  // becomes the aria-label so screen readers still announce the
+  // weapon name; the SelectedUnitHeader carries it visually.
+  const visibleText = d.shortLabel ?? d.label;
   return (
     <button
       key={d.id}
@@ -38,7 +43,7 @@ function renderButton(d: ActionDescriptor, onAction: (id: ActionId) => void, opt
       aria-label={d.label}
       style={buttonStyle(d, !!opts.primary || primary)}
     >
-      {d.label}
+      {visibleText}
     </button>
   );
 }
@@ -71,10 +76,9 @@ export default function ActionBar({ groups, onAction }: ActionBarProps) {
     <>
       <div
         style={{
-          position: 'fixed',
-          bottom: 'calc(var(--safe-bottom) + var(--s-2))',
-          left: 'var(--s-2)', right: 'var(--s-2)',
-          zIndex: 10,
+          // No `position: fixed` — the bar is a flow child of
+          // <ControlDeck>. Predictable stacking with the
+          // selected-unit header above.
           display: 'flex',
           gap: 0,
           flexWrap: 'wrap',

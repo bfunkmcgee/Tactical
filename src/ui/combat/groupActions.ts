@@ -128,6 +128,10 @@ export function groupActions(args: {
       utilities.push({
         id: (`utility-${i}` as ActionId),
         label: `${u.name} ×${charges}`,
+        // Shorten via the first whitespace-split token of the name —
+        // "Embercore Orb" → "Orb", "Phoenix Draught" → "Phoenix".
+        // Good enough until per-utility short-name authoring lands.
+        shortLabel: `${u.name.split(' ').pop()} ×${charges}`,
         disabled: unit.ap < u.apCost || charges <= 0,
         active: mode === 'utility' && selectedUtilityIdx === i,
       });
@@ -218,7 +222,15 @@ export function groupActions(args: {
  * Pure: returns the sliced groups + the spilled-out array. The caller
  * (`<ActionBar>`) renders the overflow as a "..." button + sheet.
  */
-export const MAX_VISIBLE_ACTIONS = 8;
+/**
+ * Threshold at which `pickOverflow` starts collapsing tail entries
+ * from `class` into the "..." sheet. Tuned for a 360px viewport
+ * with short labels — 6 buttons + 4 group separators fit one row
+ * comfortably; 7+ wraps. A Sapper with 2 utilities (Move/Fire/
+ * Sidearm + 2 utilities + Demolish + Reload/OW/EndTurn = 9) hits
+ * this threshold and pushes Refit into overflow.
+ */
+export const MAX_VISIBLE_ACTIONS = 6;
 
 export function pickOverflow(groups: ActionGroups): {
   visible: ActionGroups;

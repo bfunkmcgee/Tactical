@@ -118,7 +118,7 @@ describe('groupActions: per-unit action descriptor groups', () => {
     expect(groups.system.find((d) => d.id === 'endTurn')!.disabled).toBe(false);
   });
 
-  it('4. overflow trigger: 3 utilities + class ability + Refit > 8 visible; pickOverflow trims tail of class', () => {
+  it('4. overflow trigger: 3 utilities + class ability + Refit > MAX_VISIBLE_ACTIONS; pickOverflow trims tail of class', () => {
     const pack = mkPack();
     const unit = mkUnit({
       templateId: 'ranger',
@@ -142,6 +142,31 @@ describe('groupActions: per-unit action descriptor groups', () => {
     expect(visible.class[0].label).toBe('Mark');
     // Overflow contains Refit (the predictable non-essential entry)
     expect(overflow.map((d) => d.label)).toContain('Refit');
+  });
+
+  it('4b. Sapper with 2 utilities (the screenshot loadout): Refit overflows, Demolish stays visible', () => {
+    const pack = mkPack();
+    pack.soldierTemplates.sapper = {
+      id: 'sapper', name: 'Sapper', class: 'Sapper',
+      portraitColor: '#fff', hpMax: 10, aim: 0, mobility: 4,
+    } as never;
+    const unit = mkUnit({
+      templateId: 'sapper',
+      loadout: {
+        primaryId: 'runeweave_carbine', primaryMods: {},
+        sidearmId: 'sigilshot_pistol', sidearmMods: {},
+        utilityIds: ['embercore_orb', 'phoenix_draught'],
+        armor: {}, kitId: null,
+      } as never,
+      utilityCharges: [3, 3],
+    });
+    const groups = groupActions({
+      unit, mode: 'idle', selectedUtilityIdx: null, phase: 'player', content: pack,
+    });
+    // 3 + 2 + 2 + 3 = 10 total > 6 → overflow
+    const { visible, overflow } = pickOverflow(groups);
+    expect(visible.class.map((d) => d.label)).toEqual(['Demolish']);
+    expect(overflow.map((d) => d.label)).toEqual(['Refit']);
   });
 
   it('5. Mystic with active Sight: class label flips to "Sight Active" and disabled', () => {

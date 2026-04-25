@@ -1,18 +1,23 @@
 import SoldierPortrait from '../SoldierPortrait';
-import type { SoldierTemplate, Unit } from '../../game/types';
+import type { SoldierTemplate, Unit, Weapon } from '../../game/types';
 
 /**
- * Selected-unit context strip — sits between the map and the action
- * bar, surfaces the active soldier's portrait + name + class + HP +
- * AP. Visible only when a player unit is selected. Replaces the
- * eye-traversal from "name in roster pip up top" → "buttons at the
- * bottom" with a single focal point right above the actions.
+ * Selected-unit context strip — flow child of <ControlDeck>, sits
+ * directly above the action bar. Surfaces the active soldier's
+ * portrait + name + class + weapons + HP + AP so the player has a
+ * single focal point next to the buttons that change state.
+ *
+ * Weapon names live HERE (in the subline) so the action-bar buttons
+ * can render their `shortLabel` ("Fire 7/7") and stay narrow enough
+ * to fit on a 360px viewport without wrapping.
  *
  * Presentational only: no store reads, all data via props.
  */
 export interface SelectedUnitHeaderProps {
   unit: Unit | null;
   template: SoldierTemplate | null;
+  primary: Weapon | null;
+  sidearm: Weapon | null;
 }
 
 export function apDots(ap: number, apMax: number): { filled: number; empty: number } {
@@ -27,7 +32,7 @@ function hpBarColor(hp: number, hpMax: number): string {
   return 'var(--danger)';
 }
 
-export default function SelectedUnitHeader({ unit, template }: SelectedUnitHeaderProps) {
+export default function SelectedUnitHeader({ unit, template, primary, sidearm }: SelectedUnitHeaderProps) {
   if (!unit || unit.faction !== 'player' || !unit.alive) return null;
   const dots = apDots(unit.ap, unit.apMax);
   const hpPct = unit.hpMax > 0 ? Math.max(0, unit.hp) / unit.hpMax : 0;
@@ -35,17 +40,17 @@ export default function SelectedUnitHeader({ unit, template }: SelectedUnitHeade
   const overwatch = unit.status.overwatch;
   const borderColor = overwatch ? 'var(--accent)' : 'var(--bg-3)';
 
+  // Subline: class · primary · sidearm. Each part falls off cleanly
+  // when its source is missing, so a unit with no loadout still reads
+  // (e.g. just "Sapper").
+  const subParts = [template?.class, primary?.name, sidearm?.name].filter(Boolean) as string[];
+
   return (
     <div
       role="status"
       aria-label={`${unit.name}, ${unit.hp} of ${unit.hpMax} HP, ${unit.ap} of ${unit.apMax} AP`}
       style={{
-        position: 'fixed',
-        left: 'var(--s-2)',
-        right: 'var(--s-2)',
-        bottom: 'calc(var(--safe-bottom) + 72px)',
-        zIndex: 10,
-        height: 52,
+        height: 56,
         padding: '6px 10px',
         display: 'flex',
         alignItems: 'center',
@@ -60,13 +65,15 @@ export default function SelectedUnitHeader({ unit, template }: SelectedUnitHeade
     >
       {template && <SoldierPortrait template={template} size={40} />}
       <div className="stack" style={{ flex: 1, gap: 2, minWidth: 0 }}>
-        <div className="row" style={{ gap: 'var(--s-2)', alignItems: 'baseline' }}>
+        <div className="row" style={{ gap: 'var(--s-2)', alignItems: 'baseline', minWidth: 0 }}>
           <strong style={{ fontSize: 14, color: 'var(--fg-0)' }}>{unit.name}</strong>
           <span style={{
-            fontSize: 11, color: 'var(--fg-2)',
-            textTransform: 'uppercase', letterSpacing: 0.6,
+            fontSize: 10, color: 'var(--fg-2)',
+            textTransform: 'uppercase', letterSpacing: 0.5,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            minWidth: 0, flex: 1,
           }}>
-            {template?.class ?? ''}
+            {subParts.join(' · ')}
           </span>
         </div>
         <div className="row" style={{ gap: 'var(--s-2)', alignItems: 'center' }}>

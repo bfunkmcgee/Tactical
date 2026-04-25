@@ -9,6 +9,7 @@ import RosterRail from './combat/RosterRail';
 import MissionLog from './combat/MissionLog';
 import SelectedUnitHeader from './combat/SelectedUnitHeader';
 import ActionBar from './combat/ActionBar';
+import ControlDeck from './combat/ControlDeck';
 import { groupActions, type ActionId } from './combat/groupActions';
 
 const PRIMARY_SLOTS: ModSlot[] = ['optic', 'magazine', 'muzzle', 'stock'];
@@ -47,6 +48,8 @@ export default function CombatHUD() {
   const selected = units.find((u) => u.id === selectedId) ?? null;
   const playerUnits = units.filter((u) => u.faction === 'player');
   const selectedTemplate = selected ? content.soldierTemplates[selected.templateId] ?? null : null;
+  const selectedPrimary = selected?.loadout ? content.weapons[selected.loadout.primaryId] ?? null : null;
+  const selectedSidearm = selected?.loadout ? content.weapons[selected.loadout.sidearmId] ?? null : null;
 
   const shotPreview = pendingShotTargetId !== null
     ? getShotPreview(pendingShotTargetId, pendingShotUsesSidearm) : null;
@@ -195,8 +198,17 @@ export default function CombatHUD() {
         </div>
       )}
 
-      <SelectedUnitHeader unit={selected} template={selectedTemplate} />
-      <ActionBar groups={groups} onAction={handleAction} />
+      <ControlDeck
+        header={selected
+          ? <SelectedUnitHeader
+              unit={selected}
+              template={selectedTemplate}
+              primary={selectedPrimary}
+              sidearm={selectedSidearm}
+            />
+          : null}
+        bar={<ActionBar groups={groups} onAction={handleAction} />}
+      />
 
       {/* Refit overlay */}
       {refitOpen && selected?.loadout && (() => {
