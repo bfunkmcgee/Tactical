@@ -55,11 +55,17 @@ const drawDesertSignpost: PropDraw = (g, cx, cy) => {
 
 const drawDesertCactus: PropDraw = (g, cx, cy) => {
   const green = 0x567a3a, darker = 0x2a3a18, spine = 0xd8cfa0;
+  const highlight = 0x7aa05a;  // sun-hit lighter green
+  // Trunk + arms: paint the base shape, then a thin highlight stripe
+  // along the NE face of each segment for sun direction consistency.
   g.roundRect(cx - 1.4, cy - 12, 3, 14, 1.4).fill({ color: green }).stroke({ color: darker, width: 0.7 });
+  g.rect(cx - 1.4, cy - 12, 0.7, 14).fill({ color: highlight, alpha: 0.6 });
   g.roundRect(cx - 4.6, cy - 7, 2.8, 4, 1.3).fill({ color: green }).stroke({ color: darker, width: 0.5 });
   g.roundRect(cx - 4.8, cy - 10, 1.1, 3.5, 0.5).fill({ color: green });
+  g.rect(cx - 4.8, cy - 10, 0.4, 3.5).fill({ color: highlight, alpha: 0.55 });
   g.roundRect(cx + 1.6, cy - 8, 2.8, 4, 1.3).fill({ color: green }).stroke({ color: darker, width: 0.5 });
   g.roundRect(cx + 3.6, cy - 11, 1.1, 3.5, 0.5).fill({ color: green });
+  g.rect(cx + 3.6, cy - 11, 0.4, 3.5).fill({ color: highlight, alpha: 0.55 });
   for (const sy of [-9, -5, -1]) g.circle(cx, cy + sy, 0.5).fill({ color: spine, alpha: 0.85 });
 };
 
@@ -96,14 +102,21 @@ const drawDesertGrass: PropDraw = (g, cx, cy) => {
 const drawDesertCairn: PropDraw = (g, cx, cy) => {
   const dark = 0x3a2a1c, stone = 0x7a6a4c, hi = 0xc8b488;
   g.ellipse(cx, cy + 3, 8, 2).fill({ color: dark, alpha: 0.55 });
+  // Bottom stone — base + sun-hit top facet for volume.
   g.poly([cx - 6, cy + 3, cx - 7, cy, cx - 2, cy - 2, cx + 2, cy + 2])
     .fill({ color: stone }).stroke({ color: dark, width: 0.6 });
+  g.poly([cx - 7, cy, cx - 2, cy - 2, cx + 2, cy + 2, cx - 6, cy + 3])
+    .fill({ color: hi, alpha: 0.18 });
+  // Middle stone.
   g.poly([cx - 2, cy - 1, cx - 3, cy - 5, cx + 3, cy - 6, cx + 4, cy - 2])
     .fill({ color: stone }).stroke({ color: dark, width: 0.6 });
+  g.poly([cx - 3, cy - 5, cx + 3, cy - 6, cx + 4, cy - 2, cx - 2, cy - 1])
+    .fill({ color: hi, alpha: 0.22 });
+  // Top stone + crisp sun-hit top edge.
   g.poly([cx, cy - 5, cx - 1, cy - 9, cx + 3, cy - 9, cx + 3, cy - 5])
     .fill({ color: stone }).stroke({ color: dark, width: 0.6 });
   g.moveTo(cx - 1, cy - 9); g.lineTo(cx + 3, cy - 9);
-  g.stroke({ color: hi, width: 0.8, alpha: 0.75 });
+  g.stroke({ color: hi, width: 0.8, alpha: 0.85 });
 };
 
 const drawDesertBrush: PropDraw = (g, cx, cy) => {
@@ -120,11 +133,16 @@ const drawDesertBrush: PropDraw = (g, cx, cy) => {
 };
 
 const drawDesertSkull: PropDraw = (g, cx, cy) => {
-  const bone = 0xe4d8b0, dark = 0x3a2a1c;
+  const bone = 0xe4d8b0, dark = 0x3a2a1c, hi = 0xfaf2d8;
   g.ellipse(cx, cy + 3, 7, 2).fill({ color: dark, alpha: 0.55 });
+  // Cranium base + a small sun-hit ellipse on the top-right of the dome
+  // so the skull reads as a 3D ovoid rather than a flat circle.
   g.ellipse(cx, cy - 2, 6, 5).fill({ color: bone }).stroke({ color: dark, width: 0.8 });
+  g.ellipse(cx + 1, cy - 4, 3, 2).fill({ color: hi, alpha: 0.5 });
+  // Jaw.
   g.poly([cx - 3, cy + 1, cx + 3, cy + 1, cx + 2, cy + 4, cx - 2, cy + 4])
     .fill({ color: bone }).stroke({ color: dark, width: 0.7 });
+  // Eye sockets + nasal cavity.
   g.circle(cx - 2, cy - 2, 1.2).fill({ color: dark });
   g.circle(cx + 2, cy - 2, 1.2).fill({ color: dark });
   g.poly([cx - 0.6, cy, cx + 0.6, cy, cx, cy + 1.2])
@@ -275,8 +293,10 @@ export function drawDesertDetail(
   if (kind === 'floor') {
     g.moveTo(px, py - TILE_H / 2);
     g.lineTo(px + TILE_W / 2, py);
-    g.stroke({ color: pal.rimHighlight, width: 0.8, alpha: 0.45 });
+    g.stroke({ color: pal.rimHighlight, width: 0.8, alpha: 0.55 });
 
+    // Pebble flecks (existing) — slightly punchier alpha now that the
+    // sun/shadow split sits underneath them.
     const n = ((h >>> 4) % 2) + 2;
     for (let i = 0; i < n; i++) {
       const dx = (rand(i * 3 + 1) * 18 - 9) | 0;
@@ -285,7 +305,25 @@ export function drawDesertDetail(
       const light = rand(i * 3 + 4) < 0.35;
       g.circle(px + dx, py + dy, r).fill({
         color: light ? pal.accentLight : pal.accent,
-        alpha: light ? 0.55 : 0.65,
+        alpha: light ? 0.6 : 0.7,
+      });
+    }
+
+    // Fine sand-grain texture: 6-9 sub-pixel specks scattered around
+    // the diamond. Mixes the painted highlight + shadow halves so the
+    // tile reads less stamped — closer to a real painted ground.
+    const grains = 6 + (((h >>> 8) & 0x3) | 0);
+    for (let i = 0; i < grains; i++) {
+      // Sample inside the diamond shape (rough rhombus rejection).
+      const gx = (rand(i * 7 + 50) * 26 - 13);
+      const gy = (rand(i * 7 + 51) * 12 - 6);
+      // Reject points outside the diamond by chebyshev-style metric.
+      if (Math.abs(gx) / 13 + Math.abs(gy) / 6 > 1) continue;
+      const r = 0.35 + rand(i * 7 + 52) * 0.25;
+      const warm = rand(i * 7 + 53) < 0.5;
+      g.circle(px + gx, py + gy, r).fill({
+        color: warm ? pal.rimHighlight : pal.accent,
+        alpha: 0.35,
       });
     }
 
@@ -341,15 +379,33 @@ export function drawDesertDetail(
  * Adobe masonry on raised cover: horizontal brick courses + a centered
  * decorative seam, top sun highlight, and a right-side shadow band so the
  * pillar reads as 3D. Full cover also gets vertical seams and a mid-band cornice.
+ *
+ * Shading was tightened in the painted-detail pass: the top sun
+ * highlight gets a softer secondary band; a left-side gentle bevel
+ * mirrors the right-side shade; and a contact-shadow strip darkens
+ * the ground line so the pillar reads as planted, not floating.
  */
 export function drawDesertCoverDetail(
   g: Graphics, kind: TileKind,
   px: number, py: number, h: number, gx: number, gy: number, pal: TilePalette,
 ) {
   const left = px - 14, right = px + 14, top = py - h, bot = py;
-  g.rect(left, top, 28, 1.2).fill({ color: pal.coverHighlight, alpha: 0.85 });
+
+  // Top sun highlight — punchier two-band stack so the sun-hit ridge
+  // pops against the new universal sun-cast diamond underneath.
+  g.rect(left, top, 28, 1.4).fill({ color: pal.coverHighlight, alpha: 0.95 });
+  g.rect(left, top + 1.4, 28, 0.8).fill({ color: pal.coverHighlight, alpha: 0.45 });
+
+  // Right-side shade band (existing) + gentle left-side bevel so the
+  // silhouette has a planted volume rather than a flat-cut tape stripe.
   g.rect(right - 2.5, top + 1.2, 2.5, h - 1.2)
     .fill({ color: pal.coverShade, alpha: 0.55 });
+  g.rect(left, top + 1.2, 1.6, h - 1.2)
+    .fill({ color: pal.coverHighlight, alpha: 0.18 });
+
+  // Contact shadow strip on the ground line — the cover meets the
+  // diamond's W↔E split, and a 1-px dark band sells the planted seal.
+  g.rect(left + 1, bot - 1, 26, 1).fill({ color: pal.coverStroke, alpha: 0.4 });
 
   for (let y = top + 4; y < bot; y += 4) {
     g.rect(left, y, 28, 0.6).fill({ color: pal.coverStroke, alpha: 0.55 });

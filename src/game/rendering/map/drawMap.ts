@@ -1,7 +1,7 @@
 import { Container, Graphics } from 'pixi.js';
 import type { GridMap } from '../../types';
 import { tileAt } from '../../engine/grid';
-import { gridToScreen } from '../isoProjection';
+import { gridToScreen, TILE_H, TILE_W } from '../isoProjection';
 import { diamond, shiftBrightness } from '../context';
 import { biomeFor } from '../biomes';
 import { drawMapEdges } from './drawEdges';
@@ -10,10 +10,32 @@ import { drawFloorDecals } from './drawDecals';
 import { drawEastExtender, drawSouthExtender, drawBrokenCoverShape } from './extenders';
 
 /**
+ * Universal painted-light pass: layer a lighter NE half (sun-cast) +
+ * darker SW half (shadow) on top of every flat-fill iso diamond. Cheap
+ * (two extra polys per tile, all in one batched Graphics) but gives
+ * each tile a dimensional read instead of the flat solid-fill stamp
+ * the procedural renderer used to ship.
+ *
+ * Iso diamond corners around (cx, cy) — N (top), E (right), S
+ * (bottom), W (left). The split runs along the W↔E line; the top
+ * triangle is the sun-cast, bottom is the shadow.
+ */
+function paintTileLight(g: Graphics, cx: number, cy: number, fill: number) {
+  const halfW = TILE_W / 2, halfH = TILE_H / 2;
+  // Sun-cast top triangle.
+  g.poly([cx, cy - halfH, cx + halfW, cy, cx - halfW, cy])
+    .fill({ color: shiftBrightness(fill, 14), alpha: 0.42 });
+  // Shadow bottom triangle.
+  g.poly([cx, cy + halfH, cx - halfW, cy, cx + halfW, cy])
+    .fill({ color: shiftBrightness(fill, -22), alpha: 0.36 });
+}
+
+/**
  * Paint the full tile layer. Called on mission init and whenever the map
  * reference changes (grenades / demolish swap it). Draws in order:
  *   1. Edge feathering (biome silhouette beyond the tile grid)
- *   2. Tile loop: floor / wall / cover diamonds + biome detail + cover silhouettes
+ *   2. Tile loop: floor / wall / cover diamonds + universal sun-cast
+ *      + biome detail + cover silhouettes
  *   3. Floor decals (lane-biased pass)
  *   4. Env props (density-biased pass)
  */
@@ -49,6 +71,10 @@ export function drawMap(layer: Container, map: GridMap) {
       else if (t.kind === 'cover_half') fill = pal.halfCover;
       else if (t.kind === 'cover_full') fill = pal.fullCover;
       diamond(g, p.x, p.y, fill, 1, pal.floorStroke);
+      // Universal painted-light pass: sun-cast top + shadow bottom.
+      // Applied to every floor + ground-plane cover tile so the iso
+      // grid reads as a real 3D plane, not a flat decorated quad.
+      paintTileLight(g, p.x, p.y, fill);
       // Biome-specific detail pass on the ground-plane diamond.
       biome.drawGroundDetail?.(g, t.kind, variant, p.x, p.y, x, y, pal);
 
