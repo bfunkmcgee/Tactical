@@ -1,24 +1,34 @@
 import { useState } from 'react';
 import { useCombatStore } from '../state/combatStore';
-import { useContent, getWeapon, getMod } from '../content/registry';
-import { SIDEARM_MOD_SLOTS } from '../game/types';
-import type { ModSlot } from '../game/types';
+import { useContent } from '../content/registry';
 import { soundEngine } from '../game/audio/soundEngine';
-import ModPicker from './components/ModPicker';
 import RosterRail from './combat/RosterRail';
 import MissionLog from './combat/MissionLog';
 import SelectedUnitHeader from './combat/SelectedUnitHeader';
 import ActionBar from './combat/ActionBar';
 import ControlDeck from './combat/ControlDeck';
+import CombatTopBar from './combat/CombatTopBar';
+import PendingShotCard from './combat/PendingShotCard';
+import PendingUtilityCard from './combat/PendingUtilityCard';
+import RefitOverlay from './combat/RefitOverlay';
 import { groupActions, type ActionId } from './combat/groupActions';
 
-const PRIMARY_SLOTS: ModSlot[] = ['optic', 'magazine', 'muzzle', 'stock'];
-
+/**
+ * Thin orchestration shell. Subscribes to the combat store, computes the
+ * derived view-model (selected unit + weapons + groups + pending preview
+ * data), and dispatches action ids back into the store. Each visual zone
+ * — top bar, roster, log, selected-unit header, action bar, pending
+ * cards, refit modal — is a focused component under `./combat/`.
+ *
+ * Field Refit's open-state is the only UI-only state that lives here
+ * (it's a modal toggle that doesn't belong in the store).
+ */
 export default function CombatHUD() {
   const phase = useCombatStore((s) => s.phase);
   const round = useCombatStore((s) => s.round);
   const units = useCombatStore((s) => s.units);
   const objective = useCombatStore((s) => s.objective);
+  const defendTurns = useCombatStore((s) => s.defendTurns);
   const selectedId = useCombatStore((s) => s.selectedId);
   const mode = useCombatStore((s) => s.mode);
   const selectedUtilityIdx = useCombatStore((s) => s.selectedUtilityIdx);
@@ -37,12 +47,7 @@ export default function CombatHUD() {
   const cancelPending = useCombatStore((s) => s.cancelPending);
   const getShotPreview = useCombatStore((s) => s.getShotPreview);
 
-  // Field Refit panel state lives in the HUD (not the store) — it's UI-only.
   const [refitOpen, setRefitOpen] = useState(false);
-  const [refitPicker, setRefitPicker] = useState<{ slot: ModSlot; sidearm: boolean } | null>(null);
-  // Mirror the sound engine's mute flag so React re-renders the chip
-  // when it toggles. soundEngine persists the value to localStorage.
-  const [muted, setMuted] = useState(() => soundEngine.isMuted());
 
   const content = useContent();
   const selected = units.find((u) => u.id === selectedId) ?? null;
@@ -54,9 +59,9 @@ export default function CombatHUD() {
   const shotPreview = pendingShotTargetId !== null
     ? getShotPreview(pendingShotTargetId, pendingShotUsesSidearm) : null;
   const shotTarget = pendingShotTargetId !== null
-    ? units.find((u) => u.id === pendingShotTargetId) : null;
+    ? units.find((u) => u.id === pendingShotTargetId) ?? null : null;
   const pendingUtilityDef = (pendingUtility && selected?.loadout)
-    ? content.utilities[selected.loadout.utilityIds[pendingUtility.idx]]
+    ? content.utilities[selected.loadout.utilityIds[pendingUtility.idx]] ?? null
     : null;
 
   const groups = groupActions({
@@ -97,105 +102,31 @@ export default function CombatHUD() {
 
   return (
     <>
-      {/* Top status — round + phase + mute + objective only.
-          Roster pips moved to the left-edge RosterRail. */}
-      <div style={{
-        position: 'fixed', top: 'calc(var(--safe-top) + var(--s-2))',
-        left: 'var(--s-2)', right: 'var(--s-2)', display: 'flex',
-        gap: 'var(--s-2)', pointerEvents: 'none', zIndex: 10,
-      }}>
-        <div className="panel stack" style={{ padding: '6px 10px', fontSize: 13, pointerEvents: 'auto', gap: 2 }}>
-          <div className="row" style={{ gap: 8, alignItems: 'center' }}>
-            <strong>Round {round}</strong>
-            <span>· {phase === 'player' ? 'Your turn' : phase === 'enemy' ? 'Enemy turn' : phase === 'won' ? 'Victory' : 'Defeat'}</span>
-            {/* TODO: bump mute chip to 44x44 floor (out of scope for HUD refine pass). */}
-            <button
-              onClick={() => { setMuted(soundEngine.toggleMute()); }}
-              aria-label={muted ? 'Unmute' : 'Mute'}
-              style={{
-                padding: '2px 8px', minHeight: 22, minWidth: 28,
-                fontSize: 13, background: 'transparent',
-                border: '1px solid var(--bg-3)', color: muted ? 'var(--fg-2)' : 'var(--accent)',
-              }}>
-              {muted ? '🔇' : '🔊'}
-            </button>
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--fg-2)', textTransform: 'uppercase', letterSpacing: 0.6 }}>
-            {objectiveLabel(objective, units, useCombatStore.getState().defendTurns)}
-          </div>
-        </div>
-      </div>
-
+      <CombatTopBar
+        round={round}
+        phase={phase}
+        objective={objective}
+        units={units}
+        defendTurns={defendTurns}
+      />
       <RosterRail units={playerUnits} selectedId={selectedId} onSelect={selectUnit} />
       <MissionLog entries={log} />
 
-      {/* Shot preview card with hit-modifier breakdown */}
       {shotPreview && shotTarget && (
-        <div className="panel" style={{
-          position: 'fixed', left: '50%', transform: 'translateX(-50%)',
-          bottom: 'calc(var(--safe-bottom) + 152px)', zIndex: 11,
-          minWidth: 260, maxWidth: 320, padding: 'var(--s-3)', pointerEvents: 'auto',
-          borderColor: 'var(--danger)',
-        }}>
-          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-            <strong style={{ color: 'var(--fg-0)' }}>
-              {pendingShotUsesSidearm ? '🔫 Sidearm' : 'Target'}: {shotTarget.name}
-            </strong>
-            <span style={{ fontSize: 12, color: coverColor(shotPreview.cover) }}>
-              {shotPreview.cover === 'none' ? 'flanked' : `${shotPreview.cover} cover`}
-            </span>
-          </div>
-          <div className="row" style={{ gap: 'var(--s-4)', fontSize: 14, marginBottom: 6 }}>
-            <span><span style={{ color: 'var(--fg-2)' }}>hit</span> <strong>{shotPreview.hitChance}%</strong></span>
-            <span><span style={{ color: 'var(--fg-2)' }}>crit</span> <strong>{shotPreview.critChance}%</strong></span>
-            <span><span style={{ color: 'var(--fg-2)' }}>dmg</span> <strong>{shotPreview.dmgMin}–{shotPreview.dmgMax}</strong></span>
-          </div>
-          {/* Modifier breakdown */}
-          <div style={{ fontSize: 11, color: 'var(--fg-2)', marginBottom: 8,
-            borderTop: '1px solid var(--bg-3)', paddingTop: 6 }}>
-            {shotPreview.modifiers.map((m, i) => (
-              <span key={i} style={{ marginRight: 8 }}>
-                <span style={{ color: m.value < 0 ? 'var(--danger)' : m.value > 0 ? 'var(--success)' : 'var(--fg-2)' }}>
-                  {m.value > 0 ? '+' : ''}{m.value}
-                </span> {m.label}
-              </span>
-            ))}
-          </div>
-          <div className="row" style={{ gap: 'var(--s-2)' }}>
-            <button style={{ flex: 1 }} onClick={cancelPending}>Cancel</button>
-            <button className="primary" style={{ flex: 1 }} onClick={confirmPending}>
-              {pendingShotUsesSidearm ? 'Pistol' : 'Fire'}
-            </button>
-          </div>
-        </div>
+        <PendingShotCard
+          preview={shotPreview}
+          target={shotTarget}
+          usesSidearm={pendingShotUsesSidearm}
+          onConfirm={confirmPending}
+          onCancel={cancelPending}
+        />
       )}
-
-      {/* Utility preview card */}
       {pendingUtility && pendingUtilityDef && (
-        <div className="panel" style={{
-          position: 'fixed', left: '50%', transform: 'translateX(-50%)',
-          bottom: 'calc(var(--safe-bottom) + 152px)', zIndex: 11,
-          minWidth: 240, padding: 'var(--s-3)', pointerEvents: 'auto',
-          borderColor: 'var(--accent-2)',
-        }}>
-          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-            <strong>{pendingUtilityDef.name}</strong>
-            <span style={{ fontSize: 12, color: 'var(--accent-2)' }}>radius {pendingUtilityDef.radius}</span>
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--fg-1)', marginBottom: 8 }}>
-            {pendingUtilityDef.dmgMin !== undefined
-              ? `${pendingUtilityDef.dmgMin}–${pendingUtilityDef.dmgMax} dmg in radius`
-              : pendingUtilityDef.kind === 'smoke'
-                ? `Drops smoke that blocks line of sight for 2 rounds`
-                : pendingUtilityDef.heal
-                  ? `Heals ${pendingUtilityDef.heal} to adjacent ally`
-                  : `Applies ${pendingUtilityDef.kind}`}
-          </div>
-          <div className="row" style={{ gap: 'var(--s-2)' }}>
-            <button style={{ flex: 1 }} onClick={cancelPending}>Cancel</button>
-            <button className="primary" style={{ flex: 1 }} onClick={confirmPending}>Throw</button>
-          </div>
-        </div>
+        <PendingUtilityCard
+          utility={pendingUtilityDef}
+          onConfirm={confirmPending}
+          onCancel={cancelPending}
+        />
       )}
 
       <ControlDeck
@@ -210,137 +141,13 @@ export default function CombatHUD() {
         bar={<ActionBar groups={groups} onAction={handleAction} />}
       />
 
-      {/* Refit overlay */}
-      {refitOpen && selected?.loadout && (() => {
-        const p = getWeapon(selected.loadout.primaryId);
-        const s = getWeapon(selected.loadout.sidearmId);
-        return (
-          <div onClick={() => setRefitOpen(false)} style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 50,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--s-3)',
-          }}>
-            <div onClick={(e) => e.stopPropagation()} className="panel stack" style={{
-              maxWidth: 380, width: '100%', padding: 'var(--s-3)', gap: 'var(--s-3)',
-              maxHeight: '88vh', overflowY: 'auto',
-            }}>
-              <div className="row" style={{ justifyContent: 'space-between' }}>
-                <h2 style={{ fontSize: 18 }}>Field Refit · {selected.name}</h2>
-                <button onClick={() => setRefitOpen(false)}>Done</button>
-              </div>
-              <p style={{ fontSize: 12 }}>
-                Each swap costs <strong>1 AP</strong>. Current AP: <strong>{selected.ap}/{selected.apMax}</strong>.
-              </p>
-
-              <RefitWeaponPanel name={p?.name ?? 'Primary'} subtitle={p?.class ?? ''}
-                slots={PRIMARY_SLOTS} slotMap={selected.loadout.primaryMods}
-                disabled={selected.ap < 1}
-                onSlotClick={(slot) => setRefitPicker({ slot, sidearm: false })} />
-              <RefitWeaponPanel name={s?.name ?? 'Sidearm'} subtitle={s?.class ?? ''}
-                slots={SIDEARM_MOD_SLOTS} slotMap={selected.loadout.sidearmMods}
-                disabled={selected.ap < 1}
-                onSlotClick={(slot) => setRefitPicker({ slot, sidearm: true })} />
-            </div>
-          </div>
-        );
-      })()}
-
-      {refitPicker && selected?.loadout && (() => {
-        const wpn = refitPicker.sidearm
-          ? getWeapon(selected.loadout.sidearmId)
-          : getWeapon(selected.loadout.primaryId);
-        if (!wpn) return null;
-        const cur = (refitPicker.sidearm ? selected.loadout.sidearmMods : selected.loadout.primaryMods)[refitPicker.slot] ?? null;
-        return (
-          <ModPicker
-            slot={refitPicker.slot}
-            weaponClass={wpn.class}
-            currentModId={cur}
-            onPick={(modId) => tryRefit(refitPicker.slot, refitPicker.sidearm, modId)}
-            onClose={() => setRefitPicker(null)}
-            title={`Refit · ${refitPicker.sidearm ? 'Sidearm' : 'Primary'} · ${refitPicker.slot}`}
-          />
-        );
-      })()}
+      {refitOpen && selected && (
+        <RefitOverlay
+          unit={selected}
+          onClose={() => setRefitOpen(false)}
+          onPickMod={(slot, sidearm, modId) => tryRefit(slot, sidearm, modId)}
+        />
+      )}
     </>
   );
-}
-
-function RefitWeaponPanel({ name, subtitle, slots, slotMap, disabled, onSlotClick }: {
-  name: string; subtitle: string; slots: ModSlot[];
-  slotMap: Partial<Record<ModSlot, string>>;
-  disabled: boolean;
-  onSlotClick: (slot: ModSlot) => void;
-}) {
-  return (
-    <div className="stack" style={{ gap: 'var(--s-2)' }}>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <strong>{name}</strong>
-        <span style={{ fontSize: 11, color: 'var(--fg-2)', textTransform: 'uppercase' }}>{subtitle}</span>
-      </div>
-      <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
-        {slots.map((slot) => {
-          const id = slotMap[slot];
-          const mod = id ? getMod(id) : null;
-          return (
-            <button key={slot} onClick={() => onSlotClick(slot)} disabled={disabled}
-              style={{
-                flex: '1 1 130px', minHeight: 56, padding: 'var(--s-2)',
-                display: 'block', textAlign: 'left',
-                borderColor: mod ? 'var(--accent)' : 'var(--bg-3)',
-                background: mod ? 'var(--bg-3)' : 'var(--bg-2)',
-                borderStyle: mod ? 'solid' : 'dashed',
-              }}>
-              <div style={{ fontSize: 10, color: 'var(--fg-2)', textTransform: 'uppercase', letterSpacing: 0.6 }}>
-                {slot}
-              </div>
-              <div style={{ fontSize: 13, color: mod ? 'var(--fg-0)' : 'var(--fg-2)', marginTop: 2 }}>
-                {mod?.name ?? `+ Add ${slot}`}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function coverColor(c: string) {
-  if (c === 'full') return 'var(--accent)';
-  if (c === 'half') return 'var(--warn)';
-  return 'var(--danger)';
-}
-
-/**
- * One-line objective summary for the top-of-screen HUD chip.
- * Includes live progress for the objective kinds that have it (HP of
- * the destructible, rounds held, VIP health + distance to extract).
- */
-function objectiveLabel(
-  o: import('../game/types').MissionObjective,
-  units: import('../game/types').Unit[],
-  defendTurns: number,
-): string {
-  switch (o.kind) {
-    case 'eliminate_all':    return 'Objective: eliminate all hostiles';
-    case 'eliminate_target': return `Objective: eliminate target`;
-    case 'reach_tile':
-      return o.turnLimit
-        ? `Objective: reach the extraction (${o.turnLimit} rounds)`
-        : 'Objective: reach the extraction';
-    case 'destroy_objective': {
-      const tgt = units.find((u) => u.role === 'objective'
-        && u.pos.x === o.pos.x && u.pos.y === o.pos.y);
-      if (!tgt || !tgt.alive) return 'Objective: target destroyed';
-      return `Objective: destroy the target (${tgt.hp}/${tgt.hpMax} HP)`;
-    }
-    case 'defend_point':
-      return `Objective: hold the point (${defendTurns}/${o.turns} rounds)`;
-    case 'extract_vip': {
-      const vip = units.find((u) => u.role === 'vip');
-      if (!vip) return 'Objective: extract the VIP';
-      if (!vip.alive) return 'Objective: VIP lost';
-      const d = Math.abs(vip.pos.x - o.extractTile.x) + Math.abs(vip.pos.y - o.extractTile.y);
-      return `Objective: extract VIP (HP ${vip.hp}/${vip.hpMax}, ${d} tiles to exit)`;
-    }
-  }
 }
