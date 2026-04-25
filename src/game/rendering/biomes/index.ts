@@ -4,6 +4,7 @@ import type { PropDraw, TilePalette } from '../context';
 import {
   DESERT_PALETTE, DESERT_PROPS, DESERT_DECALS, EDGE_DUNES,
   drawDesertDetail, drawDesertCoverDetail, drawDesertCoverVariant,
+  DESERT_PAINTED_FLOORS,
 } from './desert';
 import {
   REFINERY_PALETTE, REFINERY_PROPS, REFINERY_DECALS, EDGE_REFINERY_SCRAP,
@@ -52,6 +53,17 @@ export type BiomeModule = {
     g: Graphics, kind: TileKind,
     px: number, py: number, h: number, hash: number, pal: TilePalette,
   ) => 'drew' | 'default';
+  /**
+   * Optional painted floor variants. When set + the texture is in the
+   * sprite cache, `drawMap` mounts a Sprite per floor tile (variant
+   * picked by tile hash) instead of the procedural diamond + sand-
+   * grain combo. Missing entries fall through to the procedural path.
+   *
+   * Each entry pairs a `spriteCache` lookup key (used by `drawMap` to
+   * resolve the texture without touching the URL) with the public asset
+   * URL (used by `ensureSpritesLoaded` to populate the cache).
+   */
+  paintedFloors?: ReadonlyArray<{ cacheKey: string; url: string }>;
 };
 
 export const DESERT_BIOME: BiomeModule = {
@@ -62,6 +74,7 @@ export const DESERT_BIOME: BiomeModule = {
   drawGroundDetail: drawDesertDetail,
   drawCoverDetail: drawDesertCoverDetail,
   drawCoverVariant: drawDesertCoverVariant,
+  paintedFloors: DESERT_PAINTED_FLOORS,
 };
 
 export const REFINERY_BIOME: BiomeModule = {

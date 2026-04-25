@@ -8,6 +8,26 @@ import type { PropDraw, TilePalette } from '../context';
  * cover, sandstone column full cover. Props/decals/edges evoke a sun-
  * bleached battlefield.
  */
+// --- Painted floor textures (Phase: first painted assets) ----------
+//
+// Six painted iso-diamond sand variants under
+// public/styles/flat/biomes/desert/floor_{0..5}.png. drawMap mounts
+// one of these as a Sprite per floor tile, picked deterministically
+// from the tile hash. When the texture isn't loaded (preload race or
+// missing file), drawMap falls back to the procedural diamond + grain
+// path automatically — same biome, same palette.
+//
+// Source PNGs ship at 480×240 (iso 2:1 aspect); the renderer scales
+// them to the in-game TILE_W × TILE_H = 64 × 32 footprint.
+export const DESERT_PAINTED_FLOORS: ReadonlyArray<{ cacheKey: string; url: string }> = [
+  { cacheKey: 'painted:desert:floor:0', url: '/styles/flat/biomes/desert/floor_0.png' },
+  { cacheKey: 'painted:desert:floor:1', url: '/styles/flat/biomes/desert/floor_1.png' },
+  { cacheKey: 'painted:desert:floor:2', url: '/styles/flat/biomes/desert/floor_2.png' },
+  { cacheKey: 'painted:desert:floor:3', url: '/styles/flat/biomes/desert/floor_3.png' },
+  { cacheKey: 'painted:desert:floor:4', url: '/styles/flat/biomes/desert/floor_4.png' },
+  { cacheKey: 'painted:desert:floor:5', url: '/styles/flat/biomes/desert/floor_5.png' },
+];
+
 export const DESERT_PALETTE: TilePalette = {
   floor: [0xd4b37a, 0xc3a066, 0xb18850], // pale dune / sand / ochre patch
   floorStroke: 0x7a5c30,

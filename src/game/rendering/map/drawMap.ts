@@ -1,13 +1,25 @@
-import { Container, Graphics } from 'pixi.js';
+import { Container, Graphics, Sprite } from 'pixi.js';
 import type { GridMap, TileKind } from '../../types';
 import { tileAt } from '../../engine/grid';
 import { gridToScreen, TILE_H, TILE_W } from '../isoProjection';
-import { diamond, shiftBrightness } from '../context';
+import { diamond, shiftBrightness, spriteCache } from '../context';
 import { biomeFor } from '../biomes';
 import { drawMapEdges } from './drawEdges';
 import { drawEnvProps } from './drawProps';
 import { drawFloorDecals } from './drawDecals';
 import { drawEastExtender, drawSouthExtender, drawBrokenCoverShape } from './extenders';
+
+/**
+ * Source-PNG width/height for painted floor tiles. The 6 desert
+ * painted floors ship at 480×240 (iso 2:1); rendered at TILE_W /
+ * SOURCE_W to land in the same on-screen footprint as the procedural
+ * diamond. Hard-coded here rather than threaded through the biome
+ * config because every painted floor in the project is currently
+ * authored at this size — bump if a future biome ships at a
+ * different resolution.
+ */
+const PAINTED_FLOOR_SOURCE_W = 480;
+const PAINTED_FLOOR_SOURCE_H = 240;
 
 /**
  * Universal painted-light pass: layer a lighter NE half (sun-cast) +
@@ -99,6 +111,13 @@ export function drawMap(layer: Container, map: GridMap) {
   layer.removeChildren();
   const biome = biomeFor(map.tileset);
   const pal = biome.palette;
+  // Painted-floor sprites mount as siblings of the procedural Graphics
+  // — added FIRST so cover silhouettes / props / decals (which still
+  // draw via Graphics) layer on top. When the biome doesn't ship
+  // painted floors (or the texture preload misses), this Container
+  // stays empty and the procedural diamond path runs as before.
+  const floorSprites = new Container();
+  layer.addChild(floorSprites);
   const g = new Graphics();
 
   drawMapEdges(g, map, pal);
@@ -122,37 +141,61 @@ export function drawMap(layer: Container, map: GridMap) {
       const tileHash = ((x * 73856093) ^ (y * 19349663)) >>> 0;
       const variant = tileHash % 3;
       const fill = fillForKind(t.kind, variant, pal);
-      diamond(g, p.x, p.y, fill, 1, pal.floorStroke);
-      // Universal painted-light pass: sun-cast top + shadow bottom.
-      // Applied to every floor + ground-plane cover tile so the iso
-      // grid reads as a real 3D plane, not a flat decorated quad.
-      paintTileLight(g, p.x, p.y, fill);
-      // Biome-specific detail pass on the ground-plane diamond.
-      biome.drawGroundDetail?.(g, t.kind, variant, p.x, p.y, x, y, pal);
 
-      // Edge-blend pass: when a grid neighbour has a different kind,
-      // bleed its colour 6 px into this tile along the shared diamond
-      // edge. The neighbour does the symmetric blend on its own side
-      // so the boundary fades from each direction — soft transition
-      // instead of a hard diamond seam where, say, a sand floor meets
-      // a clay-brick cover or an adobe wall.
-      //
-      // Grid → screen-edge map (iso projection):
-      //   (x+1, y)  → SE     (x, y+1) → SW
-      //   (x-1, y)  → NW     (x, y-1) → NE
-      const blendIfDifferent = (edge: EdgeKey, nx: number, ny: number) => {
-        const nt = tileAt(map, nx, ny);
-        if (!nt || nt.kind === t.kind) return;
-        const nHash = ((nx * 73856093) ^ (ny * 19349663)) >>> 0;
-        const nFill = fillForKind(nt.kind, nHash % 3, pal);
-        if (nFill === fill) return;
-        g.poly(edgeBandPoly(p.x, p.y, edge))
-          .fill({ color: nFill, alpha: 0.32 });
-      };
-      blendIfDifferent('SE', x + 1, y);
-      blendIfDifferent('SW', x,     y + 1);
-      blendIfDifferent('NW', x - 1, y);
-      blendIfDifferent('NE', x,     y - 1);
+      // Painted-floor branch: when the biome ships painted floor
+      // textures and the preload landed, mount a Sprite for floor
+      // tiles INSTEAD of the procedural diamond + sun-cast + grain
+      // + edge-blend combo. Walls + cover keep the procedural path.
+      let paintedFloor = false;
+      if (t.kind === 'floor' && biome.paintedFloors && biome.paintedFloors.length > 0) {
+        const idx = tileHash % biome.paintedFloors.length;
+        const tex = spriteCache.get(biome.paintedFloors[idx].cacheKey);
+        if (tex) {
+          const s = new Sprite(tex);
+          s.anchor.set(0.5, 0.5);
+          s.scale.set(TILE_W / PAINTED_FLOOR_SOURCE_W, TILE_H / PAINTED_FLOOR_SOURCE_H);
+          s.position.set(p.x, p.y);
+          floorSprites.addChild(s);
+          paintedFloor = true;
+        }
+      }
+
+      if (!paintedFloor) {
+        diamond(g, p.x, p.y, fill, 1, pal.floorStroke);
+        // Universal painted-light pass: sun-cast top + shadow bottom.
+        // Applied to every floor + ground-plane cover tile so the iso
+        // grid reads as a real 3D plane, not a flat decorated quad.
+        paintTileLight(g, p.x, p.y, fill);
+        // Biome-specific detail pass on the ground-plane diamond.
+        biome.drawGroundDetail?.(g, t.kind, variant, p.x, p.y, x, y, pal);
+
+        // Edge-blend pass: when a grid neighbour has a different kind,
+        // bleed its colour 6 px into this tile along the shared diamond
+        // edge. The neighbour does the symmetric blend on its own side
+        // so the boundary fades from each direction — soft transition
+        // instead of a hard diamond seam where, say, a sand floor meets
+        // a clay-brick cover or an adobe wall.
+        //
+        // Grid → screen-edge map (iso projection):
+        //   (x+1, y)  → SE     (x, y+1) → SW
+        //   (x-1, y)  → NW     (x, y-1) → NE
+        // Skipped on painted floors: drawing a flat-coloured ribbon
+        // on top of a painted iso texture would visibly contaminate
+        // the painted look.
+        const blendIfDifferent = (edge: EdgeKey, nx: number, ny: number) => {
+          const nt = tileAt(map, nx, ny);
+          if (!nt || nt.kind === t.kind) return;
+          const nHash = ((nx * 73856093) ^ (ny * 19349663)) >>> 0;
+          const nFill = fillForKind(nt.kind, nHash % 3, pal);
+          if (nFill === fill) return;
+          g.poly(edgeBandPoly(p.x, p.y, edge))
+            .fill({ color: nFill, alpha: 0.32 });
+        };
+        blendIfDifferent('SE', x + 1, y);
+        blendIfDifferent('SW', x,     y + 1);
+        blendIfDifferent('NW', x - 1, y);
+        blendIfDifferent('NE', x,     y - 1);
+      }
 
       if (t.kind === 'cover_half' || t.kind === 'cover_full') {
         const h = t.kind === 'cover_full' ? 22 : 12;

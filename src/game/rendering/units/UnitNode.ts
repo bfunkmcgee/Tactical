@@ -10,6 +10,7 @@ import { FIRE_STYLES, WEAPON_HOLD, type FireStyle, type WeaponHold } from './fir
 import { buildHumanRigBody, overlayCacheKey, skinMaskCacheKey, type RigBodyComposition } from './humanRigBody';
 import { loadSkinMaskDataUrl } from './skinMask';
 import { allRigs, rigById, rigPartSvg } from '../../../content/rigs';
+import { DESERT_BIOME, REFINERY_BIOME, URBAN_BIOME } from '../biomes';
 
 /**
  * Per-unit render node. Persists across store updates so animations
@@ -128,6 +129,15 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
   for (const rig of allRigs()) {
     for (const partId of rig.parts) {
       pushLoad(`rig:${rig.id}:${partId}`, rigPartSvg(rig.id, partId));
+    }
+  }
+  // Painted floor tiles per biome. drawMap consults the cache by the
+  // entry's `cacheKey`; missing textures fall through to the procedural
+  // diamond + grain path so a half-loaded asset set still ships fine.
+  for (const biome of [DESERT_BIOME, REFINERY_BIOME, URBAN_BIOME]) {
+    if (!biome.paintedFloors) continue;
+    for (const entry of biome.paintedFloors) {
+      pushLoad(entry.cacheKey, entry.url);
     }
   }
   // Armor + clothing overlay SVGs — keyed by `overlay:${url}` so the
