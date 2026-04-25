@@ -308,11 +308,15 @@ function createUnitNode(u: Unit): UnitNode {
   // Shadow is a child of container (not body) so it doesn't lean during
   // walk/fire. Warm brown (rather than pure black) on desert/refinery
   // maps so the shadow reads as dust-on-sand instead of floating ink.
+  // A wider, lower-alpha outer halo soft-grounds the unit — pushes the
+  // overall presentation toward the painted-reference look without
+  // costing the iso footprint clarity.
   const shadow = new Graphics();
   const tileset = useCombatStore.getState().map.tileset;
   const shadowColor = (tileset === 'desert' || tileset === 'desert-refinery')
     ? 0x2a1a0a : 0x050709;
-  shadow.ellipse(0, 6, 14, 6).fill({ color: shadowColor, alpha: 0.55 });
+  shadow.ellipse(0, 6, 18, 8).fill({ color: shadowColor, alpha: 0.18 }); // soft halo
+  shadow.ellipse(0, 6, 14, 6).fill({ color: shadowColor, alpha: 0.55 }); // crisp core
 
   const selectionRing = new Graphics();
 

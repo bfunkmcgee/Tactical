@@ -7,6 +7,7 @@ import type { UnitId } from '../types';
 import { drawMap } from './map/drawMap';
 import { redrawOverlays } from './overlays';
 import { createFxSystem } from './fx';
+import { mountAtmosphere } from './atmosphere';
 import { attachInputController } from './input/controller';
 import { handleTap } from './input/handleTap';
 import {
@@ -74,6 +75,12 @@ export default function PixiStage() {
       drawMap(tileLayer, initialState.map);
       applyCam();
 
+      // Atmosphere finishing layer — vignette + biome tint + dust motes
+      // mounted directly on app.stage so the camera doesn't transform
+      // them (screen-space ambient effect, not a world overlay).
+      const atmosphere = mountAtmosphere(app);
+      atmosphere.setTileset(initialState.map.tileset);
+
       // Defer unit rendering until sprite preload settles. A pack with a
       // sparse rig/appearance catalog still preloads in a microtask, so
       // the unit layer populates quickly either way.
@@ -119,6 +126,7 @@ export default function PixiStage() {
         if (s.map !== lastMap) {
           lastMap = s.map;
           drawMap(tileLayer, s.map);
+          atmosphere.setTileset(s.map.tileset);
         }
         redrawOverlays(overlayLayer, s);
         if (spritesReady) syncUnits(unitLayer, unitNodes, s, fx.spawnBlood);
@@ -154,11 +162,13 @@ export default function PixiStage() {
         }
         tickUnitAnimations(unitLayer, unitNodes, dtMs, now);
         fx.tick(dtMs, now);
+        atmosphere.tick(dtMs);
       });
 
       (app as unknown as { __cleanup?: () => void }).__cleanup = () => {
         unsub();
         detachInput();
+        atmosphere.destroy();
       };
     })();
 
