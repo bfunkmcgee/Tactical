@@ -38,6 +38,12 @@ export interface RigBodyComposition {
   /** All sprites that should receive the per-frame tint (dirt / hit-flash
    *  / death). animate.ts walks this list for rig-composed units. */
   tintTargets: Sprite[];
+  /** Initial local (x, y) every base part sprite was placed at inside
+   *  `root`. animate.ts adds walk-cycle / recoil deltas on top of this
+   *  baseline rather than overwriting — overwriting would shift the
+   *  driven sprite (currently torso) out of stack with the others
+   *  (legs/head/arms-back), which stay put at this offset. */
+  basePartPos: { x: number; y: number };
 }
 
 /** Lookup callbacks the composition needs — threaded from the store/pack. */
@@ -430,6 +436,7 @@ export function buildHumanRigBody(
     backSlot,
     waistSlot,
     tintTargets,
+    basePartPos: { x: partLeftX, y: partTopY },
   };
 }
 

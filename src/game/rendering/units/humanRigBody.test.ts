@@ -406,6 +406,31 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     expect(hairSprite.tint).toBe(0x4a3020);
   });
 
+  it('basePartPos matches the local position every base part sprite was placed at', () => {
+    // Regression pin. animate.ts adds walk-cycle / recoil deltas on top
+    // of basePartPos; if humanRigBody ever drifts away from that
+    // placement, the additive math in animate.ts would silently shift
+    // the torso ~one iso tile SE of legs/head/arms-back. This test
+    // locks the invariant: the offset advertised on the composition is
+    // exactly what every base part sprite is positioned at.
+    const cache = new Map<string, Texture>();
+    const comp = buildHumanRigBody(HUMAN_RIG, mkAppearance(), undefined, cache, {
+      armorOf: () => undefined,
+      clothingOf: () => undefined,
+    });
+    const { x, y } = comp.basePartPos;
+    expect(comp.parts.legs.position.x).toBe(x);
+    expect(comp.parts.legs.position.y).toBe(y);
+    expect(comp.parts.torso.position.x).toBe(x);
+    expect(comp.parts.torso.position.y).toBe(y);
+    expect(comp.parts.head.position.x).toBe(x);
+    expect(comp.parts.head.position.y).toBe(y);
+    expect(comp.parts['arms-back'].position.x).toBe(x);
+    expect(comp.parts['arms-back'].position.y).toBe(y);
+    expect(comp.parts['arms-front'].position.x).toBe(x);
+    expect(comp.parts['arms-front'].position.y).toBe(y);
+  });
+
   it('gauntlet-front overlay child anchor matches GRIP_ANCHOR so it rides with the post-attach re-anchor in UnitNode', async () => {
     // Regression pin. arms-front starts at anchor (0,0) but UnitNode
     // re-anchors it to GRIP_ANCHOR after buildHumanRigBody returns.

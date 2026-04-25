@@ -133,15 +133,20 @@ export function tickUnitAnimations(
       // transforms land the walk cycle + recoil on the right layers.
       if (node.deathMs === null) {
         const p = node.rigComposition.parts;
+        const base = node.rigComposition.basePartPos;
         // Legs absorb the squash on foot-plant so the torso doesn't
         // visibly stretch — reads as weight on the ground.
         p.legs.scale.y = walkScaleY;
         // Torso carries the lean + bob + recoil push. Head and arms-back
         // live next to torso in the root; they rotate independently
-        // rather than inheriting the torso's rotation.
+        // rather than inheriting the torso's rotation. Walk-cycle and
+        // recoil deltas are ADDITIVE on top of the static placement
+        // (basePartPos) — humanRigBody put torso at (partLeftX,partTopY)
+        // and overwriting that here would shift the torso ~one iso tile
+        // SE of legs/head/arms-back.
         p.torso.rotation = walkLean + bodyPitch;
-        p.torso.position.x = bodyPushX;
-        p.torso.position.y = walkBob + bodyPushY;
+        p.torso.position.x = base.x + bodyPushX;
+        p.torso.position.y = base.y + walkBob + bodyPushY;
         // Head counter-leans a fraction of the torso's rotation — the
         // eyeline stays closer to level as the body sways. A common 2D
         // animation trick; feels alive without a full lookAt rig.
@@ -201,9 +206,14 @@ export function tickUnitAnimations(
       // alive-state walk-cycle rotations underneath the tip-over.
       if (node.rigComposition) {
         const p = node.rigComposition.parts;
+        const base = node.rigComposition.basePartPos;
         p.legs.scale.y = 1;
         p.torso.rotation = 0;
-        p.torso.position.set(0, 0);
+        // Reset torso to its static placement, NOT (0, 0) — the latter
+        // would shift the torso ~one iso tile SE of the rest of the
+        // composition right before the body-level tip-over rotates the
+        // figure as one.
+        p.torso.position.set(base.x, base.y);
         p.head.rotation = 0;
         p['arms-back'].rotation = 0;
       }
