@@ -8,6 +8,10 @@ import { gridToScreen } from './isoProjection';
  * transient state (arrays of active droplets + floaters) so the
  * simulation store doesn't have to carry presentation-only data.
  *
+ * Ambient dust motes are NOT here — they're a screen-space effect
+ * mounted by `atmosphere.ts` directly on app.stage so the camera
+ * pan/zoom doesn't move them.
+ *
  * Shape returned by createFxSystem:
  *   - spawnBlood(pos, dmg) — fire from syncUnits' onHit callback
  *   - pushFloater(text, color, pos, nowMs) — drain store.floaters into here
