@@ -33,6 +33,13 @@ function renderButton(d: ActionDescriptor, onAction: (id: ActionId) => void, opt
   // becomes the aria-label so screen readers still announce the
   // weapon name; the SelectedUnitHeader carries it visually.
   const visibleText = d.shortLabel ?? d.label;
+  // When disabled, surface the reason via the HTML title attribute
+  // (long-press tooltip on touch / hover on desktop) and extend the
+  // aria-label so screen readers announce both action and reason.
+  const ariaLabel = d.disabled && d.disabledReason
+    ? `${d.label} · disabled: ${d.disabledReason}`
+    : d.label;
+  const titleAttr = d.disabled && d.disabledReason ? d.disabledReason : undefined;
   return (
     <button
       key={d.id}
@@ -40,7 +47,8 @@ function renderButton(d: ActionDescriptor, onAction: (id: ActionId) => void, opt
       className={primary ? 'primary' : undefined}
       onClick={() => onAction(d.id)}
       disabled={d.disabled}
-      aria-label={d.label}
+      aria-label={ariaLabel}
+      title={titleAttr}
       style={buttonStyle(d, !!opts.primary || primary)}
     >
       {visibleText}

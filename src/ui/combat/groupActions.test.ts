@@ -96,7 +96,7 @@ describe('groupActions: per-unit action descriptor groups', () => {
     expect(groups.system.map((d) => d.id)).toEqual(['reload', 'overwatch', 'endTurn']);
   });
 
-  it('3. low-AP soldier (AP 0): Move/Fire/Refit disabled, End Turn still enabled', () => {
+  it('3. low-AP soldier (AP 0): disabled flags AND disabledReason populated; End Turn still enabled', () => {
     const pack = mkPack();
     const unit = mkUnit({
       templateId: 'ranger', ap: 0,
@@ -109,13 +109,41 @@ describe('groupActions: per-unit action descriptor groups', () => {
     const groups = groupActions({
       unit, mode: 'idle', selectedUtilityIdx: null, phase: 'player', content: pack,
     });
-    expect(groups.primary.find((d) => d.id === 'move')!.disabled).toBe(true);
-    expect(groups.primary.find((d) => d.id === 'fire')!.disabled).toBe(true);
-    expect(groups.class.find((d) => d.id === 'refit')!.disabled).toBe(true);
-    // Reload at full magazines is also disabled.
-    expect(groups.system.find((d) => d.id === 'reload')!.disabled).toBe(true);
+    const move = groups.primary.find((d) => d.id === 'move')!;
+    const fire = groups.primary.find((d) => d.id === 'fire')!;
+    const refit = groups.class.find((d) => d.id === 'refit')!;
+    const reload = groups.system.find((d) => d.id === 'reload')!;
+    const end = groups.system.find((d) => d.id === 'endTurn')!;
+    expect(move.disabled).toBe(true);
+    expect(move.disabledReason).toBe('Needs 1 AP');
+    expect(fire.disabled).toBe(true);
+    expect(fire.disabledReason).toBe('Needs 1 AP');
+    expect(refit.disabled).toBe(true);
+    expect(refit.disabledReason).toBe('Needs 1 AP');
+    // Reload at full magazines is also disabled — different reason.
+    expect(reload.disabled).toBe(true);
+    expect(reload.disabledReason).toBe('Magazines full');
     // End Turn must remain enabled even at AP 0 — players need to hand the turn over.
-    expect(groups.system.find((d) => d.id === 'endTurn')!.disabled).toBe(false);
+    expect(end.disabled).toBe(false);
+    expect(end.disabledReason).toBeUndefined();
+  });
+
+  it('3b. out-of-ammo Fire: disabledReason is "Out of ammo — reload" (not the AP message)', () => {
+    const pack = mkPack();
+    const unit = mkUnit({
+      templateId: 'ranger', ap: 2, ammo: 0,
+      loadout: {
+        primaryId: 'runeweave_carbine', primaryMods: {},
+        sidearmId: 'sigilshot_pistol', sidearmMods: {},
+        utilityIds: [], armor: {}, kitId: null,
+      } as never,
+    });
+    const groups = groupActions({
+      unit, mode: 'idle', selectedUtilityIdx: null, phase: 'player', content: pack,
+    });
+    const fire = groups.primary.find((d) => d.id === 'fire')!;
+    expect(fire.disabled).toBe(true);
+    expect(fire.disabledReason).toBe('Out of ammo — reload');
   });
 
   it('4. overflow trigger: 3 utilities + class ability + Refit > MAX_VISIBLE_ACTIONS; pickOverflow trims tail of class', () => {
@@ -200,5 +228,6 @@ describe('groupActions: per-unit action descriptor groups', () => {
     expect(groups.system.length).toBe(1);
     expect(groups.system[0].id).toBe('endTurn');
     expect(groups.system[0].disabled).toBe(true);
+    expect(groups.system[0].disabledReason).toBe('Not your turn');
   });
 });
