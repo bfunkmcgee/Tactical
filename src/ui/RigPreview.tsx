@@ -164,7 +164,11 @@ export default function RigPreview({
   /**
    * Place + scale the world Container so the rig is framed as requested.
    * Values derived from SPRITE_SCALE = 0.42 in humanRigBody.ts — the
-   * head joint sits at ~y = -44.5 relative to world origin at scale 1.
+   * rig's bounding box at scale 1 spans roughly y = -49.76 (head top)
+   * to y = 4 (foot), height ≈ 54 px; width ≈ 40 px. 'full' fits the
+   * figure to ~85% of the available canvas dimension so the preview
+   * actually reads as a character; 'portrait' zooms further in on
+   * the head joint.
    */
   function applyFraming(world: Container, mode: 'full' | 'portrait',
     w: number, h: number): void {
@@ -174,8 +178,14 @@ export default function RigPreview({
       world.scale.set(scale);
       world.position.set(w / 2, h / 2 - headY * scale);
     } else {
-      world.scale.set(1);
-      world.position.set(w / 2, h * 0.88);
+      // RIG_W ≈ 40, RIG_H ≈ 54 at scale 1. Fit to 85% of the smaller
+      // dimension; clamp to a reasonable minimum so the figure stays
+      // legible even in cramped panes.
+      const scale = Math.max(2, Math.min(w / 40, h / 54) * 0.85);
+      world.scale.set(scale);
+      // Place feet ~12% above the bottom so the figure has air below
+      // and the head clears the top with margin.
+      world.position.set(w / 2, h * 0.88 - 4 * scale);
     }
   }
 
