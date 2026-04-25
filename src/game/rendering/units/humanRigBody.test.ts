@@ -429,6 +429,13 @@ describe('humanRigBody: equipment + clothing overlays', () => {
     expect(comp.parts['arms-back'].position.y).toBe(y);
     expect(comp.parts['arms-front'].position.x).toBe(x);
     expect(comp.parts['arms-front'].position.y).toBe(y);
+    // baseScale matches every base part's initial uniform scale;
+    // animate.ts multiplies walkScaleY on top rather than overwriting.
+    expect(comp.parts.legs.scale.x).toBe(comp.baseScale);
+    expect(comp.parts.legs.scale.y).toBe(comp.baseScale);
+    expect(comp.parts.torso.scale.x).toBe(comp.baseScale);
+    expect(comp.parts.torso.scale.y).toBe(comp.baseScale);
+    expect(comp.parts.head.scale.y).toBe(comp.baseScale);
   });
 
   it('gauntlet-front overlay child anchor matches GRIP_ANCHOR so it rides with the post-attach re-anchor in UnitNode', async () => {

@@ -134,9 +134,15 @@ export function tickUnitAnimations(
       if (node.deathMs === null) {
         const p = node.rigComposition.parts;
         const base = node.rigComposition.basePartPos;
+        const baseScale = node.rigComposition.baseScale;
         // Legs absorb the squash on foot-plant so the torso doesn't
-        // visibly stretch — reads as weight on the ground.
-        p.legs.scale.y = walkScaleY;
+        // visibly stretch — reads as weight on the ground. walkScaleY
+        // is a unitless multiplier (1 idle, ~0.95 on plant); apply it
+        // ON TOP of baseScale (the rig's 96×128 → on-screen ratio).
+        // Overwriting scale.y with walkScaleY directly would inflate
+        // the legs sprite to ~2.4× normal height and push its drawn
+        // content one iso tile south of the unit.
+        p.legs.scale.y = baseScale * walkScaleY;
         // Torso carries the lean + bob + recoil push. Head and arms-back
         // live next to torso in the root; they rotate independently
         // rather than inheriting the torso's rotation. Walk-cycle and
@@ -207,12 +213,14 @@ export function tickUnitAnimations(
       if (node.rigComposition) {
         const p = node.rigComposition.parts;
         const base = node.rigComposition.basePartPos;
-        p.legs.scale.y = 1;
+        const baseScale = node.rigComposition.baseScale;
+        // Reset legs squash to identity (multiplicative — keeps the
+        // baseScale from inflating). Reset torso to its static
+        // placement, NOT (0, 0) — the latter would shift the torso
+        // ~one iso tile SE of the rest of the composition right
+        // before the body-level tip-over rotates the figure as one.
+        p.legs.scale.y = baseScale;
         p.torso.rotation = 0;
-        // Reset torso to its static placement, NOT (0, 0) — the latter
-        // would shift the torso ~one iso tile SE of the rest of the
-        // composition right before the body-level tip-over rotates the
-        // figure as one.
         p.torso.position.set(base.x, base.y);
         p.head.rotation = 0;
         p['arms-back'].rotation = 0;

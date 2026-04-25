@@ -44,6 +44,12 @@ export interface RigBodyComposition {
    *  driven sprite (currently torso) out of stack with the others
    *  (legs/head/arms-back), which stay put at this offset. */
   basePartPos: { x: number; y: number };
+  /** Initial uniform scale every base part sprite was placed at inside
+   *  `root` (the rig's 96×128 → on-screen ratio). animate.ts multiplies
+   *  walk-cycle squash deltas on top of this rather than overwriting —
+   *  overwriting would scale the part to a different absolute size and
+   *  push its drawn content out of the unit's tile. */
+  baseScale: number;
 }
 
 /** Lookup callbacks the composition needs — threaded from the store/pack. */
@@ -437,6 +443,7 @@ export function buildHumanRigBody(
     waistSlot,
     tintTargets,
     basePartPos: { x: partLeftX, y: partTopY },
+    baseScale: SPRITE_SCALE,
   };
 }
 
