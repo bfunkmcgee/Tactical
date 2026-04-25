@@ -43,6 +43,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     kind: 'ranged',
     color: '#9aa054', // sickly yellow-green
     fireClass: 'shotgun', // short-barrel scrap blunderbuss — wide cone blast.
+    archetype: 'flanker', // skirmisher; nudges around walls to break the squad's cover
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,
@@ -60,9 +61,11 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     kind: 'ranged',
     color: '#6a7048', // deeper moss green
     fireClass: 'rifle', // scrap assault rifle — single shouldered shot.
-    // Orcs carry a crude satchel-bomb. When the AI sees two or more
-    // squad members huddled in the same 2-tile ring, it lobs it.
+    // Orcs carry a crude satchel-bomb. The 'grenadier' archetype
+    // lowers the throw threshold to 1 caught player, so an isolated
+    // hero is fair game — no need to wait for a cluster.
     grenade: { dmgMin: 3, dmgMax: 5, radius: 2, range: 6 },
+    archetype: 'grenadier',
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,
@@ -81,6 +84,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     color: '#7a6a50', // gray-brown hide
     fireClass: 'heavy',
     burstShots: 4, // scrap MG rips a 4-round burst; each round rolled separately.
+    archetype: 'sniper', // long-sightline anchor; overwatches mid-range, refuses to advance into the open
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,
@@ -98,6 +102,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     kind: 'melee',
     color: '#a03818',  // burnt-orange rage paint.
     fireClass: 'pistol',   // short single-swing animation; no burst.
+    archetype: 'berserker', // ignores cover bias when picking move tiles — sprints to the squad
     // Berserkers reuse the goblin silhouette (same as the legacy bespoke
     // theme); a warm red-orange skinTone wash pushes the goblin green
     // toward rage-paint. Dedicated berserker art can land in a content

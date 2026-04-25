@@ -327,6 +327,13 @@ export type EnemyTemplate = {
   kind: 'ranged' | 'melee';
   color: string;
   /**
+   * Behavioural archetype that nudges the AI's decision tree without
+   * rewriting it. Falls back to the default heuristic when omitted —
+   * existing content stays bug-compatible. See `decide()` in
+   * src/game/engine/ai.ts for the per-archetype branches.
+   */
+  archetype?: EnemyArchetype;
+  /**
    * Drives the renderer's fire animation (windup duration, burst vs single
    * shot, muzzle-flash size). Defaults to 'rifle' for ranged enemies when
    * omitted. Melee enemies can leave this unset.
@@ -360,6 +367,20 @@ export type EnemyTemplate = {
 };
 
 export type Faction = 'player' | 'enemy';
+
+/**
+ * Behavioural archetype tags for enemy AI. Each is a small bias on the
+ * existing utility-scored decision tree in `decide()` rather than a new
+ * tree. Templates without an archetype keep the default behaviour.
+ *
+ *  - flanker:    bonus on movement tiles that flank a covered target.
+ *  - anchor:     hold cover at higher HP threshold; overwatch readily.
+ *  - grenadier:  throw a grenade at a single isolated target, not just clusters.
+ *  - sniper:     prefer overwatch + max range; resist closing distance.
+ *  - berserker:  ignore the cover-adjacency bias when picking move tiles
+ *                — sprint to the nearest player.
+ */
+export type EnemyArchetype = 'flanker' | 'anchor' | 'grenadier' | 'sniper' | 'berserker';
 
 export type UnitId = number;
 

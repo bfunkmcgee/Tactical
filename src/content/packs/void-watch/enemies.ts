@@ -29,6 +29,10 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     kind: 'ranged',
     color: '#7a8fb0',
     fireClass: 'rifle',
+    // Wraiths haunt strong points; the 'anchor' archetype keeps them
+    // overwatching from cover at higher HP thresholds rather than
+    // chasing the squad across the deck.
+    archetype: 'anchor',
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,

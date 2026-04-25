@@ -1,13 +1,14 @@
 import type { CombatState } from '../../../state/combatStore';
-import type { Unit } from '../../types';
+import type { EnemyArchetype, Unit } from '../../types';
 import { decide, type AiGrenade } from '../ai';
 import type { EnemyStep } from './steps';
 
 /**
  * Pure planner: takes current state + the actor + the actor's grenade
- * profile, returns the next `EnemyStep` the actor should perform.
- * Wraps the existing `decide()` heuristic so the runner doesn't have to
- * translate AI intents into step shapes inline.
+ * profile + optional behavioural archetype, returns the next
+ * `EnemyStep` the actor should perform. Wraps the existing `decide()`
+ * heuristic so the runner doesn't have to translate AI intents into
+ * step shapes inline.
  *
  * Returning `{ kind: 'wait', ... }` means the actor should stop taking
  * actions this turn — either no valid intent (`no-intent`) or no AP left
@@ -17,11 +18,12 @@ export function planNextStep(
   state: CombatState,
   actor: Unit,
   grenade: AiGrenade | undefined,
+  archetype?: EnemyArchetype,
 ): EnemyStep {
   if (actor.ap <= 0) return { kind: 'wait', unitId: actor.id, reason: 'out-of-ap' };
 
   const smokeSet = new Set(state.smokeTiles.keys());
-  const intent = decide(state.map, actor, state.units, smokeSet, grenade);
+  const intent = decide(state.map, actor, state.units, smokeSet, grenade, archetype);
 
   switch (intent.kind) {
     case 'wait':

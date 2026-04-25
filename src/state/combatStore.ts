@@ -745,6 +745,7 @@ export const useCombatStore = create<CombatState>((set, get) => ({
       applyPatch: (p) => set(p),
       sleep: sleepFn,
       grenadeForTemplate: (tid) => useContent().enemyTemplates[tid]?.grenade,
+      archetypeForTemplate: (tid) => useContent().enemyTemplates[tid]?.archetype,
       stepDeps: {
         overwatch: overwatchDeps,
         armorOf: unitArmor,

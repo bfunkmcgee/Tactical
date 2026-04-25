@@ -1,5 +1,5 @@
 import type { CombatState } from '../../../state/combatStore';
-import type { UnitId } from '../../types';
+import type { EnemyArchetype, UnitId } from '../../types';
 import type { AiGrenade } from '../ai';
 import { evaluateObjective } from '../objectives';
 import { planNextStep } from './planner';
@@ -22,6 +22,8 @@ export type RunnerHandles = {
   sleep: (ms: number) => Promise<void>;
   /** Grenade profile lookup — pack-aware, supplied by the store. */
   grenadeForTemplate: (templateId: string) => AiGrenade | undefined;
+  /** Behavioural archetype lookup — pack-aware, supplied by the store. */
+  archetypeForTemplate: (templateId: string) => EnemyArchetype | undefined;
   /** Step deps threaded into every `resolveStep` call. */
   stepDeps: StepDeps;
 };
@@ -52,7 +54,8 @@ async function processOneEnemy(
     if (!actor || actor.ap <= 0) return false;
 
     const grenade = h.grenadeForTemplate(actor.templateId);
-    const initialStep = planNextStep(state, actor, grenade);
+    const archetype = h.archetypeForTemplate(actor.templateId);
+    const initialStep = planNextStep(state, actor, grenade, archetype);
     if (initialStep.kind === 'wait') return false;
 
     // Walk the `next` chain from the first step. Each resolveStep call
