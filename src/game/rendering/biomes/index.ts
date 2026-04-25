@@ -11,6 +11,7 @@ import {
 } from './refinery';
 import {
   URBAN_PALETTE, URBAN_PROPS, URBAN_DECALS, EDGE_URBAN_RUBBLE,
+  drawUrbanCoverDetail, drawUrbanCoverVariant,
 } from './urban';
 
 /**
@@ -35,7 +36,7 @@ export type BiomeModule = {
   ) => void;
   drawCover?: (
     g: Graphics, kind: TileKind,
-    px: number, py: number, h: number, pal: TilePalette,
+    px: number, py: number, h: number, hash: number, pal: TilePalette,
   ) => void;
   /**
    * Optional per-tile silhouette variant for ISOLATED cover blocks.
@@ -77,6 +78,8 @@ export const URBAN_BIOME: BiomeModule = {
   propPool: URBAN_PROPS,
   decalPool: URBAN_DECALS,
   edgePool: EDGE_URBAN_RUBBLE,
+  drawCoverDetail: drawUrbanCoverDetail,
+  drawCoverVariant: drawUrbanCoverVariant,
 };
 
 /** Pick the biome module for a given tileset. Defaults to urban. */

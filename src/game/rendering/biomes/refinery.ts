@@ -285,46 +285,168 @@ export function drawRefineryGroundDetail(
 }
 
 /**
- * Raised refinery cover silhouettes — cylindrical pipe for half cover,
- * storage tank for full cover. Explicit rounded caps + rib bands so the
- * shapes read as industrial equipment instead of brick blocks.
+ * Raised refinery cover silhouettes. Three variants per kind, picked
+ * deterministically from the per-tile hash so the same tile always
+ * paints the same shape:
+ *   - cover_half: pipe run (default ~60%) / drum pair (~20%) /
+ *     junction box (~20%).
+ *   - cover_full: storage tank (default ~60%) / vertical drum stack
+ *     (~20%) / pressure cylinder with dome cap (~20%).
+ *
+ * Each variant draws its own silhouette + matching detail (rib bands,
+ * rivet rows, sun-hit ridge, contact shadow) so the lighting reads
+ * consistently across the variant pool.
  */
 export function drawRefineryCover(
   g: Graphics, kind: TileKind,
-  px: number, py: number, h: number, pal: TilePalette,
+  px: number, py: number, h: number, hash: number, pal: TilePalette,
+) {
+  const bucket = (hash >>> 16) % 10;
+  if (kind === 'cover_half') {
+    if (bucket < 2)      drawRefineryDrumPair(g, px, py, h, pal);
+    else if (bucket < 4) drawRefineryJunctionBox(g, px, py, h, pal);
+    else                 drawRefineryPipeRun(g, px, py, h, pal);
+    return;
+  }
+  if (bucket < 2)      drawRefineryDrumStack(g, px, py, h, pal);
+  else if (bucket < 4) drawRefineryPressureTank(g, px, py, h, pal);
+  else                 drawRefineryStorageTank(g, px, py, h, pal);
+}
+
+// --- Refinery cover-silhouette variants -----------------------------
+
+function drawRefineryPipeRun(
+  g: Graphics, px: number, py: number, h: number, pal: TilePalette,
 ) {
   const left = px - 14, right = px + 14, top = py - h, bot = py;
-  if (kind === 'cover_half') {
-    const bodyTop = top + 1;
-    const bodyBot = bot - 1;
-    g.roundRect(left, bodyTop, 28, bodyBot - bodyTop, Math.min(6, (bodyBot - bodyTop) / 2))
+  const bodyTop = top + 1;
+  const bodyBot = bot - 1;
+  g.roundRect(left, bodyTop, 28, bodyBot - bodyTop, Math.min(6, (bodyBot - bodyTop) / 2))
+    .fill({ color: pal.halfCover, alpha: 1 })
+    .stroke({ color: pal.coverStroke, width: 1 });
+  g.rect(left + 3, bodyTop + 1, 22, 1).fill({ color: pal.coverHighlight, alpha: 0.75 });
+  g.rect(left + 3, bodyBot - 2, 22, 1).fill({ color: pal.coverShade, alpha: 0.65 });
+  g.rect(left - 1, bodyTop - 1, 3, bodyBot - bodyTop + 2)
+    .fill({ color: pal.coverShade, alpha: 0.9 })
+    .stroke({ color: pal.coverStroke, width: 1 });
+  g.rect(right - 2, bodyTop - 1, 3, bodyBot - bodyTop + 2)
+    .fill({ color: pal.coverShade, alpha: 0.9 })
+    .stroke({ color: pal.coverStroke, width: 1 });
+}
+
+function drawRefineryDrumPair(
+  g: Graphics, px: number, py: number, h: number, pal: TilePalette,
+) {
+  const top = py - h, bot = py;
+  const drumW = 12, gap = 2;
+  const drum = (cx: number) => {
+    g.roundRect(cx - drumW / 2, top + 1, drumW, h - 1, drumW * 0.18)
       .fill({ color: pal.halfCover, alpha: 1 })
-      .stroke({ color: pal.coverStroke, width: 1 });
-    g.rect(left + 3, bodyTop + 1, 22, 1).fill({ color: pal.coverHighlight, alpha: 0.75 });
-    g.rect(left + 3, bodyBot - 2, 22, 1).fill({ color: pal.coverShade, alpha: 0.65 });
-    g.rect(left - 1, bodyTop - 1, 3, bodyBot - bodyTop + 2)
-      .fill({ color: pal.coverShade, alpha: 0.9 })
-      .stroke({ color: pal.coverStroke, width: 1 });
-    g.rect(right - 2, bodyTop - 1, 3, bodyBot - bodyTop + 2)
-      .fill({ color: pal.coverShade, alpha: 0.9 })
-      .stroke({ color: pal.coverStroke, width: 1 });
-  } else {
-    g.rect(left - 1, top - 1, 30, h + 1)
-      .fill({ color: pal.fullCover, alpha: 1 })
-      .stroke({ color: pal.coverStroke, width: 1 });
-    g.rect(left, top, 28, 2).fill({ color: pal.coverHighlight, alpha: 0.85 });
-    for (const ry of [top + 5, top + Math.floor(h * 0.55), bot - 3]) {
-      g.rect(left - 1, ry, 30, 1).fill({ color: pal.coverShade, alpha: 0.65 });
-      g.rect(left - 1, ry + 1, 30, 0.5).fill({ color: pal.coverHighlight, alpha: 0.5 });
-    }
-    g.rect(right - 3, top + 2, 3, h - 3)
-      .fill({ color: pal.coverShade, alpha: 0.55 });
-    g.rect(left + 5, top + 3, 0.8, h - 5)
-      .fill({ color: pal.halfCover, alpha: 0.7 });
-    g.rect(left + 6, top + 8, 0.6, h - 10)
-      .fill({ color: pal.wallStain, alpha: 0.65 });
-    const plaqX = px - 2, plaqY = top + Math.floor(h * 0.3);
-    g.rect(plaqX, plaqY, 4, 4).fill({ color: pal.wallHighlight, alpha: 0.85 });
-    g.rect(plaqX + 1, plaqY + 1, 2, 2).fill({ color: pal.coverStroke, alpha: 0.95 });
+      .stroke({ color: pal.coverStroke, width: 0.8 });
+    g.rect(cx - drumW / 2, top + 2, drumW, 0.8).fill({ color: pal.coverHighlight, alpha: 0.7 });
+    g.rect(cx - drumW / 2, top + 3.5, drumW, 0.6).fill({ color: pal.coverStroke, alpha: 0.7 });
+    g.rect(cx - drumW / 2, bot - 3.5, drumW, 0.6).fill({ color: pal.coverStroke, alpha: 0.7 });
+    g.rect(cx + drumW / 2 - 1.6, top + 1, 1.6, h - 1).fill({ color: pal.coverShade, alpha: 0.5 });
+  };
+  drum(px - drumW / 2 - gap / 2);
+  drum(px + drumW / 2 + gap / 2);
+  g.rect(px - 13, bot - 0.5, 26, 0.8).fill({ color: 0x000000, alpha: 0.4 });
+}
+
+function drawRefineryJunctionBox(
+  g: Graphics, px: number, py: number, h: number, pal: TilePalette,
+) {
+  const left = px - 13, right = px + 13, top = py - h, bot = py;
+  // Box body
+  g.rect(left, top + 1, 26, h - 1)
+    .fill({ color: pal.fullCover })
+    .stroke({ color: pal.coverStroke, width: 0.8 });
+  // Top ridge sun-hit + gold warning stripe at the bottom.
+  g.rect(left + 1, top + 1.5, 24, 0.8).fill({ color: pal.coverHighlight, alpha: 0.9 });
+  g.rect(left + 1, bot - 2, 24, 1.2).fill({ color: 0xe8c488, alpha: 0.85 });
+  // Vent slats — 3 horizontals.
+  for (const sy of [top + 4, top + Math.floor(h / 2), bot - 5]) {
+    g.rect(left + 4, sy, 18, 0.7).fill({ color: pal.wallStain, alpha: 0.85 });
   }
+  // Corner rivets.
+  for (const [rx, ry] of [[left + 1.5, top + 2.5], [right - 2, top + 2.5],
+                           [left + 1.5, bot - 3], [right - 2, bot - 3]] as const) {
+    g.circle(rx, ry, 0.7).fill({ color: pal.coverHighlight });
+    g.circle(rx, ry, 0.35).fill({ color: pal.coverStroke });
+  }
+  // Right-side shade band.
+  g.rect(right - 1.6, top + 1.5, 1.6, h - 2.5).fill({ color: pal.coverShade, alpha: 0.55 });
+  g.rect(left, bot - 0.5, 26, 0.8).fill({ color: 0x000000, alpha: 0.4 });
+}
+
+function drawRefineryStorageTank(
+  g: Graphics, px: number, py: number, h: number, pal: TilePalette,
+) {
+  const left = px - 14, right = px + 14, top = py - h, bot = py;
+  g.rect(left - 1, top - 1, 30, h + 1)
+    .fill({ color: pal.fullCover, alpha: 1 })
+    .stroke({ color: pal.coverStroke, width: 1 });
+  g.rect(left, top, 28, 2).fill({ color: pal.coverHighlight, alpha: 0.85 });
+  for (const ry of [top + 5, top + Math.floor(h * 0.55), bot - 3]) {
+    g.rect(left - 1, ry, 30, 1).fill({ color: pal.coverShade, alpha: 0.65 });
+    g.rect(left - 1, ry + 1, 30, 0.5).fill({ color: pal.coverHighlight, alpha: 0.5 });
+  }
+  g.rect(right - 3, top + 2, 3, h - 3)
+    .fill({ color: pal.coverShade, alpha: 0.55 });
+  g.rect(left + 5, top + 3, 0.8, h - 5)
+    .fill({ color: pal.halfCover, alpha: 0.7 });
+  g.rect(left + 6, top + 8, 0.6, h - 10)
+    .fill({ color: pal.wallStain, alpha: 0.65 });
+  const plaqX = px - 2, plaqY = top + Math.floor(h * 0.3);
+  g.rect(plaqX, plaqY, 4, 4).fill({ color: pal.wallHighlight, alpha: 0.85 });
+  g.rect(plaqX + 1, plaqY + 1, 2, 2).fill({ color: pal.coverStroke, alpha: 0.95 });
+}
+
+function drawRefineryDrumStack(
+  g: Graphics, px: number, py: number, h: number, pal: TilePalette,
+) {
+  const bot = py, drumH = Math.max(7, Math.floor((h - 2) / 3));
+  const drumW = 14;
+  const drum = (cy: number) => {
+    g.roundRect(px - drumW / 2, cy, drumW, drumH, drumW * 0.18)
+      .fill({ color: pal.halfCover })
+      .stroke({ color: pal.coverStroke, width: 0.8 });
+    g.rect(px - drumW / 2, cy + 0.6, drumW, 0.7).fill({ color: pal.coverHighlight, alpha: 0.85 });
+    g.rect(px - drumW / 2, cy + drumH * 0.18, drumW, 0.6).fill({ color: pal.coverStroke, alpha: 0.7 });
+    g.rect(px - drumW / 2, cy + drumH - 1.4, drumW, 0.6).fill({ color: pal.coverStroke, alpha: 0.7 });
+    g.rect(px + drumW / 2 - 1.5, cy + 0.6, 1.5, drumH - 1.2).fill({ color: pal.coverShade, alpha: 0.5 });
+  };
+  drum(bot - drumH);
+  drum(bot - drumH * 2);
+  drum(bot - drumH * 3);
+  g.rect(px - drumW / 2 - 1, bot - 0.5, drumW + 2, 0.8).fill({ color: 0x000000, alpha: 0.4 });
+}
+
+function drawRefineryPressureTank(
+  g: Graphics, px: number, py: number, h: number, pal: TilePalette,
+) {
+  const top = py - h, bot = py;
+  const bodyTop = top + 4, bodyW = 20;
+  // Cylindrical body.
+  g.roundRect(px - bodyW / 2, bodyTop, bodyW, bot - bodyTop, 4)
+    .fill({ color: pal.fullCover })
+    .stroke({ color: pal.coverStroke, width: 0.9 });
+  // Top dome.
+  g.ellipse(px, bodyTop, bodyW / 2, 5)
+    .fill({ color: pal.fullCover })
+    .stroke({ color: pal.coverStroke, width: 0.9 });
+  g.ellipse(px - 2, bodyTop - 1, bodyW / 2 - 4, 3)
+    .fill({ color: pal.coverHighlight, alpha: 0.55 });
+  // Pressure gauge / valve on top of the dome.
+  g.rect(px - 1, top, 2, 4).fill({ color: pal.coverStroke });
+  g.circle(px, top - 1, 1.6).fill({ color: pal.coverHighlight });
+  g.circle(px, top - 1, 0.7).fill({ color: pal.coverStroke });
+  // Vertical seam down the cylinder + horizontal rib band.
+  g.rect(px - 0.4, bodyTop + 2, 0.8, bot - bodyTop - 4).fill({ color: pal.coverStroke, alpha: 0.7 });
+  const ribY = bodyTop + Math.floor((bot - bodyTop) * 0.55);
+  g.rect(px - bodyW / 2, ribY, bodyW, 1).fill({ color: pal.coverStroke, alpha: 0.7 });
+  g.rect(px - bodyW / 2, ribY + 1, bodyW, 0.5).fill({ color: pal.coverHighlight, alpha: 0.55 });
+  // Right-side shade.
+  g.rect(px + bodyW / 2 - 2, bodyTop + 2, 2, bot - bodyTop - 4).fill({ color: pal.coverShade, alpha: 0.55 });
+  g.rect(px - bodyW / 2 - 1, bot - 0.5, bodyW + 2, 0.8).fill({ color: 0x000000, alpha: 0.4 });
 }

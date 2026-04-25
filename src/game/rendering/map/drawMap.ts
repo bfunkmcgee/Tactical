@@ -170,8 +170,9 @@ export function drawMap(layer: Container, map: GridMap) {
           .fill({ color: 0x000000, alpha: shadowAlpha });
 
         if (biome.drawCover) {
-          // Biome-provided custom cover silhouette (e.g. refinery pipes/tanks).
-          biome.drawCover(g, t.kind, p.x, p.y, h, pal);
+          // Biome-provided custom cover silhouette (e.g. refinery
+          // pipes/tanks). The hash drives optional internal variants.
+          biome.drawCover(g, t.kind, p.x, p.y, h, tileHash, pal);
         } else {
           // Per-tile fill variance so adjacent blocks don't look
           // stamped from the same die.
