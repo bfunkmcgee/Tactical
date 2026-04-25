@@ -3,7 +3,7 @@ import type { GridMap, TileKind } from '../../types';
 import type { PropDraw, TilePalette } from '../context';
 import {
   DESERT_PALETTE, DESERT_PROPS, DESERT_DECALS, EDGE_DUNES,
-  drawDesertDetail, drawDesertCoverDetail,
+  drawDesertDetail, drawDesertCoverDetail, drawDesertCoverVariant,
 } from './desert';
 import {
   REFINERY_PALETTE, REFINERY_PROPS, REFINERY_DECALS, EDGE_REFINERY_SCRAP,
@@ -37,6 +37,20 @@ export type BiomeModule = {
     g: Graphics, kind: TileKind,
     px: number, py: number, h: number, pal: TilePalette,
   ) => void;
+  /**
+   * Optional per-tile silhouette variant for ISOLATED cover blocks.
+   * Returning `'drew'` means the biome painted both silhouette + detail
+   * for this tile and the default trapezoid + drawCoverDetail should be
+   * skipped. Returning `'default'` falls through to the standard path.
+   *
+   * Connected cover tiles (a continuous wall via the extender ribbons)
+   * are NEVER routed here — they always use the default trapezoid so
+   * the bridging extenders look right.
+   */
+  drawCoverVariant?: (
+    g: Graphics, kind: TileKind,
+    px: number, py: number, h: number, hash: number, pal: TilePalette,
+  ) => 'drew' | 'default';
 };
 
 export const DESERT_BIOME: BiomeModule = {
@@ -46,6 +60,7 @@ export const DESERT_BIOME: BiomeModule = {
   edgePool: EDGE_DUNES,
   drawGroundDetail: drawDesertDetail,
   drawCoverDetail: drawDesertCoverDetail,
+  drawCoverVariant: drawDesertCoverVariant,
 };
 
 export const REFINERY_BIOME: BiomeModule = {

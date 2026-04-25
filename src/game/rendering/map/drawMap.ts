@@ -178,6 +178,23 @@ export function drawMap(layer: Container, map: GridMap) {
           const variance = ((tileHash >>> 4) % 41) - 20;
           const tintedFill = shiftBrightness(fill, variance);
 
+          // Variant silhouette pass — only for ISOLATED blocks (a
+          // crate or a barrel stack inside a continuous adobe wall
+          // would look wrong next to extenders). When the biome's
+          // variant fn returns 'drew', it painted both silhouette +
+          // its own detail; we skip the default trapezoid + the
+          // generic drawCoverDetail pass.
+          let variantDrew = false;
+          if (!connected && biome.drawCoverVariant) {
+            variantDrew = biome.drawCoverVariant(
+              g, t.kind, p.x, p.y, h, tileHash, pal,
+            ) === 'drew';
+          }
+          if (variantDrew) {
+            // Fully painted by the variant. Skip the rest of the cover branch.
+            continue;
+          }
+
           // When a grid-E / grid-S neighbour is also cover, bridge the
           // 4px + 16-stagger gap with an extender parallelogram so the
           // two blocks read as one continuous wall instead of floating

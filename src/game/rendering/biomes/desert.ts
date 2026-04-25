@@ -375,6 +375,172 @@ export function drawDesertDetail(
   }
 }
 
+// --- Desert cover silhouette variants ------------------------------
+//
+// Per-tile alternate silhouettes for ISOLATED cover blocks (connected
+// cover tiles always use the default trapezoid so the wall extenders
+// bridge cleanly). Hash-driven dispatch in `drawDesertCoverVariant`
+// picks one of these for ~40-50% of isolated tiles; the remainder fall
+// through to the default sandstone-column / clay-brick trapezoid.
+//
+// Each variant draws BOTH silhouette + per-shape detail so its lighting
+// reads consistently — sun-hit top edge, right-side shade, contact
+// shadow strip on the ground line.
+
+/**
+ * Wooden crate (cover_half). Rectangle body with vertical plank
+ * grooves, iron banding top + bottom. Slight inward batter so it
+ * doesn't fight the sandstone palette around it.
+ */
+function drawCrate(g: Graphics, px: number, py: number, h: number) {
+  const wood = 0x6a4828, woodDark = 0x3a2814, woodHi = 0x9a7048, iron = 0x2a1e10;
+  const left = px - 13, right = px + 13, top = py - h, bot = py;
+  // Body
+  g.poly([left, bot, left + 1, top, right - 1, top, right, bot])
+    .fill({ color: wood }).stroke({ color: woodDark, width: 0.8 });
+  // Plank grooves
+  for (const x of [px - 7, px, px + 7]) {
+    g.rect(x - 0.3, top + 1, 0.6, h - 2).fill({ color: woodDark, alpha: 0.6 });
+  }
+  // Iron bands — top + bottom
+  g.rect(left, top, right - left, 1.4).fill({ color: iron });
+  g.rect(left, bot - 1.4, right - left, 1.4).fill({ color: iron });
+  // Sun-hit ridge along the top + N face
+  g.rect(left + 1, top + 1.4, right - left - 2, 0.8).fill({ color: woodHi, alpha: 0.85 });
+  // Right-side shade
+  g.rect(right - 2, top + 1.4, 2, h - 2.8).fill({ color: woodDark, alpha: 0.5 });
+  // Contact shadow
+  g.rect(left + 1, bot - 0.6, right - left - 2, 0.8).fill({ color: 0x000000, alpha: 0.35 });
+}
+
+/**
+ * Sandbag pile (cover_half). Three sandbags — two on bottom, one on
+ * top — drawn as soft round-cornered rectangles with frayed corners.
+ */
+function drawSandbags(g: Graphics, px: number, py: number, h: number) {
+  const tan = 0xb89668, tanDark = 0x6a4a26, tanHi = 0xd8b888, dark = 0x2a1a0a;
+  const bot = py;
+  // Bottom row — two bags
+  g.roundRect(px - 13, bot - 7, 13, 7, 2).fill({ color: tan }).stroke({ color: tanDark, width: 0.6 });
+  g.roundRect(px,      bot - 7, 13, 7, 2).fill({ color: tan }).stroke({ color: tanDark, width: 0.6 });
+  // Top bag (centred, smaller)
+  const topH = Math.max(5, h - 7);
+  g.roundRect(px - 8, bot - 7 - topH, 16, topH, 2)
+    .fill({ color: tan }).stroke({ color: tanDark, width: 0.6 });
+  // Sun-hit highlights on each bag's top edge
+  g.rect(px - 12, bot - 6, 11, 0.8).fill({ color: tanHi, alpha: 0.65 });
+  g.rect(px + 1,  bot - 6, 11, 0.8).fill({ color: tanHi, alpha: 0.65 });
+  g.rect(px - 7,  bot - 7 - topH + 1, 14, 0.8).fill({ color: tanHi, alpha: 0.7 });
+  // Frayed-corner stitches
+  for (const [cx, cy] of [[px - 13, bot - 3.5], [px, bot - 3.5], [px - 8, bot - 7 - topH / 2]] as const) {
+    g.circle(cx + 0.5, cy, 0.6).fill({ color: dark, alpha: 0.4 });
+  }
+  // Contact shadow
+  g.rect(px - 13, bot - 0.6, 26, 0.8).fill({ color: 0x000000, alpha: 0.4 });
+}
+
+/**
+ * Stacked barrels (cover_full). Two barrels on the bottom row + one
+ * smaller on top, banded with iron rings and gentle vertical stave
+ * lines for the curved-wood read.
+ */
+function drawBarrels(g: Graphics, px: number, py: number, h: number) {
+  const wood = 0x7a5028, woodDark = 0x3a2410, woodHi = 0xa87038, iron = 0x2a1810, ironHi = 0x6a4a30;
+  const bot = py, half = h / 2;
+  // Lower row — two barrels side by side, slightly inset
+  const drawBarrel = (cx: number, top: number, bh: number, bw: number) => {
+    g.roundRect(cx - bw / 2, top, bw, bh, bw * 0.18)
+      .fill({ color: wood }).stroke({ color: woodDark, width: 0.7 });
+    // Stave grooves
+    for (const dx of [-bw * 0.25, 0, bw * 0.25]) {
+      g.rect(cx + dx - 0.25, top + 1, 0.5, bh - 2).fill({ color: woodDark, alpha: 0.45 });
+    }
+    // Iron bands
+    g.rect(cx - bw / 2, top + bh * 0.18, bw, 1).fill({ color: iron });
+    g.rect(cx - bw / 2, top + bh * 0.78, bw, 1).fill({ color: iron });
+    // Sun-hit highlight on N face
+    g.rect(cx - bw / 2 + 0.6, top + 0.6, bw - 1.2, 0.6)
+      .fill({ color: woodHi, alpha: 0.85 });
+    g.rect(cx - bw / 2, top + bh * 0.18, bw, 0.4).fill({ color: ironHi, alpha: 0.7 });
+  };
+  drawBarrel(px - 7, bot - half, half, 12);
+  drawBarrel(px + 7, bot - half, half, 12);
+  drawBarrel(px,     bot - h,    half, 12);
+  // Contact shadow
+  g.rect(px - 13, bot - 0.6, 26, 0.8).fill({ color: 0x000000, alpha: 0.4 });
+}
+
+/**
+ * Market stall (cover_full). Wooden frame with a draped canvas roof.
+ * Reads as a covered merchant stand more than a battle obstacle, but
+ * fits the desert bazaar setting and breaks up the sandstone-column
+ * monotony.
+ */
+function drawMarketStall(g: Graphics, px: number, py: number, h: number) {
+  const post = 0x3a2412, postHi = 0x6a4a26, canvas = 0xc89060, canvasHi = 0xe0b080, canvasShade = 0x7a4a26;
+  const top = py - h, bot = py;
+  // Four corner posts (front pair brighter, back pair darker)
+  g.rect(px - 13, top + 2, 1.4, h - 2).fill({ color: post });
+  g.rect(px + 11.6, top + 2, 1.4, h - 2).fill({ color: post });
+  // Sun-hit highlight on E posts
+  g.rect(px - 13, top + 2, 0.4, h - 2).fill({ color: postHi, alpha: 0.7 });
+  g.rect(px + 11.6, top + 2, 0.4, h - 2).fill({ color: postHi, alpha: 0.5 });
+  // Canvas roof — tapered top with a soft droop
+  g.poly([
+    px - 14, top + 4,
+    px - 11, top - 1,
+    px + 11, top - 1,
+    px + 14, top + 4,
+    px + 12, top + 5,
+    px - 12, top + 5,
+  ]).fill({ color: canvas }).stroke({ color: canvasShade, width: 0.6 });
+  // Highlight along the ridge
+  g.moveTo(px - 11, top - 1); g.lineTo(px + 11, top - 1);
+  g.stroke({ color: canvasHi, width: 1.2, alpha: 0.85 });
+  // Diagonal cloth folds
+  for (const dx of [-7, -2, 4, 9] as const) {
+    g.moveTo(px + dx, top + 0); g.lineTo(px + dx + 2, top + 5);
+    g.stroke({ color: canvasShade, width: 0.5, alpha: 0.5 });
+  }
+  // Wooden counter at the front
+  g.rect(px - 12, bot - 4, 24, 2).fill({ color: post });
+  g.rect(px - 12, bot - 4, 24, 0.6).fill({ color: postHi, alpha: 0.7 });
+  // Contact shadow
+  g.rect(px - 13, bot - 0.6, 26, 0.8).fill({ color: 0x000000, alpha: 0.4 });
+}
+
+/**
+ * Hash-driven dispatcher for the four variant silhouettes. Returns
+ * `'drew'` when a variant fired and `'default'` when the caller should
+ * fall through to the standard sandstone-column / clay-brick trapezoid
+ * path. Connected cover tiles never reach this function (they always
+ * use the default so wall extenders bridge correctly) — see drawMap.ts.
+ *
+ * Distribution per tile:
+ *   - cover_full: ~40% variant (20% barrels + 20% market stall),
+ *                 ~60% default sandstone column.
+ *   - cover_half: ~40% variant (20% crate + 20% sandbags),
+ *                 ~60% default clay-brick wall.
+ */
+export function drawDesertCoverVariant(
+  g: Graphics, kind: TileKind,
+  px: number, py: number, h: number, hash: number, _pal: TilePalette,
+): 'drew' | 'default' {
+  // Bucket 0..9 from a stable bit-slice of the tile hash.
+  const bucket = (hash >>> 16) % 10;
+  if (kind === 'cover_full') {
+    if (bucket < 2)         { drawBarrels(g, px, py, h); return 'drew'; }
+    if (bucket < 4)         { drawMarketStall(g, px, py, h); return 'drew'; }
+    return 'default';
+  }
+  if (kind === 'cover_half') {
+    if (bucket < 2)         { drawCrate(g, px, py, h); return 'drew'; }
+    if (bucket < 4)         { drawSandbags(g, px, py, h); return 'drew'; }
+    return 'default';
+  }
+  return 'default';
+}
+
 /**
  * Adobe masonry on raised cover: horizontal brick courses + a centered
  * decorative seam, top sun highlight, and a right-side shadow band so the
