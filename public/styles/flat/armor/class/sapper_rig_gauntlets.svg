@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sapper Rig — front-arm fingerless glove + heartwood wrist guard for
+  Orin's class-canonical gauntlets. Content kept inside x=46..58,
+  y=58..76 so it overlays only the front arm.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="srg-glove" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#4a3820"/><stop offset="1" stop-color="#26180e"/>
+    </linearGradient>
+    <linearGradient id="srg-wood" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8a6a3a"/><stop offset="1" stop-color="#3a2810"/>
+    </linearGradient>
+    <linearGradient id="srg-brass" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d8a848"/><stop offset="1" stop-color="#6a4818"/>
+    </linearGradient>
+  </defs>
+  <!-- Fingerless leather glove -->
+  <path d="M 51 64 L 57 62 L 56 73 L 49 74 Z" fill="url(#srg-glove)" stroke="#0a0a06" stroke-width="0.4"/>
+  <!-- Heartwood wrist guard -->
+  <rect x="48" y="68" width="9" height="4" fill="url(#srg-wood)" stroke="#1a1208" stroke-width="0.3"/>
+  <!-- Wood grain hint -->
+  <line x1="49" y1="70" x2="56" y2="70" stroke="#2a1a0c" stroke-width="0.25" opacity="0.6"/>
+  <!-- Brass rivets -->
+  <circle cx="49" cy="69.5" r="0.5" fill="url(#srg-brass)"/>
+  <circle cx="56" cy="69.5" r="0.5" fill="url(#srg-brass)"/>
+  <circle cx="49" cy="71" r="0.5" fill="url(#srg-brass)"/>
+  <circle cx="56" cy="71" r="0.5" fill="url(#srg-brass)"/>
+  <!-- Fingerless knuckle hint (open at top) -->
+  <path d="M 49 74 L 56 73 L 55 76 L 49 76 Z" fill="#26180e" stroke="#0a0a06" stroke-width="0.3"/>
+</svg>

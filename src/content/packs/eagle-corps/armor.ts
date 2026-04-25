@@ -16,11 +16,12 @@ import type { Armor } from '../../../game/types';
  * "set" match the legacy stats so mid-run migrations don't quietly
  * buff or nerf squads (see src/state/gameStore.ts V1_TO_V2_ARMOR).
  *
- * Class-canonical chest pieces (warded_plate / mithril_vest /
- * swiftstep_greaves / oakheart_helm) reference torso-only overlays
- * under /styles/flat/armor/class/. Gauntlet overlays still reuse the
- * legacy soldier_*_arms.svg files, which are arms-local and don't
- * bleed outside the arms-front sprite.
+ * Class-canonical chest + gauntlet pieces reference per-slot art
+ * under /styles/flat/armor/class/. The chest overlays draw inside
+ * the torso band (y ~ 32..82); the gauntlets draw inside the
+ * front-arm wrist band (x ~ 46..58, y ~ 58..76) so they ride with
+ * arms-front under the GRIP_ANCHOR pivot without bleeding onto the
+ * torso/shoulders.
  */
 export const ARMOR: Record<string, Armor> = {
   // ---- warded_plate (Brannock's Heavy Plate): hp 4 / dr 2 / mob -1 ----
@@ -41,7 +42,7 @@ export const ARMOR: Record<string, Armor> = {
     slot: 'gauntlets',
     hpBonus: 0, dr: 0, mobility: 0, tag: 'runic',
     visual: { overlays: {
-      'gauntlet-front': { svg: '/styles/flat/soldier_warden_arms.svg' },
+      'gauntlet-front': { svg: '/styles/flat/armor/class/warden_plate_gauntlets.svg' },
     }},
   },
   warded_plate_legs: {
@@ -73,7 +74,7 @@ export const ARMOR: Record<string, Armor> = {
     slot: 'gauntlets',
     hpBonus: 0, dr: 0, mobility: 0, tag: 'mundane',
     visual: { overlays: {
-      'gauntlet-front': { svg: '/styles/flat/soldier_arms.svg' },
+      'gauntlet-front': { svg: '/styles/flat/armor/class/ranger_carapace_gauntlets.svg' },
     }},
   },
   mithril_vest_legs: {
@@ -105,7 +106,7 @@ export const ARMOR: Record<string, Armor> = {
     slot: 'gauntlets',
     hpBonus: 0, dr: 0, mobility: 0, tag: 'fae',
     visual: { overlays: {
-      'gauntlet-front': { svg: '/styles/flat/soldier_mystic_arms.svg' },
+      'gauntlet-front': { svg: '/styles/flat/armor/class/mystic_robes_gauntlets.svg' },
     }},
   },
   swiftstep_greaves_legs: {
@@ -137,7 +138,7 @@ export const ARMOR: Record<string, Armor> = {
     slot: 'gauntlets',
     hpBonus: 0, dr: 0, mobility: 0, tag: 'alchemical',
     visual: { overlays: {
-      'gauntlet-front': { svg: '/styles/flat/soldier_sapper_arms.svg' },
+      'gauntlet-front': { svg: '/styles/flat/armor/class/sapper_rig_gauntlets.svg' },
     }},
   },
   oakheart_helm_legs: {

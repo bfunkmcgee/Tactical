@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mystic Robes — front-arm rune-stitched bracer for Seraphine's
+  class-canonical gauntlets. Robe sleeve cuff with gold rune trim;
+  content kept inside x=46..58, y=58..76 so it overlays only the
+  front arm and never extends to the chest/shoulders.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="mrg-sleeve" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#5a3d7a"/><stop offset="1" stop-color="#2a1840"/>
+    </linearGradient>
+    <linearGradient id="mrg-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f0d088"/><stop offset="1" stop-color="#8a6838"/>
+    </linearGradient>
+  </defs>
+  <!-- Sleeve cuff: violet robe wrap around the forearm -->
+  <path d="M 51 60 L 57 58 L 56 73 L 49 74 Z" fill="url(#mrg-sleeve)" stroke="#10081a" stroke-width="0.4"/>
+  <!-- Gold cuff band at wrist -->
+  <rect x="48" y="69" width="9" height="3" fill="url(#mrg-gold)" stroke="#5a4020" stroke-width="0.3"/>
+  <!-- Inner rune stamps along the cuff -->
+  <circle cx="50" cy="70.5" r="0.5" fill="#3a2810"/>
+  <circle cx="55" cy="70.5" r="0.5" fill="#3a2810"/>
+  <!-- Sleeve trailing edge -->
+  <path d="M 49 74 L 56 73 L 55 76 L 49 77 Z" fill="#3a1f52" stroke="#10081a" stroke-width="0.3"/>
+</svg>

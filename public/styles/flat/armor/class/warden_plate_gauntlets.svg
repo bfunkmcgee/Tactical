@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Warden Plate — front-arm wrist bracer for Brannock's class-canonical
+  gauntlets. Authored to overlay only the front arm's forearm + wrist
+  inside the rig's 96x128 viewBox. The arms-front sprite anchor at
+  GRIP_ANCHOR (48, 71.68) drops this content right at the grip; content
+  stays inside x=46..58, y=58..76 so it doesn't spill onto the body.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 128" width="96" height="128">
+  <defs>
+    <linearGradient id="wpg-plate" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#36363c"/><stop offset="1" stop-color="#14141a"/>
+    </linearGradient>
+    <linearGradient id="wpg-gold" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#e8c488"/><stop offset="1" stop-color="#8a6838"/>
+    </linearGradient>
+  </defs>
+  <!-- Forearm bracer: tracks the front arm path from elbow to wrist -->
+  <path d="M 51 60 L 57 58 L 56 72 L 49 73 Z" fill="url(#wpg-plate)" stroke="#060608" stroke-width="0.4"/>
+  <!-- Wrist band -->
+  <rect x="48" y="71" width="9" height="3" fill="#1a1a22" stroke="#060608" stroke-width="0.3"/>
+  <!-- Rune stamp at wrist -->
+  <circle cx="52.5" cy="72.5" r="0.7" fill="url(#wpg-gold)"/>
+  <!-- Knuckle plate / glove -->
+  <path d="M 49 73 L 56 72 L 55 76 L 49 76 Z" fill="#0a0a10" stroke="#060608" stroke-width="0.3"/>
+  <!-- Plate seam -->
+  <line x1="52" y1="60" x2="52" y2="72" stroke="#5a5a62" stroke-width="0.3" opacity="0.7"/>
+</svg>
