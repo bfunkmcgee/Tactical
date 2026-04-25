@@ -52,6 +52,62 @@ export const FIRE_STYLES: Record<WeaponClass | 'default', FireStyle> = {
 };
 
 /**
+ * Per-weapon-class hold profile — how the weapon AND the front arm are
+ * mounted on the unit. Sibling table to FIRE_STYLES; consumed by
+ * UnitNode.ts at weapon-mount time and animate.ts for muzzle flash.
+ *
+ * Replaces the single global GRIP_ANCHOR + uniform 0.42 scale + inlined
+ * weaponRestY formula that collapsed every class through one transform —
+ * which left a pistol rendering at the same on-screen size as a rifle,
+ * the weapon hanging ~5-12 px low because the global anchor didn't
+ * coincide with any class's drawn grip dot, and every class showing the
+ * same two-hand center grip.
+ *
+ * Numbers are starting values from the SVG grip / barrel survey
+ * (rifle grip y=60, pistol y=70, etc. in the 96x128 viewBox); tune in a
+ * playtest pass after wiring is in place.
+ */
+export type WeaponHold = {
+  /** Sprite anchor (fraction of 96x128 viewBox) for the weapon AND the
+   *  arms-front sprite. Coincides with the SVG's drawn grip dot per
+   *  class so rotation pivots around the hand instead of mid-air. */
+  gripAnchor: { x: number; y: number };
+  /** Uniform scale applied to weaponSprite + armsFront. Pistol < rifle
+   *  < heavy so silhouettes scale with the gun's real-world bulk. */
+  scale: number;
+  /** Forward (+x, right-facing) and vertical offset of the muzzle in
+   *  weapon-wrap LOCAL pixels AFTER scale. Mirrored by `* facing` for
+   *  left. Consumed by drawMuzzleFlash so the flash lands at the SVG's
+   *  barrel tip rather than the global ~+22px point. */
+  muzzleOffset: { x: number; y: number };
+  /** Vertical y for the weaponWrap at rest (low-ready). Per-class so a
+   *  pistol can hang low at the hip while a heavy rides shouldered.
+   *  Replaces the formula UnitNode used to inline. */
+  restY: number;
+  /** Optional per-class arms-front pose nudge — overrides gripAnchor
+   *  for the arms only. Pistol uses this to read as one-hand
+   *  (anchor x shifted off-center). Defaults to gripAnchor. */
+  armsAnchor?: { x: number; y: number };
+  /** Optional per-class arms-front scale. Defaults to scale. */
+  armsScale?: number;
+};
+
+export const WEAPON_HOLD: Record<WeaponClass | 'default', WeaponHold> = {
+  rifle:   { gripAnchor: { x: 0.50, y: 60 / 128 }, scale: 0.44, muzzleOffset: { x: 16, y: -2 }, restY: -28 },
+  sniper:  { gripAnchor: { x: 0.50, y: 60 / 128 }, scale: 0.46, muzzleOffset: { x: 18, y: -3 }, restY: -32 },
+  shotgun: { gripAnchor: { x: 0.50, y: 64 / 128 }, scale: 0.44, muzzleOffset: { x: 19, y: -1 }, restY: -26 },
+  smg:     { gripAnchor: { x: 0.50, y: 70 / 128 }, scale: 0.40, muzzleOffset: { x: 15, y: -1 }, restY: -22 },
+  pistol:  { gripAnchor: { x: 0.50, y: 70 / 128 }, scale: 0.32, muzzleOffset: { x: 11, y:  0 }, restY: -14,
+             armsAnchor: { x: 0.42, y: 70 / 128 }, armsScale: 0.32 },
+  heavy:   { gripAnchor: { x: 0.45, y: 64 / 128 }, scale: 0.50, muzzleOffset: { x: 22, y: -2 }, restY: -18,
+             armsAnchor: { x: 0.40, y: 64 / 128 }, armsScale: 0.50 },
+  // 'default' mirrors the pre-WEAPON_HOLD shipping numbers exactly so any
+  // unit without a resolvable class falls through bug-compatible:
+  // gripAnchor = (0.5, 0.56), scale = 0.42, restY = (0.56 - 1) * 128 * 0.42 + 4.
+  default: { gripAnchor: { x: 0.50, y: 0.56 },     scale: 0.42, muzzleOffset: { x: 22, y: -2 }, restY: -19.6 },
+};
+
+/**
  * Drain pending FireEvents and trigger the correct animation on each
  * shooter's node. Events are authoritative (they carry the actual
  * target and weapon class from the combat resolvers), so the renderer

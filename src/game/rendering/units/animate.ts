@@ -192,6 +192,7 @@ export function tickUnitAnimations(
     drawMuzzleFlash(
       node.muzzleFlash, node.facing, flashIntensity,
       !!node.weaponWrap, node.fireStyle.flashScale,
+      node.muzzleOffset,
     );
 
     // ----- Death: fade to a dim corpse + slump + fall-sideways rotation.
@@ -260,11 +261,12 @@ export function tickUnitAnimations(
 export function drawMuzzleFlash(
   g: Graphics, facing: 1 | -1, intensity: number,
   inWeaponSpace: boolean, scale: number,
+  offset: { x: number; y: number } = MUZZLE_OFFSET,
 ) {
   g.clear();
   if (intensity <= 0) return;
-  const x = inWeaponSpace ? MUZZLE_OFFSET.x * facing : 20 * facing;
-  const y = inWeaponSpace ? MUZZLE_OFFSET.y : -30;
+  const x = inWeaponSpace ? offset.x * facing : 20 * facing;
+  const y = inWeaponSpace ? offset.y : -30;
   const s = scale;
   // Soft outer glow.
   g.circle(x, y, 11 * s).fill({ color: 0xff9a3c, alpha: 0.4 * intensity });

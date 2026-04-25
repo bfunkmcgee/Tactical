@@ -5,8 +5,8 @@ import { WEAPON_ANCHORS } from '../../../content/rigs/weapons';
 import type { Unit, UnitId, Vec2 } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
-import { GRIP_ANCHOR, HIT_FLASH_MS, MOVE_TWEEN_MS } from './constants';
-import { FIRE_STYLES, type FireStyle } from './fireStyles';
+import { HIT_FLASH_MS, MOVE_TWEEN_MS, MUZZLE_OFFSET } from './constants';
+import { FIRE_STYLES, WEAPON_HOLD, type FireStyle, type WeaponHold } from './fireStyles';
 import { buildHumanRigBody, overlayCacheKey, skinMaskCacheKey, type RigBodyComposition } from './humanRigBody';
 import { loadSkinMaskDataUrl } from './skinMask';
 import { allRigs, rigById, rigPartSvg } from '../../../content/rigs';
@@ -42,6 +42,10 @@ export type UnitNode = {
   /** Y position of the weapon wrap at rest (low-ready). Fire animations
    * lift from this value toward eye level and return to it. */
   weaponRestY: number;
+  /** Per-class muzzle offset in weapon-wrap local pixels (post-scale).
+   *  Consumed by drawMuzzleFlash so the flash lands at the SVG's barrel
+   *  tip per class. Defaults to MUZZLE_OFFSET for the bespoke fallback. */
+  muzzleOffset: { x: number; y: number };
   muzzleFlash: Graphics;
   hpBar: Graphics;
   label: Text;
@@ -268,6 +272,36 @@ export function syncUnits(
   }
 }
 
+/**
+ * Resolve the per-class WeaponHold for a unit. Players carry their
+ * primary class via `loadout.primaryId → Weapon.class`; enemies expose
+ * `fireClass` directly on the template. Falls through to WEAPON_HOLD.default
+ * (which mirrors the legacy single-anchor / 0.42-scale behavior exactly)
+ * for any unit without a resolvable class.
+ */
+function resolveWeaponHold(u: Unit): WeaponHold {
+  const pack = useContent();
+  const primary = u.loadout?.primaryId ? pack.weapons[u.loadout.primaryId] : undefined;
+  const cls = primary?.class ?? pack.enemyTemplates[u.templateId]?.fireClass;
+  return WEAPON_HOLD[cls ?? 'default'] ?? WEAPON_HOLD.default;
+}
+
+/**
+ * After arms-front is re-anchored to a per-class GripAnchor, walk its
+ * children and mirror the same anchor on each. The gauntlet-front
+ * overlay + skin-mask companion are mounted by humanRigBody.ts at the
+ * global GRIP_ANCHOR (per d4eed3a) — once the parent's anchor becomes
+ * per-class, those children must mirror it or they shift off the hand
+ * by `(parent.anchor - child.anchor) * texture * scale` pixels SE.
+ */
+function cascadeArmsAnchor(armsSprite: Sprite, anchor: { x: number; y: number }): void {
+  for (const child of armsSprite.children) {
+    if ('anchor' in child) {
+      (child as Sprite).anchor.set(anchor.x, anchor.y);
+    }
+  }
+}
+
 function createUnitNode(u: Unit): UnitNode {
   const container = new Container();
 
@@ -333,22 +367,31 @@ function createUnitNode(u: Unit): UnitNode {
     body.addChild(glint);
 
     if (weaponTex) {
+      const hold = resolveWeaponHold(u);
+      const armsAnchor = hold.armsAnchor ?? hold.gripAnchor;
+      const armsScale = hold.armsScale ?? hold.scale;
+
       weaponWrap = new Container();
-      weaponRestY = (GRIP_ANCHOR.y - 1) * 128 * 0.42 + 4;
+      weaponRestY = hold.restY;
       weaponWrap.position.set(0, weaponRestY);
 
       // arms-front IS the rig's front-arm sprite — parent it into the
       // weapon wrap so it rotates + lifts with the weapon. This replaces
       // the legacy `armsSprite` that the bespoke path creates here.
       armsSprite = rigComposition.armsFront;
-      armsSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
-      armsSprite.scale.set(0.42);
+      armsSprite.anchor.set(armsAnchor.x, armsAnchor.y);
+      armsSprite.scale.set(armsScale);
       armsSprite.position.set(0, 0);
+      // Children installed by humanRigBody (gauntlet-front overlay + the
+      // skin-mask companion) anchor at the global GRIP_ANCHOR per d4eed3a.
+      // Now that arms-front has a per-class anchor, mirror it on the
+      // children so they stay on the hand.
+      cascadeArmsAnchor(armsSprite, armsAnchor);
       weaponWrap.addChild(armsSprite);
 
       weaponSprite = new Sprite(weaponTex);
-      weaponSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
-      weaponSprite.scale.set(0.42);
+      weaponSprite.anchor.set(hold.gripAnchor.x, hold.gripAnchor.y);
+      weaponSprite.scale.set(hold.scale);
       weaponWrap.addChild(weaponSprite);
       body.addChild(weaponWrap);
       rigComposition.tintTargets.push(weaponSprite);
@@ -360,11 +403,18 @@ function createUnitNode(u: Unit): UnitNode {
       // local space (top-left origin), so they ride with aim/recoil via
       // parent-child inheritance. Missing overlays / unknown mod ids /
       // un-authored anchors all silently no-op.
+      //
+      // WEAPON_ANCHORS offsets were authored against the legacy global
+      // GRIP_ANCHOR (0.5, 0.56). When the per-class anchor moves, the
+      // child's local-frame (0,0) moves with it — compensate by
+      // subtracting the per-class anchor delta in unscaled SVG pixels.
       const primary = u.loadout?.primaryId
         ? useContent().weapons[u.loadout.primaryId]
         : undefined;
       if (primary) {
         const anchors = WEAPON_ANCHORS[primary.class];
+        const dx = (hold.gripAnchor.x - 0.5) * 96;
+        const dy = (hold.gripAnchor.y - 0.56) * 128;
         for (const [modSlot, modId] of Object.entries(u.loadout?.primaryMods ?? {})) {
           if (!modId) continue;
           let mod;
@@ -379,7 +429,7 @@ function createUnitNode(u: Unit): UnitNode {
           const attach = new Sprite(tex);
           attach.anchor.set(0, 0);
           const off = anchors?.[modSlot as import('../../types').ModSlot] ?? { x: 0, y: 0 };
-          attach.position.set(off.x, off.y);
+          attach.position.set(off.x - dx, off.y - dy);
           if (layer.tint !== undefined) attach.tint = layer.tint;
           weaponSprite.addChild(attach);
           rigComposition.tintTargets.push(attach);
@@ -424,9 +474,16 @@ function createUnitNode(u: Unit): UnitNode {
   const p = gridToScreen(u.pos);
   container.position.set(p.x, p.y);
 
+  // Muzzle offset: per-class for rig-composed units carrying a weapon,
+  // else the legacy global MUZZLE_OFFSET so the bespoke fallback path
+  // doesn't regress.
+  const muzzleOffset = (rigComposition && weaponWrap)
+    ? resolveWeaponHold(u).muzzleOffset
+    : MUZZLE_OFFSET;
+
   return {
     container, shadow, body, sprite, fallback, weaponWrap, weaponSprite, armsSprite,
-    weaponRestY, muzzleFlash,
+    weaponRestY, muzzleOffset, muzzleFlash,
     hpBar, label, ornaments, selectionRing, spriteTop,
     currentScreen: { x: p.x, y: p.y },
     targetScreen: { x: p.x, y: p.y },
@@ -477,17 +534,33 @@ function rebuildRigOverlays(node: UnitNode, u: Unit): void {
     clothingOf: getClothing,
   });
   node.body.addChild(fresh.root);
-  // Re-install armsFront in the weapon wrap if we have one. Anchor +
-  // scale + position match the createUnitNode initial installation.
+  // Re-install armsFront in the weapon wrap if we have one. Per-class
+  // anchor / scale / restY + child anchor cascade match the
+  // createUnitNode initial installation. A loadout swap that changes
+  // the primary weapon class re-resolves the hold.
   if (node.weaponWrap) {
+    const hold = resolveWeaponHold(u);
+    const armsAnchor = hold.armsAnchor ?? hold.gripAnchor;
+    const armsScale = hold.armsScale ?? hold.scale;
     node.armsSprite = fresh.armsFront;
-    node.armsSprite.anchor.set(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
-    node.armsSprite.scale.set(0.42);
+    node.armsSprite.anchor.set(armsAnchor.x, armsAnchor.y);
+    node.armsSprite.scale.set(armsScale);
     node.armsSprite.position.set(0, 0);
+    cascadeArmsAnchor(node.armsSprite, armsAnchor);
     node.weaponWrap.addChild(node.armsSprite);
+    // The weapon wrap's restY may also have shifted; re-pin it.
+    node.weaponRestY = hold.restY;
+    node.weaponWrap.position.set(0, hold.restY);
+    // Refresh per-class muzzle offset for the new class.
+    node.muzzleOffset = hold.muzzleOffset;
     // The weapon sprite survives the rebuild but we need it back in the
     // tintTargets list because it used to be in the old composition's.
-    if (node.weaponSprite) fresh.tintTargets.push(node.weaponSprite);
+    // Also re-anchor + re-scale it since the class may have changed.
+    if (node.weaponSprite) {
+      node.weaponSprite.anchor.set(hold.gripAnchor.x, hold.gripAnchor.y);
+      node.weaponSprite.scale.set(hold.scale);
+      fresh.tintTargets.push(node.weaponSprite);
+    }
   }
   node.rigComposition = fresh;
 }
