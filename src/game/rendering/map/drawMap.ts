@@ -1,5 +1,5 @@
 import { Container, Graphics } from 'pixi.js';
-import type { GridMap } from '../../types';
+import type { GridMap, TileKind } from '../../types';
 import { tileAt } from '../../engine/grid';
 import { gridToScreen, TILE_H, TILE_W } from '../isoProjection';
 import { diamond, shiftBrightness } from '../context';
@@ -31,11 +31,67 @@ function paintTileLight(g: Graphics, cx: number, cy: number, fill: number) {
 }
 
 /**
+ * Per-edge geometry table for the edge-blend pass. Each entry gives
+ * the diamond edge's two endpoints (relative to tile center) plus the
+ * inward unit-normal. Multiplied by `EDGE_BAND_PX` to inset the band.
+ *
+ * Edge naming follows the diamond corner the band STARTS at — NE goes
+ * from the top corner clockwise to the right corner, etc. The inward
+ * normal points from the edge midpoint toward the tile center.
+ */
+const EDGE_BAND_PX = 6;
+const _hw = TILE_W / 2, _hh = TILE_H / 2;
+const _len = Math.hypot(_hw, _hh);
+type EdgeKey = 'NE' | 'SE' | 'SW' | 'NW';
+const EDGES: Record<EdgeKey, {
+  ax: number; ay: number; bx: number; by: number; nx: number; ny: number;
+}> = {
+  NE: { ax: 0,    ay: -_hh, bx: _hw,  by: 0,    nx: -_hh / _len, ny:  _hw / _len },
+  SE: { ax: _hw,  ay: 0,    bx: 0,    by: _hh,  nx: -_hh / _len, ny: -_hw / _len },
+  SW: { ax: 0,    ay: _hh,  bx: -_hw, by: 0,    nx:  _hh / _len, ny: -_hw / _len },
+  NW: { ax: -_hw, ay: 0,    bx: 0,    by: -_hh, nx:  _hh / _len, ny:  _hw / _len },
+};
+
+/**
+ * Build a thin parallelogram strip on the inside of the named diamond
+ * edge. The strip's outer side traces the edge exactly; the inner side
+ * sits `EDGE_BAND_PX` toward the tile centre. Filled with the
+ * neighbour's colour at low alpha by `drawEdgeBlend`, this softens the
+ * hard diamond seam between adjacent tiles of different kinds.
+ */
+function edgeBandPoly(cx: number, cy: number, edge: EdgeKey): number[] {
+  const e = EDGES[edge];
+  const ix = e.nx * EDGE_BAND_PX, iy = e.ny * EDGE_BAND_PX;
+  return [
+    cx + e.ax,      cy + e.ay,
+    cx + e.bx,      cy + e.by,
+    cx + e.bx + ix, cy + e.by + iy,
+    cx + e.ax + ix, cy + e.ay + iy,
+  ];
+}
+
+/**
+ * Resolve the base fill for a tile of the given kind in the active
+ * palette. Floor uses the variant; cover/wall ignore variant. Used by
+ * the edge-blend pass to pick up the neighbour's colour.
+ */
+function fillForKind(
+  kind: TileKind, variant: number,
+  pal: { floor: readonly [number, number, number]; wall: number; halfCover: number; fullCover: number },
+): number {
+  if (kind === 'floor') return pal.floor[variant];
+  if (kind === 'wall') return pal.wall;
+  if (kind === 'cover_half') return pal.halfCover;
+  if (kind === 'cover_full') return pal.fullCover;
+  return pal.floor[0];
+}
+
+/**
  * Paint the full tile layer. Called on mission init and whenever the map
  * reference changes (grenades / demolish swap it). Draws in order:
  *   1. Edge feathering (biome silhouette beyond the tile grid)
  *   2. Tile loop: floor / wall / cover diamonds + universal sun-cast
- *      + biome detail + cover silhouettes
+ *      + biome detail + edge-blend ribbons + cover silhouettes
  *   3. Floor decals (lane-biased pass)
  *   4. Env props (density-biased pass)
  */
@@ -65,11 +121,7 @@ export function drawMap(layer: Container, map: GridMap) {
       // visible NE→SW tonal bands across every map).
       const tileHash = ((x * 73856093) ^ (y * 19349663)) >>> 0;
       const variant = tileHash % 3;
-      let fill = pal.floor[0];
-      if (t.kind === 'floor') fill = pal.floor[variant];
-      else if (t.kind === 'wall') fill = pal.wall;
-      else if (t.kind === 'cover_half') fill = pal.halfCover;
-      else if (t.kind === 'cover_full') fill = pal.fullCover;
+      const fill = fillForKind(t.kind, variant, pal);
       diamond(g, p.x, p.y, fill, 1, pal.floorStroke);
       // Universal painted-light pass: sun-cast top + shadow bottom.
       // Applied to every floor + ground-plane cover tile so the iso
@@ -77,6 +129,30 @@ export function drawMap(layer: Container, map: GridMap) {
       paintTileLight(g, p.x, p.y, fill);
       // Biome-specific detail pass on the ground-plane diamond.
       biome.drawGroundDetail?.(g, t.kind, variant, p.x, p.y, x, y, pal);
+
+      // Edge-blend pass: when a grid neighbour has a different kind,
+      // bleed its colour 6 px into this tile along the shared diamond
+      // edge. The neighbour does the symmetric blend on its own side
+      // so the boundary fades from each direction — soft transition
+      // instead of a hard diamond seam where, say, a sand floor meets
+      // a clay-brick cover or an adobe wall.
+      //
+      // Grid → screen-edge map (iso projection):
+      //   (x+1, y)  → SE     (x, y+1) → SW
+      //   (x-1, y)  → NW     (x, y-1) → NE
+      const blendIfDifferent = (edge: EdgeKey, nx: number, ny: number) => {
+        const nt = tileAt(map, nx, ny);
+        if (!nt || nt.kind === t.kind) return;
+        const nHash = ((nx * 73856093) ^ (ny * 19349663)) >>> 0;
+        const nFill = fillForKind(nt.kind, nHash % 3, pal);
+        if (nFill === fill) return;
+        g.poly(edgeBandPoly(p.x, p.y, edge))
+          .fill({ color: nFill, alpha: 0.32 });
+      };
+      blendIfDifferent('SE', x + 1, y);
+      blendIfDifferent('SW', x,     y + 1);
+      blendIfDifferent('NW', x - 1, y);
+      blendIfDifferent('NE', x,     y - 1);
 
       if (t.kind === 'cover_half' || t.kind === 'cover_full') {
         const h = t.kind === 'cover_full' ? 22 : 12;
