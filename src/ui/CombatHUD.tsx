@@ -5,6 +5,11 @@ import { SIDEARM_MOD_SLOTS } from '../game/types';
 import type { ModSlot } from '../game/types';
 import { soundEngine } from '../game/audio/soundEngine';
 import ModPicker from './components/ModPicker';
+import RosterRail from './combat/RosterRail';
+import MissionLog from './combat/MissionLog';
+import SelectedUnitHeader from './combat/SelectedUnitHeader';
+import ActionBar from './combat/ActionBar';
+import { groupActions, type ActionId } from './combat/groupActions';
 
 const PRIMARY_SLOTS: ModSlot[] = ['optic', 'magazine', 'muzzle', 'stock'];
 
@@ -38,32 +43,69 @@ export default function CombatHUD() {
   // when it toggles. soundEngine persists the value to localStorage.
   const [muted, setMuted] = useState(() => soundEngine.isMuted());
 
-  const selected = units.find((u) => u.id === selectedId);
+  const content = useContent();
+  const selected = units.find((u) => u.id === selectedId) ?? null;
   const playerUnits = units.filter((u) => u.faction === 'player');
-  const primary = selected?.loadout ? getWeapon(selected.loadout.primaryId) : null;
-  const sidearm = selected?.loadout ? getWeapon(selected.loadout.sidearmId) : null;
-  const kit = selected?.loadout?.kitId ? useContent().kits[selected.loadout.kitId] ?? null : null;
-  // Magazine caps include any Kit bonus ammo so Reload disables correctly.
-  const primaryCap = (primary?.ammo ?? 0) + (kit?.effects.extraAmmoPrimary ?? 0);
-  const sidearmCap = (sidearm?.ammo ?? 0) + (kit?.effects.extraAmmoSidearm ?? 0);
-  const disabled = phase !== 'player' || !selected || !selected.alive;
+  const selectedTemplate = selected ? content.soldierTemplates[selected.templateId] ?? null : null;
 
   const shotPreview = pendingShotTargetId !== null
     ? getShotPreview(pendingShotTargetId, pendingShotUsesSidearm) : null;
   const shotTarget = pendingShotTargetId !== null
     ? units.find((u) => u.id === pendingShotTargetId) : null;
   const pendingUtilityDef = (pendingUtility && selected?.loadout)
-    ? useContent().utilities[selected.loadout.utilityIds[pendingUtility.idx]]
+    ? content.utilities[selected.loadout.utilityIds[pendingUtility.idx]]
     : null;
+
+  const groups = groupActions({
+    unit: selected, mode, selectedUtilityIdx, phase, content,
+  });
+
+  function handleAction(id: ActionId): void {
+    switch (id) {
+      case 'move':    setMode(mode === 'move' ? 'idle' : 'move'); return;
+      case 'fire':    setMode(mode === 'fire' ? 'idle' : 'fire'); return;
+      case 'sidearm': setMode(mode === 'sidearm' ? 'idle' : 'sidearm'); return;
+      case 'utility-0':
+      case 'utility-1':
+      case 'utility-2': {
+        const idx = Number(id.slice(-1));
+        const active = mode === 'utility' && selectedUtilityIdx === idx;
+        setMode(active ? 'idle' : 'utility', active ? undefined : idx);
+        return;
+      }
+      case 'reload':    tryReload(); return;
+      case 'overwatch': toggleOverwatch(); return;
+      case 'refit':     setRefitOpen(true); return;
+      case 'classAbility': {
+        // Mystic's Arcane Sight is instant; the others toggle the
+        // ability targeting mode. The disabled check in groupActions
+        // ensures we only get here when the action is callable.
+        const tmpl = selected?.templateId ? content.soldierTemplates[selected.templateId] : null;
+        if (tmpl?.class === 'Mystic') tryMysticArcaneSight();
+        else setMode(mode === 'ability' ? 'idle' : 'ability');
+        return;
+      }
+      case 'endTurn':
+        soundEngine.play('ui.primary');
+        endPlayerTurn();
+        return;
+    }
+  }
 
   return (
     <>
-      {/* Top status */}
-      <div style={{ position: 'fixed', top: 'calc(var(--safe-top) + var(--s-2))', left: 'var(--s-2)', right: 'var(--s-2)', display: 'flex', gap: 'var(--s-2)', pointerEvents: 'none', zIndex: 10 }}>
+      {/* Top status — round + phase + mute + objective only.
+          Roster pips moved to the left-edge RosterRail. */}
+      <div style={{
+        position: 'fixed', top: 'calc(var(--safe-top) + var(--s-2))',
+        left: 'var(--s-2)', right: 'var(--s-2)', display: 'flex',
+        gap: 'var(--s-2)', pointerEvents: 'none', zIndex: 10,
+      }}>
         <div className="panel stack" style={{ padding: '6px 10px', fontSize: 13, pointerEvents: 'auto', gap: 2 }}>
           <div className="row" style={{ gap: 8, alignItems: 'center' }}>
             <strong>Round {round}</strong>
             <span>· {phase === 'player' ? 'Your turn' : phase === 'enemy' ? 'Enemy turn' : phase === 'won' ? 'Victory' : 'Defeat'}</span>
+            {/* TODO: bump mute chip to 44x44 floor (out of scope for HUD refine pass). */}
             <button
               onClick={() => { setMuted(soundEngine.toggleMute()); }}
               aria-label={muted ? 'Unmute' : 'Mute'}
@@ -79,41 +121,16 @@ export default function CombatHUD() {
             {objectiveLabel(objective, units, useCombatStore.getState().defendTurns)}
           </div>
         </div>
-        <div className="panel scroll-x" style={{ padding: 6, flex: 1, display: 'flex', gap: 6, pointerEvents: 'auto' }}>
-          {playerUnits.map((u) => (
-            <button key={u.id} onClick={() => selectUnit(u.id)}
-              style={{
-                minHeight: 44, minWidth: 72, padding: 6,
-                border: `1px solid ${u.id === selectedId ? 'var(--accent)' : 'var(--bg-3)'}`,
-                background: u.alive ? (u.id === selectedId ? 'var(--bg-3)' : 'var(--bg-2)') : '#2a1a1a',
-                opacity: u.alive ? 1 : 0.5, display: 'block', textAlign: 'left',
-              }}>
-              <div style={{ fontSize: 11, color: u.color, fontWeight: 600 }}>{u.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--fg-1)' }}>{u.hp}/{u.hpMax} · AP {u.ap}/{u.apMax}</div>
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* Log */}
-      <div className="panel scroll-y" style={{
-        position: 'fixed', right: 'var(--s-2)',
-        top: 'calc(var(--safe-top) + 72px)',
-        width: 220, maxHeight: 140, fontSize: 12, pointerEvents: 'auto',
-        display: 'flex', flexDirection: 'column-reverse', zIndex: 10,
-      }}>
-        <div>
-          {log.slice(-10).map((l) => (
-            <div key={l.id} style={{ color: logColor(l.kind), marginBottom: 2 }}>{l.text}</div>
-          ))}
-        </div>
-      </div>
+      <RosterRail units={playerUnits} selectedId={selectedId} onSelect={selectUnit} />
+      <MissionLog entries={log} />
 
       {/* Shot preview card with hit-modifier breakdown */}
       {shotPreview && shotTarget && (
         <div className="panel" style={{
           position: 'fixed', left: '50%', transform: 'translateX(-50%)',
-          bottom: 'calc(var(--safe-bottom) + 92px)', zIndex: 11,
+          bottom: 'calc(var(--safe-bottom) + 152px)', zIndex: 11,
           minWidth: 260, maxWidth: 320, padding: 'var(--s-3)', pointerEvents: 'auto',
           borderColor: 'var(--danger)',
         }}>
@@ -154,7 +171,7 @@ export default function CombatHUD() {
       {pendingUtility && pendingUtilityDef && (
         <div className="panel" style={{
           position: 'fixed', left: '50%', transform: 'translateX(-50%)',
-          bottom: 'calc(var(--safe-bottom) + 92px)', zIndex: 11,
+          bottom: 'calc(var(--safe-bottom) + 152px)', zIndex: 11,
           minWidth: 240, padding: 'var(--s-3)', pointerEvents: 'auto',
           borderColor: 'var(--accent-2)',
         }}>
@@ -178,96 +195,8 @@ export default function CombatHUD() {
         </div>
       )}
 
-      {/* Bottom action bar — fixed so it stays above the mobile URL bar. */}
-      <div style={{
-        position: 'fixed', bottom: 'calc(var(--safe-bottom) + var(--s-2))',
-        left: 'var(--s-2)', right: 'var(--s-2)', zIndex: 10,
-        display: 'flex', gap: 'var(--s-2)', flexWrap: 'wrap',
-        background: 'rgba(11,15,20,0.85)', border: '1px solid var(--bg-3)', borderRadius: 'var(--r-lg)',
-        padding: 'var(--s-2)', backdropFilter: 'blur(6px)',
-      }}>
-        <button onClick={() => setMode(mode === 'move' ? 'idle' : 'move')} disabled={disabled}
-          style={{ borderColor: mode === 'move' ? 'var(--accent)' : undefined }}>Move</button>
-        <button onClick={() => setMode(mode === 'fire' ? 'idle' : 'fire')}
-          disabled={disabled || !primary || (selected!.ap < primary.apCost) || selected!.ammo <= 0}
-          style={{ borderColor: mode === 'fire' ? 'var(--accent)' : undefined }}>
-          Fire {primary ? `(${selected!.ammo}/${primaryCap})` : ''}
-        </button>
-        <button onClick={() => setMode(mode === 'sidearm' ? 'idle' : 'sidearm')}
-          disabled={disabled || !sidearm || (selected!.ap < sidearm.apCost) || selected!.sidearmAmmo <= 0}
-          style={{ borderColor: mode === 'sidearm' ? 'var(--accent)' : undefined }}>
-          Sidearm {sidearm ? `(${selected!.sidearmAmmo}/${sidearmCap})` : ''}
-        </button>
-        {selected?.loadout?.utilityIds.map((uid, i) => {
-          const u = useContent().utilities[uid]!;
-          const active = mode === 'utility' && selectedUtilityIdx === i;
-          const charges = selected.utilityCharges[i] ?? 0;
-          return (
-            <button key={i} onClick={() => setMode(active ? 'idle' : 'utility', active ? undefined : i)}
-              disabled={disabled || selected!.ap < u.apCost || charges <= 0}
-              style={{ borderColor: active ? 'var(--accent)' : undefined }}>
-              {u.name} ×{charges}
-            </button>
-          );
-        })}
-        <button onClick={() => tryReload()}
-          disabled={disabled || !primary
-            || (selected!.ammo >= primaryCap && selected!.sidearmAmmo >= sidearmCap)}>Reload</button>
-        <button onClick={() => toggleOverwatch()} disabled={disabled || selected!.ap < 1}
-          style={{ borderColor: selected?.status.overwatch ? 'var(--accent)' : undefined }}>
-          {selected?.status.overwatch ? 'Cancel OW' : 'Overwatch'}
-        </button>
-        <button onClick={() => setRefitOpen(true)}
-          disabled={disabled || selected!.ap < 1 || selected!.status.overwatch}>
-          Refit
-        </button>
-        {selected?.loadout && (() => {
-          // Class abilities surface per-class:
-          //   Ranger  → Mark (target enemy in ability mode)
-          //   Warden  → Bracing Fire (target enemy, heavy only, costs ammo)
-          //   Mystic  → Arcane Sight (instant self-cast)
-          //   Sapper  → Demolish (target cover tile in ability mode)
-          const tmpl = useContent().soldierTemplates[selected.templateId];
-          if (!tmpl) return null;
-          const primary = getWeapon(selected.loadout.primaryId);
-          const apOK = selected.ap >= 1;
-          let label: string, canUse: boolean, onClick: () => void;
-          switch (tmpl.class) {
-            case 'Ranger':
-              label = 'Mark';
-              canUse = apOK && !disabled;
-              onClick = () => setMode(mode === 'ability' ? 'idle' : 'ability');
-              break;
-            case 'Warden':
-              label = 'Bracing Fire';
-              canUse = apOK && !disabled && primary.class === 'heavy' && selected.ammo > 0;
-              onClick = () => setMode(mode === 'ability' ? 'idle' : 'ability');
-              break;
-            case 'Mystic':
-              label = selected.status.seeThroughSmoke ? 'Sight Active' : 'Arcane Sight';
-              canUse = apOK && !disabled && !selected.status.seeThroughSmoke;
-              onClick = () => tryMysticArcaneSight();
-              break;
-            case 'Sapper':
-              label = 'Demolish';
-              canUse = apOK && !disabled;
-              onClick = () => setMode(mode === 'ability' ? 'idle' : 'ability');
-              break;
-            default:
-              return null;
-          }
-          return (
-            <button onClick={onClick} disabled={!canUse}
-              style={{ borderColor: mode === 'ability' ? 'var(--accent)' : undefined }}>
-              {label}
-            </button>
-          );
-        })()}
-        <div style={{ flex: 1 }} />
-        <button className="primary"
-          onClick={() => { soundEngine.play('ui.primary'); endPlayerTurn(); }}
-          disabled={phase !== 'player'}>End Turn</button>
-      </div>
+      <SelectedUnitHeader unit={selected} template={selectedTemplate} />
+      <ActionBar groups={groups} onAction={handleAction} />
 
       {/* Refit overlay */}
       {refitOpen && selected?.loadout && (() => {
@@ -361,17 +290,6 @@ function RefitWeaponPanel({ name, subtitle, slots, slotMap, disabled, onSlotClic
       </div>
     </div>
   );
-}
-
-function logColor(k: string) {
-  switch (k) {
-    case 'hit': return 'var(--fg-0)';
-    case 'crit': return 'var(--accent-2)';
-    case 'miss': return 'var(--fg-2)';
-    case 'kill': return 'var(--danger)';
-    case 'heal': return 'var(--success)';
-    default: return 'var(--fg-1)';
-  }
 }
 
 function coverColor(c: string) {

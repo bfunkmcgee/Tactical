@@ -615,7 +615,10 @@ function updateUnitNode(
   }
 
   // ---- Label.
-  node.label.text = u.faction === 'player' ? `${u.name} ${u.ap}/${u.apMax}` : u.name;
+  // World label is pure identification — AP/HP now live in the
+  // SelectedUnitHeader + RosterRail DOM panels, so the in-Pixi
+  // label stays uncluttered above the soldier's footprint.
+  node.label.text = u.name;
   node.label.position.set(0, barY - 4);
   node.label.visible = u.alive;
 
