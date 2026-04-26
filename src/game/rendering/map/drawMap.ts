@@ -11,15 +11,15 @@ import { drawEastExtender, drawSouthExtender, drawBrokenCoverShape } from './ext
 
 /**
  * Source-PNG width/height for painted floor tiles. The 6 desert
- * painted floors ship at 480×240 (iso 2:1); rendered at TILE_W /
- * SOURCE_W to land in the same on-screen footprint as the procedural
- * diamond. Hard-coded here rather than threaded through the biome
- * config because every painted floor in the project is currently
- * authored at this size — bump if a future biome ships at a
- * different resolution.
+ * painted floors ship at 1056×528 (iso 2:1, larger than the previous
+ * 480×240 batch so painted features survive the 16.5× downscale to
+ * the in-game TILE_W × TILE_H = 64 × 32 footprint). Hard-coded here
+ * rather than threaded through the biome config because every painted
+ * floor in the project is currently authored at this size — bump if
+ * a future biome ships at a different resolution.
  */
-const PAINTED_FLOOR_SOURCE_W = 480;
-const PAINTED_FLOOR_SOURCE_H = 240;
+const PAINTED_FLOOR_SOURCE_W = 1056;
+const PAINTED_FLOOR_SOURCE_H = 528;
 
 /**
  * Universal painted-light pass: layer a lighter NE half (sun-cast) +
