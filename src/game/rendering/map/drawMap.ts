@@ -123,14 +123,20 @@ export function drawMap(layer: Container, map: GridMap) {
   layer.removeChildren();
   const biome = biomeFor(map.tileset);
   const pal = biome.palette;
-  // Painted-floor sprites mount as siblings of the procedural Graphics
-  // — added FIRST so cover silhouettes / props / decals (which still
-  // draw via Graphics) layer on top. When the biome doesn't ship
-  // painted floors (or the texture preload misses), this Container
-  // stays empty and the procedural diamond path runs as before.
+  // Layer order (bottom → top):
+  //   1. floorBase — flat sand diamonds drawn UNDER painted floor
+  //      sprites so the alpha-feathered tile gaps fall through to
+  //      sand colour instead of the Pixi clear background.
+  //   2. floorSprites — painted iso tile textures.
+  //   3. g — every other procedural element: walls, cover silhouettes,
+  //      cast shadows, extenders, decals, props, edge feathering.
+  // For tiles that DON'T render a painted sprite (walls, cover, or
+  // when the texture failed to load), the full procedural path runs
+  // inside `g` as before.
+  const floorBase = new Graphics();
   const floorSprites = new Container();
-  layer.addChild(floorSprites);
   const g = new Graphics();
+  layer.addChild(floorBase, floorSprites, g);
 
   drawMapEdges(g, map, pal);
 
@@ -164,11 +170,25 @@ export function drawMap(layer: Container, map: GridMap) {
       // overscan overlaps cleanly into neighbouring tiles instead of
       // tiling cleanly at the iso edge — gives the floor a more
       // continuous painted-ground read.
+      //
+      // We STILL draw a flat-fill sand diamond at the iso footprint
+      // first — without that base the alpha-feathered painted Sprite
+      // shows the Pixi background through the transparent gaps near
+      // each tile's edges. The base means a tile that fades toward
+      // transparent at its corners falls through to sand-coloured
+      // ground rather than the dark Pixi clear colour.
       let paintedFloor = false;
       if (t.kind === 'floor' && biome.paintedFloors && biome.paintedFloors.length > 0) {
         const idx = tileHash % biome.paintedFloors.length;
         const tex = spriteCache.get(biome.paintedFloors[idx].cacheKey);
         if (tex) {
+          // Flat sand base + a softer sun-cast on the BELOW-sprite
+          // Graphics so the painted tile's alpha-feathered edges
+          // fall through to sand instead of the Pixi clear colour.
+          // Drawn into `floorBase` (mounted under `floorSprites`).
+          diamond(floorBase, p.x, p.y, fill, 1, pal.floorStroke);
+          paintTileLight(floorBase, p.x, p.y, fill);
+          // Painted Sprite on top.
           const s = new Sprite(tex);
           s.anchor.set(0.5, 0.5);
           const scale = PAINTED_FLOOR_OVERSCAN;
