@@ -27,22 +27,9 @@ const PAINTED_FLOOR_SOURCE_H = 528;
  * pixels, with no overlap). Larger values show more painted detail
  * per tile and overlap into neighbouring tiles via the alpha feather
  * — trades a softer "continuous painted ground" read for some
- * variant-distinctiveness loss at the overlap zones. 1.5 reads as a
- * painted floor with visible per-tile texture; 1.0 reads as a tiled
- * grid; 2.0+ blurs into a single ambient sand wash.
+ * variant-distinctiveness loss at the overlap zones.
  */
 const PAINTED_FLOOR_OVERSCAN = 1.0;
-
-/**
- * Bright sand colour used for the flat-fill diamond UNDER painted
- * floor sprites — matched to the painted assets' median sand colour
- * so the alpha-feathered tile edges fade into the same tone the
- * painted texture is at, rather than the procedural palette's
- * darker tan (which made each painted tile read as a hot spot
- * against a dimmer base). Keep in sync with the painted asset
- * library's average sand value; sampled at extraction time.
- */
-const PAINTED_FLOOR_BASE = 0xebc183;
 
 /**
  * Universal painted-light pass: layer a lighter NE half (sun-cast) +
@@ -135,19 +122,16 @@ export function drawMap(layer: Container, map: GridMap) {
   const biome = biomeFor(map.tileset);
   const pal = biome.palette;
   // Layer order (bottom → top):
-  //   1. floorBase — flat sand diamonds drawn UNDER painted floor
-  //      sprites so the alpha-feathered tile gaps fall through to
-  //      sand colour instead of the Pixi clear background.
-  //   2. floorSprites — painted iso tile textures.
-  //   3. g — every other procedural element: walls, cover silhouettes,
-  //      cast shadows, extenders, decals, props, edge feathering.
-  // For tiles that DON'T render a painted sprite (walls, cover, or
-  // when the texture failed to load), the full procedural path runs
-  // inside `g` as before.
-  const floorBase = new Graphics();
+  //   1. floorSprites — painted iso tile textures (when the biome
+  //      ships them and the preload landed).
+  //   2. g — every other procedural element: walls, cover silhouettes,
+  //      cast shadows, extenders, decals, props, edge feathering, AND
+  //      the procedural diamond fallback for floor tiles whose
+  //      painted texture didn't load. Sits ABOVE the painted floors
+  //      so cover/props occlude correctly.
   const floorSprites = new Container();
   const g = new Graphics();
-  layer.addChild(floorBase, floorSprites, g);
+  layer.addChild(floorSprites, g);
 
   drawMapEdges(g, map, pal);
 
@@ -172,43 +156,17 @@ export function drawMap(layer: Container, map: GridMap) {
       const fill = fillForKind(t.kind, variant, pal);
 
       // Painted-floor branch: when the biome ships painted floor
-      // textures and the preload landed, mount a Sprite for floor
-      // tiles INSTEAD of the procedural diamond + sun-cast + grain
-      // + edge-blend combo. Walls + cover keep the procedural path.
-      // Sprites render at PAINTED_FLOOR_OVERSCAN × the iso footprint
-      // so each painted tile shows more of its hand-painted detail.
-      // The soft alpha feather around each tile's diamond means the
-      // overscan overlaps cleanly into neighbouring tiles instead of
-      // tiling cleanly at the iso edge — gives the floor a more
-      // continuous painted-ground read.
-      //
-      // We STILL draw a flat-fill sand diamond at the iso footprint
-      // first — without that base the alpha-feathered painted Sprite
-      // shows the Pixi background through the transparent gaps near
-      // each tile's edges. The base means a tile that fades toward
-      // transparent at its corners falls through to sand-coloured
-      // ground rather than the dark Pixi clear colour.
+      // textures and the preload landed, mount a raw Sprite for the
+      // floor tile and skip every procedural pass for that cell. The
+      // painted asset is hard-edge diamond-masked + iso-aspect
+      // matched, so adjacent tiles butt up exactly without needing a
+      // base layer. Walls + cover + non-painted floors keep the full
+      // procedural path through `g`.
       let paintedFloor = false;
       if (t.kind === 'floor' && biome.paintedFloors && biome.paintedFloors.length > 0) {
         const idx = tileHash % biome.paintedFloors.length;
         const tex = spriteCache.get(biome.paintedFloors[idx].cacheKey);
         if (tex) {
-          // Pure flat-fill sand diamond — no dark stroke outline, no
-          // sun-cast/shadow split. The painted texture has its own
-          // lighting baked in; layering procedural sun-cast underneath
-          // creates visible dark-band artifacts at the alpha-feathered
-          // edges where the base peeks through. The dark diamond
-          // stroke (pal.floorStroke at 0.75 alpha) was the real source
-          // of the "muddy" cast — every painted floor tile had a
-          // visible dark outline around it. Pure flat fill behind the
-          // sprite + the texture's own painted edges = clean read.
-          floorBase.poly([
-            p.x, p.y - TILE_H / 2,
-            p.x + TILE_W / 2, p.y,
-            p.x, p.y + TILE_H / 2,
-            p.x - TILE_W / 2, p.y,
-          ]).fill({ color: PAINTED_FLOOR_BASE, alpha: 1 });
-          // Painted Sprite on top.
           const s = new Sprite(tex);
           s.anchor.set(0.5, 0.5);
           const scale = PAINTED_FLOOR_OVERSCAN;
