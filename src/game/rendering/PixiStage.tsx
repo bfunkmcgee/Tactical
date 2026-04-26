@@ -19,6 +19,13 @@ import { applyFireEvents } from './units/fireStyles';
 import { tickUnitAnimations } from './units/animate';
 
 /**
+ * Toggle the atmosphere finishing layer (vignette + biome multiply
+ * tint + dust motes). Off for the painted-floor mood test — flip
+ * back to `true` to restore the post-processed look.
+ */
+const ATMOSPHERE_ENABLED = false;
+
+/**
  * Thin mount shell for the Pixi stage.
  *
  * Owns:
@@ -84,9 +91,11 @@ export default function PixiStage() {
 
       // Atmosphere finishing layer — vignette + biome tint + dust motes
       // mounted directly on app.stage so the camera doesn't transform
-      // them (screen-space ambient effect, not a world overlay).
-      const atmosphere = mountAtmosphere(app);
-      atmosphere.setTileset(initialState.map.tileset);
+      // them (screen-space ambient effect, not a world overlay). Gated
+      // behind ATMOSPHERE_ENABLED so the raw painted-asset look can be
+      // tested without post-processing.
+      const atmosphere = ATMOSPHERE_ENABLED ? mountAtmosphere(app) : null;
+      atmosphere?.setTileset(initialState.map.tileset);
 
       // Defer unit rendering until sprite preload settles. A pack with a
       // sparse rig/appearance catalog still preloads in a microtask, so
@@ -142,7 +151,7 @@ export default function PixiStage() {
         if (s.map !== lastMap) {
           lastMap = s.map;
           drawMap(tileLayer, s.map);
-          atmosphere.setTileset(s.map.tileset);
+          atmosphere?.setTileset(s.map.tileset);
         }
         redrawOverlays(overlayLayer, s);
         if (spritesReady) syncUnits(unitLayer, unitNodes, s, fx.spawnBlood);
@@ -178,13 +187,13 @@ export default function PixiStage() {
         }
         tickUnitAnimations(unitLayer, unitNodes, dtMs, now);
         fx.tick(dtMs, now);
-        atmosphere.tick(dtMs);
+        atmosphere?.tick(dtMs);
       });
 
       (app as unknown as { __cleanup?: () => void }).__cleanup = () => {
         unsub();
         detachInput();
-        atmosphere.destroy();
+        atmosphere?.destroy();
       };
     })();
 
