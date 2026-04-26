@@ -34,6 +34,17 @@ const PAINTED_FLOOR_SOURCE_H = 528;
 const PAINTED_FLOOR_OVERSCAN = 1.6;
 
 /**
+ * Bright sand colour used for the flat-fill diamond UNDER painted
+ * floor sprites — matched to the painted assets' median sand colour
+ * so the alpha-feathered tile edges fade into the same tone the
+ * painted texture is at, rather than the procedural palette's
+ * darker tan (which made each painted tile read as a hot spot
+ * against a dimmer base). Keep in sync with the painted asset
+ * library's average sand value; sampled at extraction time.
+ */
+const PAINTED_FLOOR_BASE = 0xebc183;
+
+/**
  * Universal painted-light pass: layer a lighter NE half (sun-cast) +
  * darker SW half (shadow) on top of every flat-fill iso diamond. Cheap
  * (two extra polys per tile, all in one batched Graphics) but gives
@@ -182,12 +193,14 @@ export function drawMap(layer: Container, map: GridMap) {
         const idx = tileHash % biome.paintedFloors.length;
         const tex = spriteCache.get(biome.paintedFloors[idx].cacheKey);
         if (tex) {
-          // Flat sand base + a softer sun-cast on the BELOW-sprite
-          // Graphics so the painted tile's alpha-feathered edges
-          // fall through to sand instead of the Pixi clear colour.
-          // Drawn into `floorBase` (mounted under `floorSprites`).
-          diamond(floorBase, p.x, p.y, fill, 1, pal.floorStroke);
-          paintTileLight(floorBase, p.x, p.y, fill);
+          // Bright sand base + a softer sun-cast so the painted
+          // tile's alpha-feathered edges fade into a matched-colour
+          // ground instead of the procedural palette's darker tan
+          // (which was reading as a hot-spot pop on every painted
+          // tile against a dimmer base). Drawn into `floorBase`
+          // (mounted under `floorSprites`).
+          diamond(floorBase, p.x, p.y, PAINTED_FLOOR_BASE, 1, pal.floorStroke);
+          paintTileLight(floorBase, p.x, p.y, PAINTED_FLOOR_BASE);
           // Painted Sprite on top.
           const s = new Sprite(tex);
           s.anchor.set(0.5, 0.5);
