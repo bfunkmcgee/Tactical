@@ -193,14 +193,21 @@ export function drawMap(layer: Container, map: GridMap) {
         const idx = tileHash % biome.paintedFloors.length;
         const tex = spriteCache.get(biome.paintedFloors[idx].cacheKey);
         if (tex) {
-          // Bright sand base + a softer sun-cast so the painted
-          // tile's alpha-feathered edges fade into a matched-colour
-          // ground instead of the procedural palette's darker tan
-          // (which was reading as a hot-spot pop on every painted
-          // tile against a dimmer base). Drawn into `floorBase`
-          // (mounted under `floorSprites`).
-          diamond(floorBase, p.x, p.y, PAINTED_FLOOR_BASE, 1, pal.floorStroke);
-          paintTileLight(floorBase, p.x, p.y, PAINTED_FLOOR_BASE);
+          // Pure flat-fill sand diamond — no dark stroke outline, no
+          // sun-cast/shadow split. The painted texture has its own
+          // lighting baked in; layering procedural sun-cast underneath
+          // creates visible dark-band artifacts at the alpha-feathered
+          // edges where the base peeks through. The dark diamond
+          // stroke (pal.floorStroke at 0.75 alpha) was the real source
+          // of the "muddy" cast — every painted floor tile had a
+          // visible dark outline around it. Pure flat fill behind the
+          // sprite + the texture's own painted edges = clean read.
+          floorBase.poly([
+            p.x, p.y - TILE_H / 2,
+            p.x + TILE_W / 2, p.y,
+            p.x, p.y + TILE_H / 2,
+            p.x - TILE_W / 2, p.y,
+          ]).fill({ color: PAINTED_FLOOR_BASE, alpha: 1 });
           // Painted Sprite on top.
           const s = new Sprite(tex);
           s.anchor.set(0.5, 0.5);
