@@ -22,6 +22,18 @@ const PAINTED_FLOOR_SOURCE_W = 1056;
 const PAINTED_FLOOR_SOURCE_H = 528;
 
 /**
+ * Render painted floors at this multiple of their iso footprint.
+ * 1.0 = exact tile fit (each painted tile occupies exactly 64×32 game
+ * pixels, with no overlap). Larger values show more painted detail
+ * per tile and overlap into neighbouring tiles via the alpha feather
+ * — trades a softer "continuous painted ground" read for some
+ * variant-distinctiveness loss at the overlap zones. 1.5 reads as a
+ * painted floor with visible per-tile texture; 1.0 reads as a tiled
+ * grid; 2.0+ blurs into a single ambient sand wash.
+ */
+const PAINTED_FLOOR_OVERSCAN = 1.6;
+
+/**
  * Universal painted-light pass: layer a lighter NE half (sun-cast) +
  * darker SW half (shadow) on top of every flat-fill iso diamond. Cheap
  * (two extra polys per tile, all in one batched Graphics) but gives
@@ -146,6 +158,12 @@ export function drawMap(layer: Container, map: GridMap) {
       // textures and the preload landed, mount a Sprite for floor
       // tiles INSTEAD of the procedural diamond + sun-cast + grain
       // + edge-blend combo. Walls + cover keep the procedural path.
+      // Sprites render at PAINTED_FLOOR_OVERSCAN × the iso footprint
+      // so each painted tile shows more of its hand-painted detail.
+      // The soft alpha feather around each tile's diamond means the
+      // overscan overlaps cleanly into neighbouring tiles instead of
+      // tiling cleanly at the iso edge — gives the floor a more
+      // continuous painted-ground read.
       let paintedFloor = false;
       if (t.kind === 'floor' && biome.paintedFloors && biome.paintedFloors.length > 0) {
         const idx = tileHash % biome.paintedFloors.length;
@@ -153,7 +171,11 @@ export function drawMap(layer: Container, map: GridMap) {
         if (tex) {
           const s = new Sprite(tex);
           s.anchor.set(0.5, 0.5);
-          s.scale.set(TILE_W / PAINTED_FLOOR_SOURCE_W, TILE_H / PAINTED_FLOOR_SOURCE_H);
+          const scale = PAINTED_FLOOR_OVERSCAN;
+          s.scale.set(
+            (TILE_W / PAINTED_FLOOR_SOURCE_W) * scale,
+            (TILE_H / PAINTED_FLOOR_SOURCE_H) * scale,
+          );
           s.position.set(p.x, p.y);
           floorSprites.addChild(s);
           paintedFloor = true;
