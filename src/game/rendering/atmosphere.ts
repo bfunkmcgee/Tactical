@@ -162,13 +162,18 @@ function makeVignetteTexture(w: number, h: number): Texture {
   canvas.height = h;
   const ctx = canvas.getContext('2d')!;
   const cx = w / 2, cy = h / 2;
-  const inner = Math.min(w, h) * 0.30;
+  // Push the vignette's transparent radius further out so the central
+  // ~50% of the canvas stays untouched; only the corners darken.
+  // Earlier stops + alphas were aggressive enough to give painted
+  // floors a "muddy" cast across the playable area; the procedural
+  // floor tolerated it because its palette was already dim.
+  const inner = Math.min(w, h) * 0.50;
   const outer = Math.hypot(cx, cy);
   const grd = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
   grd.addColorStop(0,    'rgba(0, 0, 0, 0)');
-  grd.addColorStop(0.55, 'rgba(0, 0, 0, 0.18)');
-  grd.addColorStop(0.85, 'rgba(0, 0, 0, 0.42)');
-  grd.addColorStop(1,    'rgba(0, 0, 0, 0.62)');
+  grd.addColorStop(0.55, 'rgba(0, 0, 0, 0.06)');
+  grd.addColorStop(0.85, 'rgba(0, 0, 0, 0.18)');
+  grd.addColorStop(1,    'rgba(0, 0, 0, 0.35)');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, w, h);
   return Texture.from(canvas);
