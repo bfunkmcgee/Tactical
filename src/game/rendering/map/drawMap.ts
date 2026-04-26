@@ -31,7 +31,7 @@ const PAINTED_FLOOR_SOURCE_H = 528;
  * painted floor with visible per-tile texture; 1.0 reads as a tiled
  * grid; 2.0+ blurs into a single ambient sand wash.
  */
-const PAINTED_FLOOR_OVERSCAN = 1.6;
+const PAINTED_FLOOR_OVERSCAN = 1.0;
 
 /**
  * Bright sand colour used for the flat-fill diamond UNDER painted
