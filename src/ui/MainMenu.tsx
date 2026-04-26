@@ -24,6 +24,13 @@ export default function MainMenu() {
     bump((n) => n + 1);
   };
 
+  // Animation Previewer is dev-only — gated behind ?dev=1 so it
+  // doesn't appear in the normal menu. The previewer mounts the
+  // live UnitNode pipeline against a synthetic Unit so devs can
+  // trigger Walk / Fire / Hit / Death without deploying a mission.
+  const isDev = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).has('dev');
+
   return (
     <div className="screen" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="panel stack" style={{ minWidth: 320, maxWidth: 420, textAlign: 'center' }}>
@@ -43,6 +50,11 @@ export default function MainMenu() {
             ? <button className="primary" onClick={() => setScreen('mapRoom')}>Map Room</button>
             : <button className="primary" onClick={() => setScreen('loadout')}>New Run</button>}
           <button onClick={() => { resetLoadouts(); }} style={{ opacity: .7 }}>Reset Loadouts</button>
+          {isDev && (
+            <button onClick={() => setScreen('previewer')} style={{ opacity: .7 }}>
+              Animation Previewer
+            </button>
+          )}
         </div>
 
         {ALL_PACKS.length > 1 && (

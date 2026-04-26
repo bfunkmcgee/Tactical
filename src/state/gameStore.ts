@@ -11,7 +11,8 @@ type Screen =
   | 'combat'             // tactical layer
   | 'fieldCamp'          // between-mission resupply + heal
   | 'excursionComplete'  // narrative + aggregated stats on extract
-  | 'debrief';
+  | 'debrief'
+  | 'previewer';         // dev-only: rig + animation previewer
 
 type SquadLoadouts = Record<string, Loadout>;
 type CustomSoldiers = Record<string, SoldierTemplate>;

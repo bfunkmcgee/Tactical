@@ -7,6 +7,7 @@ import CombatScreen from './ui/CombatScreen';
 import FieldCampScreen from './ui/FieldCampScreen';
 import ExcursionCompleteScreen from './ui/ExcursionCompleteScreen';
 import DebriefScreen from './ui/DebriefScreen';
+import CharacterAnimationPreviewer from './ui/CharacterAnimationPreviewer';
 
 export default function App() {
   const screen = useGameStore((s) => s.screen);
@@ -19,5 +20,6 @@ export default function App() {
     case 'fieldCamp':         return <FieldCampScreen />;
     case 'excursionComplete': return <ExcursionCompleteScreen />;
     case 'debrief':           return <DebriefScreen />;
+    case 'previewer':         return <CharacterAnimationPreviewer />;
   }
 }

@@ -312,7 +312,7 @@ function cascadeArmsAnchor(armsSprite: Sprite, anchor: { x: number; y: number })
   }
 }
 
-function createUnitNode(u: Unit): UnitNode {
+export function createUnitNode(u: Unit): UnitNode {
   const container = new Container();
 
   // Shadow is a child of container (not body) so it doesn't lean during
