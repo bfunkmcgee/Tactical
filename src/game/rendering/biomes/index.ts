@@ -4,7 +4,9 @@ import type { PropDraw, TilePalette } from '../context';
 import {
   DESERT_PALETTE, DESERT_PROPS, DESERT_DECALS, EDGE_DUNES,
   drawDesertDetail, drawDesertCoverDetail, drawDesertCoverVariant,
-  DESERT_PAINTED_FLOORS,
+  // DESERT_PAINTED_FLOORS — currently unused; see DESERT_BIOME below
+  // for why the painted-floor pass is parked. Re-import + wire when a
+  // tile set authored for seamless tiling lands.
 } from './desert';
 import {
   REFINERY_PALETTE, REFINERY_PROPS, REFINERY_DECALS, EDGE_REFINERY_SCRAP,
@@ -74,13 +76,15 @@ export const DESERT_BIOME: BiomeModule = {
   drawGroundDetail: drawDesertDetail,
   drawCoverDetail: drawDesertCoverDetail,
   drawCoverVariant: drawDesertCoverVariant,
-  // The 6 painted desert PNGs went through a post-process pass to
-  // make them tileable: HSV-based sand detection painted out the
-  // conspicuous wet/teal patches, every tile blends 45% toward a
-  // global median sand colour to flatten per-tile bias, and an 8 px
-  // gaussian alpha feather softens the diamond edges so adjacent
-  // tiles fade into each other instead of butting up at hard borders.
-  paintedFloors: DESERT_PAINTED_FLOORS,
+  // Painted desert floor tiles parked: the first painted asset batch
+  // didn't tile cleanly at the in-game iso scale (each variant read
+  // as a distinct "card" with visible borders, and at 64×32 game
+  // pixels the painted detail compressed to ~6 visible pixels per
+  // variant — too small to discriminate). The wiring + DESERT_PAINTED_
+  // FLOORS export + 6 PNGs at public/styles/flat/biomes/desert/ are
+  // preserved as scaffolding; re-enable when a tile set authored for
+  // seamless tiling lands by uncommenting the line below.
+  //   paintedFloors: DESERT_PAINTED_FLOORS,
 };
 
 export const REFINERY_BIOME: BiomeModule = {

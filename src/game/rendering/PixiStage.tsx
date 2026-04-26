@@ -20,10 +20,11 @@ import { tickUnitAnimations } from './units/animate';
 
 /**
  * Toggle the atmosphere finishing layer (vignette + biome multiply
- * tint + dust motes). Off for the painted-floor mood test — flip
- * back to `true` to restore the post-processed look.
+ * tint + dust motes). Flip to `false` to test the raw map render
+ * without post-processing (useful when iterating on tile assets or
+ * biome palettes).
  */
-const ATMOSPHERE_ENABLED = false;
+const ATMOSPHERE_ENABLED = true;
 
 /**
  * Thin mount shell for the Pixi stage.
@@ -70,14 +71,7 @@ export default function PixiStage() {
       // owns it via closure so no module-level leak survives tab changes.
       const unitNodes = new Map<UnitId, UnitNode>();
 
-      // Default camera zoom 1.5x — bumps every game element (tiles,
-      // units, props, painted floors) up by 50% on screen. The
-      // painted iso floor variants need more pixel real-estate per
-      // tile than the procedural look did to read as visibly distinct;
-      // 1.5x gives them ~2.25x more pixels each. Players can still
-      // pinch out (or wheel-zoom) all the way back to 0.5x for the
-      // wide-map view via the input controller.
-      const cam = { x: app.screen.width / 2, y: 80, zoom: 1.5 };
+      const cam = { x: app.screen.width / 2, y: 80, zoom: 1 };
       const shakeOffset = { x: 0, y: 0 };
       const applyCam = () => {
         world.position.set(cam.x + shakeOffset.x, cam.y + shakeOffset.y);
