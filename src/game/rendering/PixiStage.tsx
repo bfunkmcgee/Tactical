@@ -91,10 +91,19 @@ export default function PixiStage() {
       // Defer unit rendering until sprite preload settles. A pack with a
       // sparse rig/appearance catalog still preloads in a microtask, so
       // the unit layer populates quickly either way.
+      // Painted floor tiles also wait on this preload — re-fire drawMap
+      // once the textures land so the painted Sprites actually mount.
+      // Without this, the initial drawMap call above runs with an empty
+      // sprite cache and every floor tile falls through to the
+      // procedural fallback (visibly dimmer than painted), and drawMap
+      // only re-fires when the map mutation event fires (grenade /
+      // demolish) — so painted floors would never appear on most
+      // missions.
       let spritesReady = false;
       ensureSpritesLoaded(useContent()).then(() => {
         if (destroyed) return;
         spritesReady = true;
+        drawMap(tileLayer, useCombatStore.getState().map);
         syncUnits(unitLayer, unitNodes, useCombatStore.getState());
       });
 
