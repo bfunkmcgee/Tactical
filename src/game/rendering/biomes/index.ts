@@ -4,7 +4,9 @@ import type { PropDraw, TilePalette } from '../context';
 import {
   DESERT_PALETTE, DESERT_PROPS, DESERT_DECALS, EDGE_DUNES,
   drawDesertDetail, drawDesertCoverDetail, drawDesertCoverVariant,
-  DESERT_PAINTED_FLOORS,
+  // DESERT_PAINTED_FLOORS — currently unused; see DESERT_BIOME below
+  // for why the painted-floor pass is parked. Re-import + wire when a
+  // tile set authored for seamless tiling lands.
 } from './desert';
 import {
   REFINERY_PALETTE, REFINERY_PROPS, REFINERY_DECALS, EDGE_REFINERY_SCRAP,
@@ -74,7 +76,16 @@ export const DESERT_BIOME: BiomeModule = {
   drawGroundDetail: drawDesertDetail,
   drawCoverDetail: drawDesertCoverDetail,
   drawCoverVariant: drawDesertCoverVariant,
-  paintedFloors: DESERT_PAINTED_FLOORS,
+  // paintedFloors intentionally omitted: the first painted-tile batch
+  // (DESERT_PAINTED_FLOORS in desert.ts, six 480×240 PNGs) was authored
+  // as standalone display pieces — each tile has its own internal
+  // lighting/depth cue and one variant includes a conspicuous "wet"
+  // patch — so tiling them together reads as a patchwork of separate
+  // cards with visible borders. The wiring + assets are preserved for
+  // a future tile set authored for seamless tiling; until those land,
+  // the procedural sun-cast + sand-grain + edge-blend path looks
+  // cleaner. Re-enable by uncommenting this line:
+  //   paintedFloors: DESERT_PAINTED_FLOORS,
 };
 
 export const REFINERY_BIOME: BiomeModule = {
