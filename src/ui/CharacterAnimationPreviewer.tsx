@@ -259,7 +259,7 @@ export default function CharacterAnimationPreviewer() {
 
   // ---- Render.
   return (
-    <div className="screen stack" style={{ gap: 'var(--s-3)', padding: 'var(--s-3)' }}>
+    <div className="screen stack" style={{ gap: 'var(--s-3)', padding: 'var(--s-3)', overflowY: 'auto' }}>
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <button onClick={() => setScreen('menu')}>Back</button>
         <h2>Animation Previewer</h2>
@@ -332,21 +332,9 @@ export default function CharacterAnimationPreviewer() {
           </div>
         </div>
 
-        {/* Center: Pixi canvas + animation triggers */}
+        {/* Center: triggers + Pixi canvas. Triggers above the canvas so
+            they stay visible even when the canvas is tall on mobile. */}
         <div className="stack" style={{ flex: 1, minWidth: 280, gap: 'var(--s-2)' }}>
-          <div
-            ref={hostRef}
-            style={{
-              width: '100%',
-              minHeight: 360,
-              height: '60vh',
-              maxHeight: 600,
-              border: '1px solid var(--bg-3)',
-              borderRadius: 'var(--r-md)',
-              overflow: 'hidden',
-              background: '#0e1a20',
-            }}
-          />
           <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
             <button onClick={trigIdle}>Idle</button>
             <button
@@ -360,6 +348,19 @@ export default function CharacterAnimationPreviewer() {
             <button onClick={trigDeath}>Death</button>
             <button onClick={trigReset}>Reset</button>
           </div>
+          <div
+            ref={hostRef}
+            style={{
+              width: '100%',
+              minHeight: 320,
+              height: '50vh',
+              maxHeight: 560,
+              border: '1px solid var(--bg-3)',
+              borderRadius: 'var(--r-md)',
+              overflow: 'hidden',
+              background: '#0e1a20',
+            }}
+          />
         </div>
       </div>
     </div>
