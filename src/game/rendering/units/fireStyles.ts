@@ -124,6 +124,13 @@ export function applyFireEvents(nodes: Map<UnitId, UnitNode>, events: FireEvent[
     node.fireTargetDir = { x: dx / len, y: dy / len };
     node.fireStyle = FIRE_STYLES[evt.fireClass] ?? FIRE_STYLES.default;
     node.fireAnimMs = node.fireStyle.totalMs;
-    if (Math.abs(dx) > 0.5) node.facing = dx > 0 ? 1 : -1;
+    if (Math.abs(dx) > 0.5) {
+      const desiredFacing = dx > 0 ? 1 : -1;
+      if (desiredFacing !== node.targetFacing) {
+        node.targetFacing = desiredFacing;
+        node.facingTurnMs = 0;
+        node.facingTurnDurationMs = Math.max(80, Math.min(140, 80 + node.fireStyle.windupMs * 0.15));
+      }
+    }
   }
 }
