@@ -29,6 +29,7 @@ export default function BarracksScreen({ onClose }: BarracksScreenProps) {
   const renameCustomSoldier = useGameStore((s) => s.renameCustomSoldier);
   const rerollCustomSoldierAppearance = useGameStore((s) => s.rerollCustomSoldierAppearance);
   const roster = useGameStore((s) => s.roster);
+  const loadouts = useGameStore((s) => s.loadouts);
 
   const entries: SoldierTemplate[] = Object.values(customSoldiers);
   const inRoster = (id: string) => roster.includes(id);
@@ -94,7 +95,7 @@ export default function BarracksScreen({ onClose }: BarracksScreenProps) {
                 padding: 'var(--s-2)',
               }}
             >
-              <SoldierPortrait template={tpl} size={48} />
+              <SoldierPortrait template={tpl} loadout={loadouts[tpl.id]} size={48} />
               <div className="stack" style={{ flex: 1, gap: 2 }}>
                 <strong>{tpl.name}</strong>
                 <div style={{ fontSize: 11, color: 'var(--fg-2)' }}>
