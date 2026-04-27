@@ -62,6 +62,9 @@ export type UnitNode = {
 
   // Visual state.
   facing: 1 | -1;
+  targetFacing: 1 | -1;
+  facingTurnMs: number;
+  facingTurnDurationMs: number;
   prevHp: number;
   /** Composite tint reflecting accumulated grime on the unit. Starts at
    * 0xffffff (clean) and shifts toward a dusty brown as Unit.dirt rises. */
@@ -70,6 +73,8 @@ export type UnitNode = {
   fireAnimMs: number;                   // countdown for fire sequence.
   fireStyle: FireStyle;                 // per-weapon-class choreography.
   fireTargetDir: { x: number; y: number }; // unit vector toward the shot target.
+  aimYaw?: number;
+  aimX?: number;
   deathMs: number | null;
   selected: boolean;
   bobPhase: number;
@@ -503,12 +508,17 @@ export function createUnitNode(u: Unit): UnitNode {
     targetScreen: { x: p.x, y: p.y },
     moveMs: 0, moveDurationMs: 0,
     facing: 1,
+    targetFacing: 1,
+    facingTurnMs: 0,
+    facingTurnDurationMs: 0,
     prevHp: u.hp,
     dirtTint: tintForDirt(u.dirt ?? 0),
     hitFlashMs: 0,
     fireAnimMs: 0,
     fireStyle: FIRE_STYLES.default,
     fireTargetDir: { x: 1, y: 0 },
+    aimYaw: 0,
+    aimX: 0,
     deathMs: u.alive ? null : 0,
     selected: false,
     bobPhase: Math.random() * Math.PI * 2,
@@ -598,7 +608,14 @@ function updateUnitNode(
     node.moveMs = 0;
     node.moveDurationMs = MOVE_TWEEN_MS;
     const dx = target.x - node.currentScreen.x;
-    if (Math.abs(dx) > 0.5) node.facing = dx > 0 ? 1 : -1;
+    if (Math.abs(dx) > 0.5) {
+      const desiredFacing = dx > 0 ? 1 : -1;
+      if (desiredFacing !== node.targetFacing) {
+        node.targetFacing = desiredFacing;
+        node.facingTurnMs = 0;
+        node.facingTurnDurationMs = 90;
+      }
+    }
   }
 
   // ---- Hit: HP dropped this sync → flash red + jitter + spurt blood.

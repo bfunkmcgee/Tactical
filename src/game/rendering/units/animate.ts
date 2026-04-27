@@ -23,6 +23,11 @@ export function tickUnitAnimations(
   nowMs: number,
 ) {
   for (const node of nodes.values()) {
+    // ----- Facing blend: short left/right turn tween so fire events can
+    // rotate toward targets without a one-frame mirror pop.
+    const facingBlend = interpolateFacing(node, dtMs);
+    const facingSign: 1 | -1 = facingBlend >= 0 ? 1 : -1;
+
     // ----- Movement interpolation.
     if (node.moveDurationMs > 0) {
       node.moveMs += dtMs;
@@ -82,6 +87,9 @@ export function tickUnitAnimations(
       node.fireAnimMs = Math.max(0, node.fireAnimMs - dtMs);
       const style = node.fireStyle;
       const elapsed = style.totalMs - node.fireAnimMs;
+      const aimPitchTarget = Math.max(-0.12, Math.min(0.12, node.fireTargetDir.y * 0.22));
+      node.aimYaw = lerp(node.aimYaw ?? 0, aimPitchTarget, 0.35);
+      node.aimX = lerp(node.aimX ?? 0, node.fireTargetDir.y * 0.9, 0.25);
       const burstSpanMs = style.shots > 1
         ? (style.shots - 1) * style.shotSpacingMs + style.shotWindowMs
         : style.shotWindowMs;
@@ -93,7 +101,7 @@ export function tickUnitAnimations(
         // target (rotation). Body is still.
         const p = elapsed / style.windupMs;
         const ease = easeOutQuad(p);
-        weaponAim = -style.windupRad * node.facing * ease;
+        weaponAim = -style.windupRad * facingBlend * ease;
         weaponLift = -style.weaponLiftPx * ease;
       } else if (elapsed < returnStart) {
         // Shot phase: hold weapon at aim + flash/kick for each active shot.
@@ -106,15 +114,15 @@ export function tickUnitAnimations(
             break;
           }
         }
-        weaponAim = -style.windupRad * node.facing;
+        weaponAim = -style.windupRad * facingBlend;
         weaponLift = -style.weaponLiftPx;
         if (flashP >= 0) {
           // Active shot: muzzle flash + recoil on both arm and body.
           flashIntensity = 1 - flashP;
           const kick = 1 - flashP;
-          weaponAim += -style.kickRad * node.facing * kick;
-          weaponLift -= 2 * kick; // weapon jerks up on recoil
-          bodyPitch = 0.025 * node.facing * kick; // subtle torso reaction
+          weaponAim += -style.kickRad * facingBlend * kick;
+          weaponLift -= (2 + Math.abs(node.fireTargetDir.y) * 1.2) * kick; // weapon jerks up on recoil
+          bodyPitch = 0.025 * facingBlend * kick; // subtle torso reaction
           bodyPushX = -node.fireTargetDir.x * style.recoilPx * kick;
           bodyPushY = -node.fireTargetDir.y * style.recoilPx * kick;
         }
@@ -122,9 +130,14 @@ export function tickUnitAnimations(
         // Return: weapon eases back to low-ready, body settles.
         const p = (elapsed - returnStart) / returnMs;
         const ret = 1 - easeOutQuad(Math.min(1, p));
-        weaponAim = -style.windupRad * node.facing * ret * 0.5;
+        weaponAim = -style.windupRad * facingBlend * ret * 0.5;
         weaponLift = -style.weaponLiftPx * ret;
       }
+      weaponAim += (node.aimYaw ?? 0) * facingBlend;
+      weaponLift += -(node.aimX ?? 0);
+    } else {
+      node.aimYaw = lerp(node.aimYaw ?? 0, 0, 0.22);
+      node.aimX = lerp(node.aimX ?? 0, 0, 0.22);
     }
 
     // ----- Hit flash: tint + jitter.
@@ -178,15 +191,16 @@ export function tickUnitAnimations(
         // motion without flapping.
         p['arms-back'].rotation = walkSway * 0.8 + idleShoulderSway;
       }
-      node.body.scale.set(node.facing, 1);
+      node.body.scale.set(facingBlend, 1);
       node.body.rotation = 0;
       node.body.position.x = jitterX;
       node.body.position.y = 0;
     } else {
       // Bespoke-SVG path: body is monolithic; everything rotates as one.
+      node.body.scale.set(facingBlend, walkScaleY);
       node.body.scale.set(node.facing, walkScaleY * (1 + idleBreathScaleY * 0.35));
       node.body.rotation = walkLean + bodyPitch;
-      node.body.position.x = jitterX + bodyPushX;
+      node.body.position.x = jitterX + bodyPu shX;
       node.body.position.y = walkBob + bodyPushY + idleBreathY * 0.45;
     }
 
@@ -207,7 +221,7 @@ export function tickUnitAnimations(
     // ----- Muzzle flash: drawn in weapon-wrap space when available so it
     // follows the rotating barrel. Falls back to container-space otherwise.
     drawMuzzleFlash(
-      node.muzzleFlash, node.facing, flashIntensity,
+      node.muzzleFlash, facingSign, flashIntensity,
       !!node.weaponWrap, node.fireStyle.flashScale,
       node.muzzleOffset,
     );
@@ -245,10 +259,10 @@ export function tickUnitAnimations(
         p['arms-back'].rotation = 0;
       }
       node.body.position.y = t * 14;              // slump to the ground
-      node.body.rotation = node.facing * 0.9 * t; // tip over 50°, feels flatter
+      node.body.rotation = facingSign * 0.9 * t; // tip over 50°, feels flatter
       // Weapon drops below the grip as the character collapses.
       if (node.weaponWrap) {
-        node.weaponWrap.rotation = node.facing * 1.4 * t;
+        node.weaponWrap.rotation = facingSign * 1.4 * t;
         node.weaponWrap.position.y = node.weaponRestY + t * 4;
       }
       node.shadow.alpha = 1 - t * 0.35;           // shadow dims but stays
@@ -320,6 +334,29 @@ export function applyTint(node: UnitNode, tint: number) {
 
 function easeOutQuad(t: number): number {
   return 1 - (1 - t) * (1 - t);
+}
+
+function interpolateFacing(node: UnitNode, dtMs: number): number {
+  if (node.facingTurnDurationMs <= 0 || node.facing === node.targetFacing) {
+    node.facing = node.targetFacing;
+    node.facingTurnMs = 0;
+    node.facingTurnDurationMs = 0;
+    return node.facing;
+  }
+  node.facingTurnMs += dtMs;
+  const t = Math.min(1, node.facingTurnMs / node.facingTurnDurationMs);
+  const eased = easeOutQuad(t);
+  const blended = node.facing + (node.targetFacing - node.facing) * eased;
+  if (t >= 1) {
+    node.facing = node.targetFacing;
+    node.facingTurnMs = 0;
+    node.facingTurnDurationMs = 0;
+  }
+  return blended;
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
 }
 
 /**
