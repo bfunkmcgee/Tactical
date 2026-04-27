@@ -67,7 +67,7 @@ export default function RosterRail({ units, selectedId, onSelect }: RosterRailPr
             }}
           >
             {tmpl ? (
-              <SoldierPortrait template={tmpl} size={36} />
+              <SoldierPortrait template={tmpl} loadout={u.loadout} size={36} />
             ) : (
               // Fallback for templates without a registered portrait.
               <div style={{

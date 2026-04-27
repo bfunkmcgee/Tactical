@@ -31,10 +31,12 @@ export interface RigPreviewProps {
    *     Used by SoldierPortrait for richer roster thumbnails.
    */
   framing?: 'full' | 'portrait';
+  /** Optional callback with a PNG data URL snapshot after composition. */
+  onSnapshot?: (dataUrl: string) => void;
 }
 
 export default function RigPreview({
-  appearance, loadout, width = 180, height = 240, framing = 'full',
+  appearance, loadout, width = 180, height = 240, framing = 'full', onSnapshot,
 }: RigPreviewProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   // Refs to the mounted Pixi app + the current rig composition's root.
@@ -129,6 +131,11 @@ export default function RigPreview({
       applyFraming(world, framing, width, height);
       app.stage.addChild(world);
       rebuild(world, appearance, loadout);
+      if (onSnapshot) {
+        requestAnimationFrame(() => {
+          try { onSnapshot(app.canvas.toDataURL('image/png')); } catch { /* ignore snapshot failures */ }
+        });
+      }
     })();
 
     return () => {
@@ -149,7 +156,12 @@ export default function RigPreview({
     const world = app.stage.children[0] as Container | undefined;
     if (!world) return;
     rebuild(world, appearance, loadout);
-  }, [appearance, loadout]);
+    if (onSnapshot) {
+      requestAnimationFrame(() => {
+        try { onSnapshot(app.canvas.toDataURL('image/png')); } catch { /* ignore snapshot failures */ }
+      });
+    }
+  }, [appearance, loadout, onSnapshot]);
 
   // Re-frame when the framing prop flips between 'full' and 'portrait'.
   useEffect(() => {

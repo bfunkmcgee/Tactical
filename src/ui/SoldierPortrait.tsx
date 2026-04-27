@@ -1,6 +1,7 @@
-import type { CSSProperties } from 'react';
-import type { SoldierTemplate } from '../game/types';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import type { Loadout, SoldierTemplate } from '../game/types';
 import { useContent } from '../content/registry';
+import RigPreview from './RigPreview';
 
 /**
  * Cheap DOM-only soldier portrait. Shows the soldier's head SVG as an
@@ -26,8 +27,25 @@ import { useContent } from '../content/registry';
 
 const GENERIC_HUMAN_HEAD = '/styles/flat/human/human_head.svg';
 
+const portraitSnapshotCache = new Map<string, string>();
+const portraitSnapshotWaiters = new Map<string, Set<(url: string) => void>>();
+const portraitSnapshotInFlight = new Set<string>();
+
+function stableLoadoutKey(loadout: Loadout | undefined): string {
+  if (!loadout) return 'none';
+  const armor = Object.keys(loadout.armor).sort().map((k) => `${k}:${loadout.armor[k as keyof Loadout['armor']]}`).join('|');
+  const pmods = Object.keys(loadout.primaryMods).sort().map((k) => `${k}:${loadout.primaryMods[k as keyof Loadout['primaryMods']]}`).join('|');
+  const smods = Object.keys(loadout.sidearmMods).sort().map((k) => `${k}:${loadout.sidearmMods[k as keyof Loadout['sidearmMods']]}`).join('|');
+  const clothing = (loadout.clothingIds ?? []).join(',');
+  return [
+    loadout.primaryId, pmods, loadout.sidearmId, smods, armor,
+    (loadout.utilityIds ?? []).join(','), loadout.kitId ?? '', clothing,
+  ].join('~');
+}
+
 export interface SoldierPortraitProps {
   template: SoldierTemplate;
+  loadout?: Loadout;
   /** Render size in CSS pixels. Defaults to 48. */
   size?: number;
   /** Extra styles merged onto the root element. */
@@ -35,11 +53,21 @@ export interface SoldierPortraitProps {
 }
 
 export default function SoldierPortrait({
-  template, size = 48, style,
+  template, loadout, size = 48, style,
 }: SoldierPortraitProps) {
   const headUrl = template.appearance?.partOverrides?.head ?? (
     template.appearance ? GENERIC_HUMAN_HEAD : null
   );
+  const snapshotKey = useMemo(
+    () => (template.appearance
+      ? `${template.id}::${size}::${JSON.stringify(template.appearance)}::${stableLoadoutKey(loadout)}`
+      : null),
+    [template, size, loadout],
+  );
+  const [snapshotUrl, setSnapshotUrl] = useState<string | null>(
+    snapshotKey ? portraitSnapshotCache.get(snapshotKey) ?? null : null,
+  );
+  const [isSnapshotOwner, setIsSnapshotOwner] = useState<boolean>(false);
 
   // Resolve the hair overlay URL (if any) from the active pack's
   // hairStyles catalog. Unknown style ids / missing catalog → no hair.
@@ -57,11 +85,73 @@ export default function SoldierPortrait({
     ...style,
   };
 
+  useEffect(() => {
+    if (!snapshotKey) return;
+    const cached = portraitSnapshotCache.get(snapshotKey) ?? null;
+    setSnapshotUrl(cached);
+    if (cached) { setIsSnapshotOwner(false); return; }
+
+    const waiters = portraitSnapshotWaiters.get(snapshotKey) ?? new Set<(url: string) => void>();
+    const waiter = (url: string) => setSnapshotUrl(url);
+    waiters.add(waiter);
+    portraitSnapshotWaiters.set(snapshotKey, waiters);
+    if (!portraitSnapshotInFlight.has(snapshotKey)) {
+      portraitSnapshotInFlight.add(snapshotKey);
+      setIsSnapshotOwner(true);
+    } else {
+      setIsSnapshotOwner(false);
+    }
+    return () => {
+      const setForKey = portraitSnapshotWaiters.get(snapshotKey);
+      if (!setForKey) return;
+      setForKey.delete(waiter);
+      if (setForKey.size === 0) portraitSnapshotWaiters.delete(snapshotKey);
+    };
+  }, [snapshotKey]);
+
   if (!headUrl) {
     // Non-rigged template: fall back to the legacy flat-color square.
     return (
       <div style={{ ...baseStyle, background: template.portraitColor }} />
     );
+  }
+
+  if (template.appearance && snapshotUrl) {
+    return (
+      <img
+        src={snapshotUrl}
+        alt={template.name}
+        style={{ ...baseStyle, background: '#1a1a22', display: 'block' }}
+      />
+    );
+  }
+
+  if (template.appearance && isSnapshotOwner) {
+    return (
+      <RigPreview
+        appearance={template.appearance}
+        loadout={loadout}
+        framing="portrait"
+        width={size}
+        height={size}
+        onSnapshot={(url) => {
+          if (!snapshotKey) return;
+          if (!portraitSnapshotCache.has(snapshotKey)) {
+            portraitSnapshotCache.set(snapshotKey, url);
+          }
+          portraitSnapshotInFlight.delete(snapshotKey);
+          setSnapshotUrl(url);
+          const waiters = portraitSnapshotWaiters.get(snapshotKey);
+          if (!waiters) return;
+          waiters.forEach((notify) => notify(url));
+          portraitSnapshotWaiters.delete(snapshotKey);
+        }}
+      />
+    );
+  }
+
+  if (template.appearance) {
+    return <div style={{ ...baseStyle, background: '#1a1a22' }} />;
   }
 
   // Head SVGs are authored in a 96×128 viewBox, with the face near the

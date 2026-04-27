@@ -1,5 +1,5 @@
 import SoldierPortrait from '../SoldierPortrait';
-import type { SoldierTemplate, Unit, Weapon } from '../../game/types';
+import type { Loadout, SoldierTemplate, Unit, Weapon } from '../../game/types';
 
 /**
  * Selected-unit context strip — flow child of <ControlDeck>, sits
@@ -16,6 +16,7 @@ import type { SoldierTemplate, Unit, Weapon } from '../../game/types';
 export interface SelectedUnitHeaderProps {
   unit: Unit | null;
   template: SoldierTemplate | null;
+  loadout?: Loadout;
   primary: Weapon | null;
   sidearm: Weapon | null;
 }
@@ -32,7 +33,7 @@ function hpBarColor(hp: number, hpMax: number): string {
   return 'var(--danger)';
 }
 
-export default function SelectedUnitHeader({ unit, template, primary, sidearm }: SelectedUnitHeaderProps) {
+export default function SelectedUnitHeader({ unit, template, loadout, primary, sidearm }: SelectedUnitHeaderProps) {
   if (!unit || unit.faction !== 'player' || !unit.alive) return null;
   const dots = apDots(unit.ap, unit.apMax);
   const hpPct = unit.hpMax > 0 ? Math.max(0, unit.hp) / unit.hpMax : 0;
@@ -63,7 +64,7 @@ export default function SelectedUnitHeader({ unit, template, primary, sidearm }:
         pointerEvents: 'auto',
       }}
     >
-      {template && <SoldierPortrait template={template} size={40} />}
+      {template && <SoldierPortrait template={template} loadout={loadout} size={40} />}
       <div className="stack" style={{ flex: 1, gap: 2, minWidth: 0 }}>
         <div className="row" style={{ gap: 'var(--s-2)', alignItems: 'baseline', minWidth: 0 }}>
           <strong style={{ fontSize: 14, color: 'var(--fg-0)' }}>{unit.name}</strong>

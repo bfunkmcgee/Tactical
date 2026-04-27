@@ -134,6 +134,7 @@ export default function CombatHUD() {
           ? <SelectedUnitHeader
               unit={selected}
               template={selectedTemplate}
+              loadout={selected.loadout}
               primary={selectedPrimary}
               sidearm={selectedSidearm}
             />

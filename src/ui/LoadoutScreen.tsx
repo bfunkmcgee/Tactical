@@ -122,7 +122,7 @@ export default function LoadoutScreen() {
                 alignItems: 'center',
                 gap: 6,
               }}>
-              <SoldierPortrait template={s} size={28} />
+              <SoldierPortrait template={s} loadout={loadouts[sid]} size={28} />
               <div style={{ textAlign: 'left' }}>
                 <div>{s.name}</div>
                 <div style={{ fontSize: 11, color: 'var(--fg-2)', marginTop: 2 }}>{s.class}</div>
@@ -145,7 +145,7 @@ export default function LoadoutScreen() {
                 width={120} height={180}
                 framing="full"
               />
-            : <SoldierPortrait template={soldier} size={48} />}
+            : <SoldierPortrait template={soldier} loadout={current} size={48} />}
           <div className="stack" style={{ gap: 4, flex: 1 }}>
             <h2>{soldier.name}</h2>
             <p>{soldier.class}</p>
