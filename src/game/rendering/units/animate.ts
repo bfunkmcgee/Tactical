@@ -3,6 +3,8 @@ import type { UnitId } from '../../types';
 import { HIT_FLASH_MS, DEATH_DURATION_MS, MUZZLE_OFFSET } from './constants';
 import type { UnitNode } from './UnitNode';
 
+export const IDLE_MOTION_ENABLED = true;
+
 /**
  * Per-frame animation update. Reads each node's pending timers and builds
  * a composite body transform + muzzle-flash draw for this frame.
@@ -56,10 +58,24 @@ export function tickUnitAnimations(
       walkSway = -walkLean * 0.6; // weapon lags/opposes the body swing
     }
 
-    // Idle is deliberately STILL — a hovering idle animation reads as
-    // "floating" in an isometric tactical view. The selection ring alpha
-    // pulses (further below) to indicate the active unit instead of any
-    // character-body motion.
+    // Idle channels are intentionally low-amplitude + low-frequency so the
+    // unit breathes without "hovering". Amplitudes are deterministic per unit
+    // (via bobPhase) so squads don't sync-breathe.
+    let idleBreathY = 0;
+    let idleBreathScaleY = 0;
+    let idleShoulderSway = 0;
+    let idleWeaponSway = 0;
+    if (IDLE_MOTION_ENABLED && !moving && alive) {
+      const breathT = nowMs * 0.0011 + node.bobPhase;
+      const swayT = nowMs * 0.0009 + node.bobPhase * 0.7;
+      const breathAmp = 0.3 + ((Math.sin(node.bobPhase * 1.7) + 1) * 0.25); // 0.3..0.8 px
+      // Keep idle additive but subordinate to firing.
+      const fireIdleFade = node.fireAnimMs > 0 ? 0.2 : 1;
+      idleBreathY = Math.sin(breathT) * breathAmp * fireIdleFade;
+      idleBreathScaleY = Math.sin(breathT + Math.PI / 2) * 0.01 * fireIdleFade; // ±0.01
+      idleShoulderSway = Math.sin(swayT) * 0.015 * fireIdleFade;
+      idleWeaponSway = Math.sin(swayT + 0.85) * 0.012 * fireIdleFade;
+    }
 
     // ----- Fire sequence: windup → one-or-more shots → return.
     // Only the weapon (arm+gun) lifts toward eye level and rotates into
@@ -165,14 +181,15 @@ export function tickUnitAnimations(
         // SE of legs/head/arms-back.
         p.torso.rotation = walkLean + bodyPitch;
         p.torso.position.x = base.x + bodyPushX;
-        p.torso.position.y = base.y + walkBob + bodyPushY;
+        p.torso.position.y = base.y + walkBob + bodyPushY + idleBreathY;
+        p.torso.scale.y = 1 + idleBreathScaleY;
         // Head counter-leans a fraction of the torso's rotation — the
         // eyeline stays closer to level as the body sways. A common 2D
         // animation trick; feels alive without a full lookAt rig.
-        p.head.rotation = -walkLean * 0.35;
+        p.head.rotation = -walkLean * 0.35 - idleShoulderSway * 0.25;
         // Arms-back rides a damped sway — the off-hand follows body
         // motion without flapping.
-        p['arms-back'].rotation = walkSway * 0.8;
+        p['arms-back'].rotation = walkSway * 0.8 + idleShoulderSway;
       }
       node.body.scale.set(facingBlend, 1);
       node.body.rotation = 0;
@@ -181,9 +198,10 @@ export function tickUnitAnimations(
     } else {
       // Bespoke-SVG path: body is monolithic; everything rotates as one.
       node.body.scale.set(facingBlend, walkScaleY);
+      node.body.scale.set(node.facing, walkScaleY * (1 + idleBreathScaleY * 0.35));
       node.body.rotation = walkLean + bodyPitch;
-      node.body.position.x = jitterX + bodyPushX;
-      node.body.position.y = walkBob + bodyPushY;
+      node.body.position.x = jitterX + bodyPu shX;
+      node.body.position.y = walkBob + bodyPushY + idleBreathY * 0.45;
     }
 
     // ----- Selection ring alpha pulse — drives the "who's active" cue
@@ -196,7 +214,7 @@ export function tickUnitAnimations(
     // body: `weaponAim` rotates around the grip, `weaponLift` raises
     // the whole wrap toward eye level during aim.
     if (node.weaponWrap) {
-      node.weaponWrap.rotation = walkSway + weaponAim;
+      node.weaponWrap.rotation = walkSway + weaponAim + idleWeaponSway;
       node.weaponWrap.position.y = node.weaponRestY + weaponLift;
     }
 
@@ -236,6 +254,7 @@ export function tickUnitAnimations(
         p.legs.scale.y = baseScale;
         p.torso.rotation = 0;
         p.torso.position.set(base.x, base.y);
+        p.torso.scale.y = 1;
         p.head.rotation = 0;
         p['arms-back'].rotation = 0;
       }
