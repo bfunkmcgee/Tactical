@@ -10,9 +10,13 @@ import {
   ensureSpritesLoaded,
 } from '../game/rendering/units/UnitNode';
 import { tickUnitAnimations } from '../game/rendering/units/animate';
-import { FIRE_STYLES } from '../game/rendering/units/fireStyles';
 import { HIT_FLASH_MS, MOVE_TWEEN_MS } from '../game/rendering/units/constants';
 import type { EnemyTemplate, SoldierTemplate, Unit, Weapon } from '../game/types';
+import {
+  applyPreviewWeaponClass,
+  resolvePreviewWeaponClass,
+  type PreviewWeaponContext,
+} from './previewer/weaponPreviewContext';
 import { makePreviewUnit } from './previewer/makePreviewUnit';
 
 /**
@@ -44,6 +48,7 @@ export default function CharacterAnimationPreviewer() {
   const [facing, setFacing] = useState<1 | -1>(1);
   const [walkLoop, setWalkLoop] = useState<boolean>(false);
   const [phase, setPhase] = useState<string>('idle');
+  const [fireContext, setFireContext] = useState<PreviewWeaponContext>('primary');
 
   // Pixi mount refs.
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -154,7 +159,7 @@ export default function CharacterAnimationPreviewer() {
     if (!appRef.current || !layerRef.current) return;
     buildNodeFromPickers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId, primaryId, sidearmId]);
+  }, [templateId, primaryId, sidearmId, fireContext]);
 
   function buildNodeFromPickers(): void {
     const layer = layerRef.current;
@@ -183,8 +188,9 @@ export default function CharacterAnimationPreviewer() {
     // Set initial fireStyle from the equipped weapon class so Fire
     // triggers immediately use the right choreography. createUnitNode
     // initialises fireStyle to FIRE_STYLES.default; we upgrade.
-    const wpn = primaryWeaponFor(u, weapons);
-    if (wpn) node.fireStyle = FIRE_STYLES[wpn.class] ?? FIRE_STYLES.default;
+    const primary = primaryWeaponFor(u, weapons);
+    const sidearm = sidearmWeaponFor(u, weapons);
+    applyPreviewWeaponClass(node, resolvePreviewWeaponClass({ context: fireContext, primary, sidearm }));
     node.facing = facingRef.current;
     // Reset the container to (0, 0) inside `layer`; layer is centred
     // on the canvas.
@@ -218,6 +224,14 @@ export default function CharacterAnimationPreviewer() {
   function trigFire(): void {
     const node = nodeRef.current;
     if (!node) return;
+
+    const tmpl: SoldierTemplate | EnemyTemplate | undefined =
+      pack.soldierTemplates[templateId] ?? pack.enemyTemplates[templateId];
+    const isSoldier = !!tmpl && 'class' in tmpl;
+    const primary = isSoldier ? (weapons.find((w) => w.id === primaryId) ?? null) : null;
+    const sidearm = isSoldier ? (weapons.find((w) => w.id === sidearmId) ?? null) : null;
+    applyPreviewWeaponClass(node, resolvePreviewWeaponClass({ context: fireContext, primary, sidearm }));
+
     node.fireAnimMs = node.fireStyle.totalMs;
     node.fireTargetDir = { x: facingRef.current, y: 0 };
     node.facing = facingRef.current;
@@ -343,6 +357,14 @@ export default function CharacterAnimationPreviewer() {
             >
               {walkLoop ? 'Walk · on' : 'Walk'}
             </button>
+            <button
+              onClick={() => setFireContext('primary')}
+              style={{ borderColor: fireContext === 'primary' ? 'var(--accent)' : undefined }}
+            >Use Primary</button>
+            <button
+              onClick={() => setFireContext('sidearm')}
+              style={{ borderColor: fireContext === 'sidearm' ? 'var(--accent)' : undefined }}
+            >Use Sidearm</button>
             <button onClick={trigFire}>Fire</button>
             <button onClick={trigHit}>Hit</button>
             <button onClick={trigDeath}>Death</button>
@@ -374,4 +396,9 @@ function isSoldierId(id: string, list: SoldierTemplate[]): boolean {
 function primaryWeaponFor(u: Unit, weapons: Weapon[]): Weapon | null {
   if (!u.loadout) return null;
   return weapons.find((w) => w.id === u.loadout!.primaryId) ?? null;
+}
+
+function sidearmWeaponFor(u: Unit, weapons: Weapon[]): Weapon | null {
+  if (!u.loadout) return null;
+  return weapons.find((w) => w.id === u.loadout!.sidearmId) ?? null;
 }
