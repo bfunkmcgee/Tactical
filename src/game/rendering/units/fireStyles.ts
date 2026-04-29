@@ -93,14 +93,20 @@ export type WeaponHold = {
 };
 
 export const WEAPON_HOLD: Record<WeaponClass | 'default', WeaponHold> = {
+  // Shoulder-fire baseline: carbine stays near shoulder pocket with a stable two-hand frame.
   rifle:   { gripAnchor: { x: 0.50, y: 60 / 128 }, scale: 0.44, muzzleOffset: { x: 16, y: -2 }, restY: -28 },
+  // Eye-level precision: long rifle mounts highest for deliberate sighted shots.
   sniper:  { gripAnchor: { x: 0.50, y: 60 / 128 }, scale: 0.46, muzzleOffset: { x: 18, y: -3 }, restY: -32 },
+  // Shoulder-fire with blast posture: compact raise and broad muzzle presentation.
   shotgun: { gripAnchor: { x: 0.50, y: 64 / 128 }, scale: 0.44, muzzleOffset: { x: 19, y: -1 }, restY: -26 },
-  smg:     { gripAnchor: { x: 0.50, y: 70 / 128 }, scale: 0.40, muzzleOffset: { x: 15, y: -1 }, restY: -22 },
+  // Hip-to-shoulder spray: compact profile sits below rifle and flashes slightly closer to body.
+  smg:     { gripAnchor: { x: 0.50, y: 70 / 128 }, scale: 0.38, muzzleOffset: { x: 14, y: -1 }, restY: -21 },
+  // Hip-fire sidearm: one-hand dominant frame, with off-center arm pose to avoid idle two-hand read.
   pistol:  { gripAnchor: { x: 0.50, y: 70 / 128 }, scale: 0.32, muzzleOffset: { x: 11, y:  0 }, restY: -14,
-             armsAnchor: { x: 0.42, y: 70 / 128 }, armsScale: 0.32 },
-  heavy:   { gripAnchor: { x: 0.45, y: 64 / 128 }, scale: 0.50, muzzleOffset: { x: 22, y: -2 }, restY: -18,
-             armsAnchor: { x: 0.40, y: 64 / 128 }, armsScale: 0.50 },
+             armsAnchor: { x: 0.40, y: 69 / 128 }, armsScale: 0.31 },
+  // Shoulder-fire support weapon: high mount and slightly lower grip pivot to emphasize carried mass.
+  heavy:   { gripAnchor: { x: 0.45, y: 65 / 128 }, scale: 0.50, muzzleOffset: { x: 22, y: -2 }, restY: -22,
+             armsAnchor: { x: 0.40, y: 65 / 128 }, armsScale: 0.50 },
   // 'default' mirrors the pre-WEAPON_HOLD shipping numbers exactly so any
   // unit without a resolvable class falls through bug-compatible:
   // gripAnchor = (0.5, 0.56), scale = 0.42, restY = (0.56 - 1) * 128 * 0.42 + 4.
