@@ -16,6 +16,7 @@ export interface SquadCarry {
   utilityCharges: number[];
   dirt: number;   // 0..100 — phase 5 will render
   damage: number; // 0..100
+  wear?: number;  // 0..100 persistent visual attrition
 }
 
 export interface ExcursionState {
@@ -116,6 +117,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       utilityCharges: [],
       dirt: 0,
       damage: 0,
+      wear: 0,
     }));
     const grant = zone.consumableGrant ?? {};
     const stockpile: Record<string, number> = { ...grant };
