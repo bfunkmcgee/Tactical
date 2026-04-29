@@ -1,6 +1,6 @@
 import type { Container, Graphics } from 'pixi.js';
 import type { UnitId } from '../../types';
-import { HIT_FLASH_MS, DEATH_DURATION_MS, MUZZLE_OFFSET } from './constants';
+import { ANIMATION_LIMITS, HIT_FLASH_MS, DEATH_DURATION_MS, MUZZLE_OFFSET } from './constants';
 import type { UnitNode } from './UnitNode';
 
 export const IDLE_MOTION_ENABLED = true;
@@ -140,6 +140,15 @@ export function tickUnitAnimations(
       node.aimX = lerp(node.aimX ?? 0, 0, 0.22);
     }
 
+
+    // ----- Normalize/clamp additive channels before they touch sprites.
+    // Limits are mirrored via facingSign/facingBlend so left/right facings
+    // keep identical anatomical envelopes.
+    const clampedBodyPitch = clampSymmetric(bodyPitch, ANIMATION_LIMITS.torsoRotationRad);
+    const clampedWeaponAim = clampSymmetric(weaponAim, ANIMATION_LIMITS.weaponAimRad);
+    const clampedWeaponLift = clampSymmetric(weaponLift, ANIMATION_LIMITS.weaponLiftPx);
+    const clampedIdleShoulderSway = clampSymmetric(idleShoulderSway, ANIMATION_LIMITS.armsBackSwayRad);
+
     // ----- Hit flash: tint + jitter.
     let jitterX = 0;
     if (node.hitFlashMs > 0) {
@@ -177,17 +186,17 @@ export function tickUnitAnimations(
         // (basePartPos) — humanRigBody put torso at (partLeftX,partTopY)
         // and overwriting that here would shift the torso ~one iso tile
         // SE of legs/head/arms-back.
-        p.torso.rotation = walkLean + bodyPitch;
+        p.torso.rotation = clampSymmetric(walkLean + clampedBodyPitch, ANIMATION_LIMITS.torsoRotationRad);
         p.torso.position.x = base.x + bodyPushX;
         p.torso.position.y = base.y + walkBob + bodyPushY + idleBreathY;
         p.torso.scale.y = 1 + idleBreathScaleY;
         // Head counter-leans a fraction of the torso's rotation — the
         // eyeline stays closer to level as the body sways. A common 2D
         // animation trick; feels alive without a full lookAt rig.
-        p.head.rotation = -walkLean * 0.35 - idleShoulderSway * 0.25;
+        p.head.rotation = clampSymmetric(-walkLean * 0.35 - clampedIdleShoulderSway * 0.25, ANIMATION_LIMITS.headCounterRotationRad);
         // Arms-back rides a damped sway — the off-hand follows body
         // motion without flapping.
-        p['arms-back'].rotation = walkSway * 0.8 + idleShoulderSway;
+        p['arms-back'].rotation = clampSymmetric(walkSway * 0.8 + clampedIdleShoulderSway, ANIMATION_LIMITS.armsBackSwayRad);
       }
       node.body.scale.set(facingBlend, 1);
       node.body.rotation = 0;
@@ -196,7 +205,7 @@ export function tickUnitAnimations(
     } else {
       // Bespoke-SVG path: body is monolithic; everything rotates as one.
       node.body.scale.set(facingBlend, walkScaleY * (1 + idleBreathScaleY * 0.35));
-      node.body.rotation = walkLean + bodyPitch;
+      node.body.rotation = clampSymmetric(walkLean + clampedBodyPitch, ANIMATION_LIMITS.torsoRotationRad);
       node.body.position.x = jitterX + bodyPushX;
       node.body.position.y = walkBob + bodyPushY + idleBreathY * 0.45;
     }
@@ -211,8 +220,8 @@ export function tickUnitAnimations(
     // body: `weaponAim` rotates around the grip, `weaponLift` raises
     // the whole wrap toward eye level during aim.
     if (node.weaponWrap) {
-      node.weaponWrap.rotation = walkSway + weaponAim + idleWeaponSway;
-      node.weaponWrap.position.y = node.weaponRestY + weaponLift;
+      node.weaponWrap.rotation = clampSymmetric(walkSway + clampedWeaponAim + idleWeaponSway, ANIMATION_LIMITS.weaponAimRad);
+      node.weaponWrap.position.y = node.weaponRestY + clampedWeaponLift;
     }
 
     // ----- Muzzle flash: drawn in weapon-wrap space when available so it
@@ -389,4 +398,8 @@ function applyWearOverlays(node: UnitNode): void {
   if (overlays.scratch) overlays.scratch.alpha = Math.min(0.65, t * 0.9);
   if (overlays.tear) overlays.tear.alpha = t > 0.2 ? Math.min(0.6, (t - 0.2) * 0.8) : 0;
   if (overlays.scorch) overlays.scorch.alpha = t > 0.45 ? Math.min(0.7, (t - 0.45) * 1.1) : 0;
+}
+
+function clampSymmetric(value: number, absLimit: number): number {
+  return Math.max(-absLimit, Math.min(absLimit, value));
 }
