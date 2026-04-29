@@ -17,7 +17,7 @@ import type { PropDraw, TilePalette } from '../context';
 // missing file), drawMap falls back to the procedural diamond + grain
 // path automatically — same biome, same palette.
 //
-// Source PNGs ship at 480×240 (iso 2:1 aspect); the renderer scales
+// Source PNGs ship at 1056×528 (iso 2:1 aspect); the renderer scales
 // them to the in-game TILE_W × TILE_H = 64 × 32 footprint.
 export const DESERT_PAINTED_FLOORS: ReadonlyArray<{ cacheKey: string; url: string }> = [
   { cacheKey: 'painted:desert:floor:0', url: '/styles/flat/biomes/desert/floor_0.png' },
@@ -27,6 +27,17 @@ export const DESERT_PAINTED_FLOORS: ReadonlyArray<{ cacheKey: string; url: strin
   { cacheKey: 'painted:desert:floor:4', url: '/styles/flat/biomes/desert/floor_4.png' },
   { cacheKey: 'painted:desert:floor:5', url: '/styles/flat/biomes/desert/floor_5.png' },
 ];
+
+export const DESERT_PAINTED_FLOOR_RENDERING = {
+  sourceWidth: 1056,
+  sourceHeight: 528,
+  overscan: 1.0,
+  // Subtle anti-repetition jitter: tiny hue/value wobble + alpha drift.
+  jitter: { hueDeg: 3, value: 0.04, alpha: 0.04 },
+  // Keep floor decals/props legible over painted sand at zoomed-out views.
+  decalAlphaBoost: 1.1,
+  propAlphaBoost: 1.08,
+} as const;
 
 export const DESERT_PALETTE: TilePalette = {
   floor: [0xd4b37a, 0xc3a066, 0xb18850], // pale dune / sand / ochre patch
