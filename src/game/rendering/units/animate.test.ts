@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { UnitNode } from './UnitNode';
 import { IDLE_MOTION_ENABLED, tickUnitAnimations } from './animate';
-import { ANIMATION_LIMITS } from './constants';
+import { ANIMATION_LIMITS, WEAPON_ANIMATION_LIMITS } from './constants';
 
 type Transform = {
   x: number;
@@ -76,6 +76,7 @@ function makeNode(opts: { rig: boolean; alive: boolean }): UnitNode {
     wearEventScore: 0,
     hitFlashMs: 0,
     fireAnimMs: 0,
+    fireClass: 'default',
     fireStyle: {
       totalMs: 100,
       windupMs: 20,
@@ -195,14 +196,15 @@ describe('tickUnitAnimations channel guardrails', () => {
     node.fireStyle.windupRad = 0.8;
     node.fireStyle.kickRad = 0.7;
     node.fireStyle.weaponLiftPx = 20;
+    node.fireClass = 'heavy';
 
     tickUnitAnimations(layer, new Map([[('u4' as never), node]]), 16, 0);
 
     expect(Math.abs(node.rigComposition!.parts.torso.rotation)).toBeLessThanOrEqual(ANIMATION_LIMITS.torsoRotationRad);
     expect(Math.abs(node.rigComposition!.parts.head.rotation)).toBeLessThanOrEqual(ANIMATION_LIMITS.headCounterRotationRad);
     expect(Math.abs(node.rigComposition!.parts['arms-back'].rotation)).toBeLessThanOrEqual(ANIMATION_LIMITS.armsBackSwayRad);
-    expect(Math.abs(node.weaponWrap!.rotation)).toBeLessThanOrEqual(ANIMATION_LIMITS.weaponAimRad);
-    expect(Math.abs(node.weaponWrap!.position.y - node.weaponRestY)).toBeLessThanOrEqual(ANIMATION_LIMITS.weaponLiftPx);
+    expect(Math.abs(node.weaponWrap!.rotation)).toBeLessThanOrEqual(WEAPON_ANIMATION_LIMITS.heavy.rotationRad);
+    expect(Math.abs(node.weaponWrap!.position.y - node.weaponRestY)).toBeLessThanOrEqual(WEAPON_ANIMATION_LIMITS.heavy.liftPx);
   });
 
   it('applies symmetric clamps for left-facing extreme aim', () => {
@@ -216,11 +218,38 @@ describe('tickUnitAnimations channel guardrails', () => {
     node.fireStyle.windupRad = 0.9;
     node.fireStyle.kickRad = 0.8;
     node.fireStyle.weaponLiftPx = 24;
+    node.fireClass = 'pistol';
 
     tickUnitAnimations(layer, new Map([[('u5' as never), node]]), 16, 0);
 
     expect(Math.abs(node.body.rotation)).toBeLessThanOrEqual(ANIMATION_LIMITS.torsoRotationRad);
-    expect(Math.abs(node.weaponWrap!.rotation)).toBeLessThanOrEqual(ANIMATION_LIMITS.weaponAimRad);
-    expect(Math.abs(node.weaponWrap!.position.y - node.weaponRestY)).toBeLessThanOrEqual(ANIMATION_LIMITS.weaponLiftPx);
+    expect(Math.abs(node.weaponWrap!.rotation)).toBeLessThanOrEqual(WEAPON_ANIMATION_LIMITS.pistol.rotationRad);
+    expect(Math.abs(node.weaponWrap!.position.y - node.weaponRestY)).toBeLessThanOrEqual(WEAPON_ANIMATION_LIMITS.pistol.liftPx);
+  });
+
+
+  it('keeps mirrored moving+firing constraints symmetric for heavy class', () => {
+    const right = makeNode({ rig: false, alive: true });
+    const left = makeNode({ rig: false, alive: true });
+    const layer = { sortChildren() {} } as never;
+
+    for (const node of [right, left]) {
+      node.moveDurationMs = 100;
+      node.moveMs = 25;
+      node.fireAnimMs = 100;
+      node.fireStyle.windupRad = 0.9;
+      node.fireStyle.kickRad = 0.8;
+      node.fireStyle.weaponLiftPx = 18;
+      node.fireClass = 'heavy';
+    }
+    right.facing = 1; right.targetFacing = 1; right.fireTargetDir = { x: 1, y: 7 };
+    left.facing = -1; left.targetFacing = -1; left.fireTargetDir = { x: -1, y: 7 };
+
+    tickUnitAnimations(layer, new Map([[('u6' as never), right]]), 16, 0);
+    tickUnitAnimations(layer, new Map([[('u7' as never), left]]), 16, 0);
+
+    expect(Math.abs(right.weaponWrap!.position.y - left.weaponWrap!.position.y)).toBeLessThanOrEqual(1e-6);
+    expect(Math.abs(right.weaponWrap!.rotation)).toBeLessThanOrEqual(WEAPON_ANIMATION_LIMITS.heavy.rotationRad);
+    expect(Math.abs(right.weaponWrap!.position.y - right.weaponRestY)).toBeLessThanOrEqual(WEAPON_ANIMATION_LIMITS.heavy.liftPx);
   });
 });

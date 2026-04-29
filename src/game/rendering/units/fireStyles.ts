@@ -128,6 +128,7 @@ export function applyFireEvents(nodes: Map<UnitId, UnitNode>, events: FireEvent[
     const dx = to.x - from.x, dy = to.y - from.y;
     const len = Math.hypot(dx, dy) || 1;
     node.fireTargetDir = { x: dx / len, y: dy / len };
+    node.fireClass = evt.fireClass ?? "default";
     node.fireStyle = FIRE_STYLES[evt.fireClass] ?? FIRE_STYLES.default;
     node.fireAnimMs = node.fireStyle.totalMs;
     if (Math.abs(dx) > 0.5) {
