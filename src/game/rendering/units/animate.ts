@@ -197,7 +197,8 @@ export function tickUnitAnimations(
         p.head.rotation = clampSymmetric(-walkLean * 0.35 - clampedIdleShoulderSway * 0.25, ANIMATION_LIMITS.headCounterRotationRad);
         // Arms-back rides a damped sway — the off-hand follows body
         // motion without flapping.
-        p['arms-back'].rotation = clampSymmetric(walkSway * 0.8 + clampedIdleShoulderSway, ANIMATION_LIMITS.armsBackSwayRad);
+        const armsBackSway = (walkSway * 0.8 + clampedIdleShoulderSway) * (node.armsBackSwayFactor ?? 1);
+        p['arms-back'].rotation = clampSymmetric(armsBackSway, ANIMATION_LIMITS.armsBackSwayRad);
       }
       node.body.scale.set(facingBlend, 1);
       node.body.rotation = 0;
