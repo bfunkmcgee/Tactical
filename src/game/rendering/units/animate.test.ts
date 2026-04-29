@@ -66,8 +66,13 @@ function makeNode(opts: { rig: boolean; alive: boolean }): UnitNode {
     moveMs: 0,
     moveDurationMs: 0,
     facing: 1,
+    targetFacing: 1,
+    facingTurnMs: 0,
+    facingTurnDurationMs: 0,
     prevHp: 10,
     dirtTint: 0xffffff,
+    wearLevel: 0,
+    wearEventScore: 0,
     hitFlashMs: 0,
     fireAnimMs: 0,
     fireStyle: {
@@ -104,6 +109,7 @@ function makeNode(opts: { rig: boolean; alive: boolean }): UnitNode {
       backSlot: {} as never,
       waistSlot: {} as never,
       tintTargets: [],
+      wearOverlays: {},
     } as never : null,
   } as UnitNode;
 }

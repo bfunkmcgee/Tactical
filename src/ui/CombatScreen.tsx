@@ -55,7 +55,7 @@ export default function CombatScreen() {
               ammoSidearm: c.ammoSidearm,
               utilityCharges: c.utilityCharges,
               dirt: Math.min(100, s.dirt + 15),  // phase 5 will show this
-              // damage accumulates from hits in phase 5; left at 0 for now.
+              wear: Math.min(100, Math.max(s.wear ?? 0, c.wear ?? 0)),
             };
           });
           if (isSkirmish && excursion.activeSkirmishId) {
@@ -96,6 +96,7 @@ export default function CombatScreen() {
               ammoSidearm: c.ammoSidearm,
               utilityCharges: c.utilityCharges,
               dirt: Math.min(100, s.dirt + 15),
+              wear: Math.min(100, Math.max(s.wear ?? 0, c.wear ?? 0)),
             };
           });
           recordDefeat(updatedSquad, kills, damageTaken);

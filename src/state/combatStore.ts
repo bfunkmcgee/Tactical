@@ -171,6 +171,8 @@ export type CombatState = {
     ammoPrimary: number;
     ammoSidearm: number;
     utilityCharges: number[];
+    dirt: number;
+    wear: number;
   }>;
 };
 
@@ -198,6 +200,8 @@ export interface SoldierCarry {
   utilityCharges?: number[];
   /** Accumulated grime 0..100. Fed through to Unit.dirt for rendering. */
   dirt?: number;
+  /** Persistent attrition score (0..100) used for visual wear layering. */
+  wear?: number;
 }
 
 function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
@@ -253,6 +257,7 @@ function mkSoldierUnit(templateId: string, carry?: SoldierCarry): Unit {
     alive: true,
     color: t.portraitColor,
     dirt: carry?.dirt ?? 0,
+    wear: carry?.wear ?? 0,
     // Rig-composed appearance copied from the template; undefined for
     // bespoke-SVG soldiers (they fall through to the legacy render path).
     appearance: t.appearance,
@@ -784,6 +789,11 @@ export const useCombatStore = create<CombatState>((set, get) => ({
         ammoPrimary: u.ammo,
         ammoSidearm: u.sidearmAmmo,
         utilityCharges: [...u.utilityCharges],
+        dirt: u.dirt ?? 0,
+        wear: Math.min(100, Math.max(
+          u.wear ?? 0,
+          u.hpMax > 0 ? (1 - Math.max(0, u.hp) / u.hpMax) * 100 : 100,
+        )),
       }));
   },
 }));

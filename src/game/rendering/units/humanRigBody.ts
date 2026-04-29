@@ -50,6 +50,7 @@ export interface RigBodyComposition {
    *  overwriting would scale the part to a different absolute size and
    *  push its drawn content out of the unit's tile. */
   baseScale: number;
+  wearOverlays: Partial<Record<'scratch' | 'tear' | 'scorch', Sprite>>;
 }
 
 /** Lookup callbacks the composition needs — threaded from the store/pack. */
@@ -66,6 +67,7 @@ export interface RigBodyDeps {
    *  its overlays composite onto the rig after the armor pass
    *  (belt pouches, boots, backpack, etc.). Unknown ids are ignored. */
   kitOf?: (id: string) => Kit | undefined;
+  wearDecals?: Partial<Record<'scratch' | 'tear' | 'scorch', string>>;
 }
 
 /**
@@ -135,6 +137,7 @@ export function buildHumanRigBody(
 ): RigBodyComposition {
   const root = new Container();
   const tintTargets: Sprite[] = [];
+  const wearOverlays: Partial<Record<'scratch' | 'tear' | 'scorch', Sprite>> = {};
 
   // Screen origin (0, 0) in UnitNode.body == the ground beneath the
   // unit. Part sprites are anchored at (0, 0) with positions computed
@@ -308,6 +311,19 @@ export function buildHumanRigBody(
     tintTargets.push(s);
     return s;
   };
+  const addWearOverlay = (kind: 'scratch' | 'tear' | 'scorch', url: string) => {
+    const tex = cache.get(`overlay:${url}`);
+    if (!tex) return;
+    const s = new Sprite(tex);
+    s.anchor.set(0, 0);
+    s.scale.set(SPRITE_SCALE);
+    s.position.set(partLeftX, partTopY);
+    s.alpha = 0;
+    s.zIndex = kind === 'scorch' ? 48 : 46;
+    root.addChild(s);
+    tintTargets.push(s);
+    wearOverlays[kind] = s;
+  };
 
   // ---- Base outfit pass: civvies on top of the base torso + legs,
   // underneath any armor. Drawn even when no loadout is set so a rig
@@ -431,6 +447,9 @@ export function buildHumanRigBody(
       }
     }
   }
+  if (deps.wearDecals?.scratch) addWearOverlay('scratch', deps.wearDecals.scratch);
+  if (deps.wearDecals?.tear) addWearOverlay('tear', deps.wearDecals.tear);
+  if (deps.wearDecals?.scorch) addWearOverlay('scorch', deps.wearDecals.scorch);
 
   return {
     root,
@@ -444,6 +463,7 @@ export function buildHumanRigBody(
     tintTargets,
     basePartPos: { x: partLeftX, y: partTopY },
     baseScale: SPRITE_SCALE,
+    wearOverlays,
   };
 }
 

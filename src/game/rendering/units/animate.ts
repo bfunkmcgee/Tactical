@@ -148,11 +148,9 @@ export function tickUnitAnimations(
       jitterX = (Math.random() - 0.5) * 3 * a;
       applyTint(node, blendRed(a));
     } else {
-      // No hit flash: reflect the unit's accumulated grime as a dusty
-      // brown tint. Dirt level is set by updateUnitNode from u.dirt, so
-      // changes between missions show instantly when the sprite spawns.
-      applyTint(node, node.dirtTint);
+      applyTint(node, blendWearTint(node.dirtTint, node.wearLevel));
     }
+    applyWearOverlays(node);
 
     // ----- Compose body transform. Two paths — rig-composed units get
     // per-part channels (legs squash, torso lean, head counter-lean,
@@ -200,7 +198,7 @@ export function tickUnitAnimations(
       node.body.scale.set(facingBlend, walkScaleY);
       node.body.scale.set(node.facing, walkScaleY * (1 + idleBreathScaleY * 0.35));
       node.body.rotation = walkLean + bodyPitch;
-      node.body.position.x = jitterX + bodyPu shX;
+      node.body.position.x = jitterX + bodyPushX;
       node.body.position.y = walkBob + bodyPushY + idleBreathY * 0.45;
     }
 
@@ -368,4 +366,28 @@ function blendRed(alpha: number): number {
   const g = Math.round(255 - 165 * alpha);
   const b = Math.round(255 - 149 * alpha);
   return (r << 16) | (g << 8) | b;
+}
+
+function blendWearTint(dirtTint: number, wearLevel: number): number {
+  const t = Math.max(0, Math.min(1, wearLevel / 100));
+  const wr = 140, wg = 118, wb = 96;
+  const dr = (dirtTint >> 16) & 0xff;
+  const dg = (dirtTint >> 8) & 0xff;
+  const db = dirtTint & 0xff;
+  const r = Math.round(dr + (wr - dr) * (t * 0.35));
+  const g = Math.round(dg + (wg - dg) * (t * 0.35));
+  const b = Math.round(db + (wb - db) * (t * 0.35));
+  return (r << 16) | (g << 8) | b;
+}
+
+function applyWearOverlays(node: UnitNode): void {
+  const t = Math.max(0, Math.min(1, node.wearLevel / 100));
+  const overlays = node.rigComposition?.wearOverlays;
+  if (!overlays) {
+    if (node.fallback) node.fallback.alpha = 1 - Math.min(0.3, t * 0.25);
+    return;
+  }
+  if (overlays.scratch) overlays.scratch.alpha = Math.min(0.65, t * 0.9);
+  if (overlays.tear) overlays.tear.alpha = t > 0.2 ? Math.min(0.6, (t - 0.2) * 0.8) : 0;
+  if (overlays.scorch) overlays.scorch.alpha = t > 0.45 ? Math.min(0.7, (t - 0.45) * 1.1) : 0;
 }

@@ -69,6 +69,8 @@ export type UnitNode = {
   /** Composite tint reflecting accumulated grime on the unit. Starts at
    * 0xffffff (clean) and shifts toward a dusty brown as Unit.dirt rises. */
   dirtTint: number;
+  wearLevel: number;
+  wearEventScore: number;
   hitFlashMs: number;
   fireAnimMs: number;                   // countdown for fire sequence.
   fireStyle: FireStyle;                 // per-weapon-class choreography.
@@ -196,6 +198,16 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
       pushLoad(overlayCacheKey(o.torsoSvg), o.torsoSvg);
       pushLoad(overlayCacheKey(o.legsSvg), o.legsSvg);
     }
+  }
+  for (const s of Object.values(pack.soldierTemplates)) {
+    const decals = s.wearDecals;
+    if (!decals) continue;
+    for (const url of Object.values(decals)) if (url) pushLoad(overlayCacheKey(url), url);
+  }
+  for (const e of Object.values(pack.enemyTemplates)) {
+    const decals = e.wearDecals;
+    if (!decals) continue;
+    for (const url of Object.values(decals)) if (url) pushLoad(overlayCacheKey(url), url);
   }
   // Per-soldier rig-part overrides. Each soldier template that sets
   // appearance.partOverrides contributes a handful of URLs that
@@ -373,6 +385,8 @@ export function createUnitNode(u: Unit): UnitNode {
       kitOf: (id) => {
         try { return getKit(id); } catch { return undefined; }
       },
+      wearDecals: useContent().soldierTemplates[u.templateId]?.wearDecals
+        ?? useContent().enemyTemplates[u.templateId]?.wearDecals,
     });
     body.addChild(rigComposition.root);
     // spriteTop matches the bespoke-path value so ornaments / HP bar /
@@ -513,6 +527,8 @@ export function createUnitNode(u: Unit): UnitNode {
     facingTurnDurationMs: 0,
     prevHp: u.hp,
     dirtTint: tintForDirt(u.dirt ?? 0),
+    wearLevel: wearLevelForUnit(u, 0),
+    wearEventScore: 0,
     hitFlashMs: 0,
     fireAnimMs: 0,
     fireStyle: FIRE_STYLES.default,
@@ -556,6 +572,8 @@ function rebuildRigOverlays(node: UnitNode, u: Unit): void {
       try { return getArmor(id); } catch { return undefined; }
     },
     clothingOf: getClothing,
+    wearDecals: useContent().soldierTemplates[u.templateId]?.wearDecals
+      ?? useContent().enemyTemplates[u.templateId]?.wearDecals,
   });
   node.body.addChild(fresh.root);
   // Re-install armsFront in the weapon wrap if we have one. Per-class
@@ -621,6 +639,7 @@ function updateUnitNode(
   // ---- Hit: HP dropped this sync → flash red + jitter + spurt blood.
   if (u.hp < node.prevHp) {
     node.hitFlashMs = HIT_FLASH_MS;
+    node.wearEventScore = Math.min(100, node.wearEventScore + (node.prevHp - u.hp) * 6);
     if (onHit) onHit(u.pos, node.prevHp - u.hp);
   }
   node.prevHp = u.hp;
@@ -629,6 +648,7 @@ function updateUnitNode(
   // (future Field Wash consumable) show instantly, and so newly spawned
   // units pick up their excursion-accumulated dirt at mission start.
   node.dirtTint = tintForDirt(u.dirt ?? 0);
+  node.wearLevel = wearLevelForUnit(u, node.wearEventScore);
 
   // (Fire-animation triggers are driven by FireEvent stream — see
   // applyFireEvents in fireStyles.ts. Ammo tracking is not needed here.)
@@ -719,4 +739,10 @@ export function tintForDirt(dirt: number): number {
   const g = Math.round(255 + (152 - 255) * t);
   const b = Math.round(255 + (106 - 255) * t);
   return (r << 16) | (g << 8) | b;
+}
+
+export function wearLevelForUnit(u: Unit, eventScore: number): number {
+  const hpLoss = u.hpMax > 0 ? (1 - Math.max(0, u.hp) / u.hpMax) * 100 : 100;
+  const persisted = u.wear ?? 0;
+  return Math.max(0, Math.min(100, Math.max(persisted, hpLoss * 0.75 + eventScore * 0.25)));
 }

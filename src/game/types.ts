@@ -312,6 +312,8 @@ export type SoldierTemplate = {
    * path.
    */
   appearance?: HumanAppearance;
+  /** Optional faction/class-authored wear decals (scratches/tears/scorch). */
+  wearDecals?: Partial<Record<'scratch' | 'tear' | 'scorch', string>>;
 };
 
 export type EnemyTemplate = {
@@ -364,6 +366,8 @@ export type EnemyTemplate = {
    * the Hollow Wraith stay bespoke for now.
    */
   appearance?: HumanAppearance;
+  /** Optional faction/class-authored wear decals (scratches/tears/scorch). */
+  wearDecals?: Partial<Record<'scratch' | 'tear' | 'scorch', string>>;
 };
 
 export type Faction = 'player' | 'enemy';
@@ -428,6 +432,8 @@ export type Unit = {
    * (players); a Field Wash consumable could also strip it later.
    */
   dirt?: number;
+  /** Persistent mission attrition score (0..100) used to drive wear visuals. */
+  wear?: number;
   /**
    * Optional role flag for objective-driven units. 'objective' is a
    * shootable destructible (e.g. a relay tower) with no behaviour —
