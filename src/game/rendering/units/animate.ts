@@ -195,8 +195,7 @@ export function tickUnitAnimations(
       node.body.position.y = 0;
     } else {
       // Bespoke-SVG path: body is monolithic; everything rotates as one.
-      node.body.scale.set(facingBlend, walkScaleY);
-      node.body.scale.set(node.facing, walkScaleY * (1 + idleBreathScaleY * 0.35));
+      node.body.scale.set(facingBlend, walkScaleY * (1 + idleBreathScaleY * 0.35));
       node.body.rotation = walkLean + bodyPitch;
       node.body.position.x = jitterX + bodyPushX;
       node.body.position.y = walkBob + bodyPushY + idleBreathY * 0.45;
