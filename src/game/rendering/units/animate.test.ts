@@ -148,3 +148,35 @@ describe('tickUnitAnimations idle channels', () => {
     expect(deadRig.rigComposition?.parts['arms-back'].rotation).toBe(0);
   });
 });
+
+
+describe('tickUnitAnimations facing interpolation for bespoke units', () => {
+  it('blends x-scale continuously during fire-triggered turns', () => {
+    const node = makeNode({ rig: false, alive: true });
+    const layer = { sortChildren() {} } as never;
+
+    node.facing = 1;
+    node.targetFacing = -1;
+    node.facingTurnMs = 0;
+    node.facingTurnDurationMs = 120;
+    node.fireAnimMs = 120;
+
+    tickUnitAnimations(layer, new Map([[('u3' as never), node]]), 30, 0);
+    const firstX = node.body.scale.x;
+
+    tickUnitAnimations(layer, new Map([[('u3' as never), node]]), 30, 30);
+    const secondX = node.body.scale.x;
+
+    tickUnitAnimations(layer, new Map([[('u3' as never), node]]), 30, 60);
+    const thirdX = node.body.scale.x;
+
+    tickUnitAnimations(layer, new Map([[('u3' as never), node]]), 30, 90);
+    const fourthX = node.body.scale.x;
+
+    expect(firstX).toBeLessThan(1);
+    expect(firstX).toBeGreaterThan(-1);
+    expect(secondX).toBeLessThan(firstX);
+    expect(thirdX).toBeLessThan(secondX);
+    expect(fourthX).toBe(-1);
+  });
+});
