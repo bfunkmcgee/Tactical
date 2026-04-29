@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { WEAPON_HOLD, FIRE_STYLES } from './fireStyles';
+import { WEAPON_HOLD, FIRE_STYLES, MELEE_STYLE, resolveFireStyleClass, resolveFireStyle } from './fireStyles';
 import type { WeaponClass } from '../../types';
 
 /**
@@ -62,5 +62,19 @@ describe('WEAPON_HOLD: per-class weapon mount table', () => {
     for (const cls of ALL_CLASSES) {
       expect(FIRE_STYLES[cls], `FIRE_STYLES missing ${cls}`).toBeDefined();
     }
+  });
+});
+
+
+describe('melee fire style routing', () => {
+  it('routes melee enemies to the melee style class', () => {
+    expect(resolveFireStyleClass({ enemyTemplate: { kind: 'melee' } as never })).toBe('melee');
+  });
+
+  it('uses dedicated melee strike choreography with no muzzle flash', () => {
+    const style = resolveFireStyle('melee');
+    expect(style).toBe(MELEE_STYLE);
+    expect(style.flashScale).toBe(0);
+    expect(style.weaponLiftPx).toBe(0);
   });
 });

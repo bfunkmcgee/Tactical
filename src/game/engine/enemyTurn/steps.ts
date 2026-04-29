@@ -1,5 +1,5 @@
 import type { CombatState, FireEvent, Floater } from '../../../state/combatStore';
-import type { LogEntry, Unit, UnitId, Vec2, WeaponClass } from '../../types';
+import type { LogEntry, Unit, UnitId, Vec2 } from '../../types';
 import type { AiGrenade } from '../ai';
 import type { EngineDeps } from '../deps';
 import { resolveEnemyAttack } from '../combat';
@@ -49,7 +49,7 @@ export type StepResult = {
 export type StepDeps = EngineDeps & {
   overwatch: OverwatchDeps;
   floaterFor: (pos: Vec2, text: string, color: number) => Floater;
-  fireClassFor: (u: Unit, weapon: null) => WeaponClass;
+  fireClassFor: (u: Unit, weapon: null) => FireEvent['fireClass'];
   burstShotsForTemplate: (tid: string) => number | undefined;
 };
 
