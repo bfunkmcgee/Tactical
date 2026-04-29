@@ -14,8 +14,10 @@ import { biomeFor } from '../biomes';
  * buffer around every spawn so mission-start screenshots stay clean.
  */
 export function drawFloorDecals(g: Graphics, map: GridMap) {
-  const decals = biomeFor(map.tileset).decalPool;
+  const biome = biomeFor(map.tileset);
+  const decals = biome.decalPool;
   if (decals.length === 0) return;
+  const alphaBoost = biome.paintedFloors ? (biome.paintedFloorRendering?.decalAlphaBoost ?? 1) : 1;
 
   const bufferKeys = new Set<number>();
   const addBuffer = (px: number, py: number) => {
@@ -82,7 +84,10 @@ export function drawFloorDecals(g: Graphics, map: GridMap) {
       const jx = ((h >>> 9) % 17) - 8;
       const jy = ((h >>> 14) % 9) - 4;
       const p = gridToScreen({ x, y });
+      const prevAlpha = g.alpha;
+      g.alpha = prevAlpha * alphaBoost;
       decals[pickIdx](g, p.x + jx, p.y + jy);
+      g.alpha = prevAlpha;
     }
   }
 }

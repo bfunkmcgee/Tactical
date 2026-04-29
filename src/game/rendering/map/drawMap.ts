@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite } from 'pixi.js';
+import { Container, Graphics, Sprite, type PointData } from 'pixi.js';
 import type { GridMap, TileKind } from '../../types';
 import { tileAt } from '../../engine/grid';
 import { gridToScreen, TILE_H, TILE_W } from '../isoProjection';
@@ -9,27 +9,39 @@ import { drawEnvProps } from './drawProps';
 import { drawFloorDecals } from './drawDecals';
 import { drawEastExtender, drawSouthExtender, drawBrokenCoverShape } from './extenders';
 
-/**
- * Source-PNG width/height for painted floor tiles. The 6 desert
- * painted floors ship at 1056×528 (iso 2:1, larger than the previous
- * 480×240 batch so painted features survive the 16.5× downscale to
- * the in-game TILE_W × TILE_H = 64 × 32 footprint). Hard-coded here
- * rather than threaded through the biome config because every painted
- * floor in the project is currently authored at this size — bump if
- * a future biome ships at a different resolution.
- */
-const PAINTED_FLOOR_SOURCE_W = 1056;
-const PAINTED_FLOOR_SOURCE_H = 528;
+const DEFAULT_PAINTED_FLOOR = {
+  sourceWidth: 1056,
+  sourceHeight: 528,
+  overscan: 1.0,
+  jitter: { hueDeg: 0, value: 0, alpha: 0 },
+} as const;
 
-/**
- * Render painted floors at this multiple of their iso footprint.
- * 1.0 = exact tile fit (each painted tile occupies exactly 64×32 game
- * pixels, with no overlap). Larger values show more painted detail
- * per tile and overlap into neighbouring tiles via the alpha feather
- * — trades a softer "continuous painted ground" read for some
- * variant-distinctiveness loss at the overlap zones.
- */
-const PAINTED_FLOOR_OVERSCAN = 1.0;
+function hslToRgb(h: number, s: number, l: number): number {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const hp = ((h % 360) + 360) % 360 / 60;
+  const x = c * (1 - Math.abs((hp % 2) - 1));
+  let [r1, g1, b1] = [0, 0, 0];
+  if (hp < 1) [r1, g1, b1] = [c, x, 0];
+  else if (hp < 2) [r1, g1, b1] = [x, c, 0];
+  else if (hp < 3) [r1, g1, b1] = [0, c, x];
+  else if (hp < 4) [r1, g1, b1] = [0, x, c];
+  else if (hp < 5) [r1, g1, b1] = [x, 0, c];
+  else [r1, g1, b1] = [c, 0, x];
+  const m = l - c / 2;
+  const r = Math.round((r1 + m) * 255);
+  const g = Math.round((g1 + m) * 255);
+  const b = Math.round((b1 + m) * 255);
+  return (r << 16) | (g << 8) | b;
+}
+
+export function paintedFloorFootprintAt(center: PointData) {
+  return [
+    { x: center.x, y: center.y - TILE_H / 2 },
+    { x: center.x + TILE_W / 2, y: center.y },
+    { x: center.x, y: center.y + TILE_H / 2 },
+    { x: center.x - TILE_W / 2, y: center.y },
+  ] as const;
+}
 
 /**
  * Universal painted-light pass: layer a lighter NE half (sun-cast) +
@@ -164,16 +176,25 @@ export function drawMap(layer: Container, map: GridMap) {
       // procedural path through `g`.
       let paintedFloor = false;
       if (t.kind === 'floor' && biome.paintedFloors && biome.paintedFloors.length > 0) {
+        const renderCfg = biome.paintedFloorRendering ?? DEFAULT_PAINTED_FLOOR;
         const idx = tileHash % biome.paintedFloors.length;
         const tex = spriteCache.get(biome.paintedFloors[idx].cacheKey);
         if (tex) {
           const s = new Sprite(tex);
           s.anchor.set(0.5, 0.5);
-          const scale = PAINTED_FLOOR_OVERSCAN;
+          const scale = renderCfg.overscan;
           s.scale.set(
-            (TILE_W / PAINTED_FLOOR_SOURCE_W) * scale,
-            (TILE_H / PAINTED_FLOOR_SOURCE_H) * scale,
+            (TILE_W / renderCfg.sourceWidth) * scale,
+            (TILE_H / renderCfg.sourceHeight) * scale,
           );
+          const jitter = renderCfg.jitter ?? DEFAULT_PAINTED_FLOOR.jitter;
+          const hueT = (((tileHash >>> 7) & 0xff) / 255) * 2 - 1;
+          const valueT = (((tileHash >>> 15) & 0xff) / 255) * 2 - 1;
+          const alphaT = (((tileHash >>> 23) & 0xff) / 255) * 2 - 1;
+          const hue = 39 + hueT * jitter.hueDeg;
+          const light = 0.52 + valueT * jitter.value;
+          s.tint = hslToRgb(hue, 0.5, light);
+          s.alpha = Math.max(0.86, Math.min(1, 0.96 + alphaT * jitter.alpha));
           s.position.set(p.x, p.y);
           floorSprites.addChild(s);
           paintedFloor = true;

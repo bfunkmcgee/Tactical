@@ -12,8 +12,10 @@ import { biomeFor } from '../biomes';
  * would clash with the raised cover silhouette.
  */
 export function drawEnvProps(g: Graphics, map: GridMap) {
-  const props = biomeFor(map.tileset).propPool;
+  const biome = biomeFor(map.tileset);
+  const props = biome.propPool;
   if (props.length === 0) return;
+  const alphaBoost = biome.paintedFloors ? (biome.paintedFloorRendering?.propAlphaBoost ?? 1) : 1;
   // Exclude spawn tiles AND their chebyshev-1 neighbours. This gives
   // every soldier a clean "stepping-out" zone at mission start — the
   // first screenshot had bones scattered on the exact tiles where
@@ -70,7 +72,10 @@ export function drawEnvProps(g: Graphics, map: GridMap) {
       const jx = ((h >>> 12) % 11) - 5;
       const jy = ((h >>> 17) % 7) - 3;
       const p = gridToScreen({ x, y });
+      const prevAlpha = g.alpha;
+      g.alpha = prevAlpha * alphaBoost;
       props[pickIdx](g, p.x + jx, p.y + jy);
+      g.alpha = prevAlpha;
     }
   }
 }

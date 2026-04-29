@@ -4,9 +4,7 @@ import type { PropDraw, TilePalette } from '../context';
 import {
   DESERT_PALETTE, DESERT_PROPS, DESERT_DECALS, EDGE_DUNES,
   drawDesertDetail, drawDesertCoverDetail, drawDesertCoverVariant,
-  // DESERT_PAINTED_FLOORS — currently unused; see DESERT_BIOME below
-  // for why the painted-floor pass is parked. Re-import + wire when a
-  // tile set authored for seamless tiling lands.
+  DESERT_PAINTED_FLOORS, DESERT_PAINTED_FLOOR_RENDERING,
 } from './desert';
 import {
   REFINERY_PALETTE, REFINERY_PROPS, REFINERY_DECALS, EDGE_REFINERY_SCRAP,
@@ -66,6 +64,27 @@ export type BiomeModule = {
    * URL (used by `ensureSpritesLoaded` to populate the cache).
    */
   paintedFloors?: ReadonlyArray<{ cacheKey: string; url: string }>;
+  /**
+   * Painted-floor rendering controls for this biome. Lets each biome
+   * ship floor textures at its own authored source size and tune tiny
+   * per-tile color/opacity jitter to break up visible card repetition.
+   */
+  paintedFloorRendering?: {
+    sourceWidth: number;
+    sourceHeight: number;
+    overscan: number;
+    jitter?: {
+      hueDeg: number;
+      value: number;
+      alpha: number;
+    };
+    /**
+     * Multipliers applied to procedural decals/props for floor tiles
+     * when painted floors are active.
+     */
+    decalAlphaBoost?: number;
+    propAlphaBoost?: number;
+  };
 };
 
 export const DESERT_BIOME: BiomeModule = {
@@ -76,15 +95,8 @@ export const DESERT_BIOME: BiomeModule = {
   drawGroundDetail: drawDesertDetail,
   drawCoverDetail: drawDesertCoverDetail,
   drawCoverVariant: drawDesertCoverVariant,
-  // Painted desert floor tiles parked: the first painted asset batch
-  // didn't tile cleanly at the in-game iso scale (each variant read
-  // as a distinct "card" with visible borders, and at 64×32 game
-  // pixels the painted detail compressed to ~6 visible pixels per
-  // variant — too small to discriminate). The wiring + DESERT_PAINTED_
-  // FLOORS export + 6 PNGs at public/styles/flat/biomes/desert/ are
-  // preserved as scaffolding; re-enable when a tile set authored for
-  // seamless tiling lands by uncommenting the line below.
-  //   paintedFloors: DESERT_PAINTED_FLOORS,
+  paintedFloors: DESERT_PAINTED_FLOORS,
+  paintedFloorRendering: DESERT_PAINTED_FLOOR_RENDERING,
 };
 
 export const REFINERY_BIOME: BiomeModule = {
