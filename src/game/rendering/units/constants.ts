@@ -16,6 +16,8 @@ export const GRIP_ANCHOR = { x: 0.5, y: 0.56 };
 export const MUZZLE_OFFSET = { x: 22, y: -2 };
 
 
+import type { WeaponClass } from '../../types';
+
 /** Guardrails for additive animation channels before they are applied to sprites. */
 export const ANIMATION_LIMITS = {
   // Torso rotation cap keeps the chest readable during stacked walk+recoil.
@@ -29,3 +31,15 @@ export const ANIMATION_LIMITS = {
   // Weapon lift cap keeps shoulder elevation inside believable range.
   weaponLiftPx: 8.5,
 } as const;
+
+
+/** Post-composition caps for weapon channels, tuned per class silhouette. */
+export const WEAPON_ANIMATION_LIMITS: Record<WeaponClass | 'default', { rotationRad: number; liftPx: number }> = {
+  heavy: { rotationRad: 0.24, liftPx: 6.5 },
+  sniper: { rotationRad: 0.22, liftPx: 7.0 },
+  rifle: { rotationRad: 0.30, liftPx: 8.0 },
+  smg: { rotationRad: 0.34, liftPx: 8.8 },
+  shotgun: { rotationRad: 0.36, liftPx: 9.2 },
+  pistol: { rotationRad: 0.40, liftPx: 9.8 },
+  default: { rotationRad: 0.32, liftPx: 8.5 },
+};

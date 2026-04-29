@@ -1,6 +1,6 @@
 import type { Container, Graphics } from 'pixi.js';
 import type { UnitId } from '../../types';
-import { ANIMATION_LIMITS, HIT_FLASH_MS, DEATH_DURATION_MS, MUZZLE_OFFSET } from './constants';
+import { ANIMATION_LIMITS, WEAPON_ANIMATION_LIMITS, HIT_FLASH_MS, DEATH_DURATION_MS, MUZZLE_OFFSET } from './constants';
 import type { UnitNode } from './UnitNode';
 
 export const IDLE_MOTION_ENABLED = true;
@@ -144,9 +144,10 @@ export function tickUnitAnimations(
     // ----- Normalize/clamp additive channels before they touch sprites.
     // Limits are mirrored via facingSign/facingBlend so left/right facings
     // keep identical anatomical envelopes.
+    const classLimits = WEAPON_ANIMATION_LIMITS[node.fireClass ?? 'default'] ?? WEAPON_ANIMATION_LIMITS.default;
     const clampedBodyPitch = clampSymmetric(bodyPitch, ANIMATION_LIMITS.torsoRotationRad);
-    const clampedWeaponAim = clampSymmetric(weaponAim, ANIMATION_LIMITS.weaponAimRad);
-    const clampedWeaponLift = clampSymmetric(weaponLift, ANIMATION_LIMITS.weaponLiftPx);
+    const clampedWeaponAim = clampSymmetric(weaponAim, classLimits.rotationRad);
+    const clampedWeaponLift = clampSymmetric(weaponLift, classLimits.liftPx);
     const clampedIdleShoulderSway = clampSymmetric(idleShoulderSway, ANIMATION_LIMITS.armsBackSwayRad);
 
     // ----- Hit flash: tint + jitter.
@@ -220,7 +221,7 @@ export function tickUnitAnimations(
     // body: `weaponAim` rotates around the grip, `weaponLift` raises
     // the whole wrap toward eye level during aim.
     if (node.weaponWrap) {
-      node.weaponWrap.rotation = clampSymmetric(walkSway + clampedWeaponAim + idleWeaponSway, ANIMATION_LIMITS.weaponAimRad);
+      node.weaponWrap.rotation = clampSymmetric(walkSway + clampedWeaponAim + idleWeaponSway, classLimits.rotationRad);
       node.weaponWrap.position.y = node.weaponRestY + clampedWeaponLift;
     }
 
