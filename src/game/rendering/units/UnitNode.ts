@@ -91,6 +91,9 @@ export type UnitNode = {
    *  first updateUnitNode will initialise it without triggering a rebuild
    *  (the initial createUnitNode already composed for the current version). */
   lastLoadoutVersion?: number;
+  /** Multiplier for the rig `arms-back` sway animation channel.
+   *  1 = full sway, 0 = disabled (used for transparent/no-art arms-back). */
+  armsBackSwayFactor: number;
 };
 
 /**
@@ -330,6 +333,11 @@ function cascadeArmsAnchor(armsSprite: Sprite, anchor: { x: number; y: number })
   }
 }
 
+function hasTransparentArmsBackArt(u: Unit): boolean {
+  const partPath = u.appearance?.partOverrides?.['arms-back'];
+  return typeof partPath === 'string' && partPath.endsWith('/rig_transparent.svg');
+}
+
 export function createUnitNode(u: Unit): UnitNode {
   const container = new Container();
 
@@ -514,6 +522,7 @@ export function createUnitNode(u: Unit): UnitNode {
   const muzzleOffset = (rigComposition && weaponWrap)
     ? resolveWeaponHold(u).muzzleOffset
     : MUZZLE_OFFSET;
+  const armsBackSwayFactor = (rigComposition && hasTransparentArmsBackArt(u)) ? 0 : 1;
 
   return {
     container, shadow, body, sprite, fallback, weaponWrap, weaponSprite, armsSprite,
@@ -542,6 +551,7 @@ export function createUnitNode(u: Unit): UnitNode {
     bobPhase: Math.random() * Math.PI * 2,
     rigComposition,
     lastLoadoutVersion: u.loadoutVersion,
+    armsBackSwayFactor,
   };
 }
 

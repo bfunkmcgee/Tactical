@@ -22,7 +22,7 @@ function makeTransform(x = 0, y = 0): Transform {
   };
 }
 
-function makeNode(opts: { rig: boolean; alive: boolean }): UnitNode {
+function makeNode(opts: { rig: boolean; alive: boolean; armsBackSwayFactor?: number }): UnitNode {
   const muzzleFlash = {
     clear() { return this; },
     circle() { return this; },
@@ -113,6 +113,7 @@ function makeNode(opts: { rig: boolean; alive: boolean }): UnitNode {
       tintTargets: [],
       wearOverlays: {},
     } as never : null,
+    armsBackSwayFactor: opts.armsBackSwayFactor ?? 1,
   } as UnitNode;
 }
 
@@ -148,6 +149,29 @@ describe('tickUnitAnimations idle channels', () => {
     expect(deadRig.rigComposition?.parts.torso.position.y).toBe(7);
     expect(deadRig.rigComposition?.parts.torso.scale.y).toBe(1);
     expect(deadRig.rigComposition?.parts['arms-back'].rotation).toBe(0);
+  });
+
+  it('keeps parity intentional between transparent and visible arms-back rigs', () => {
+    const visibleArmsBack = makeNode({ rig: true, alive: true, armsBackSwayFactor: 1 });
+    const transparentArmsBack = makeNode({ rig: true, alive: true, armsBackSwayFactor: 0 });
+    const layer = { sortChildren() {} } as never;
+
+    for (const n of [visibleArmsBack, transparentArmsBack]) {
+      n.moveDurationMs = 100;
+      n.moveMs = 25;
+    }
+
+    tickUnitAnimations(layer, new Map([[('u8' as never), visibleArmsBack]]), 16, 5000);
+    tickUnitAnimations(layer, new Map([[('u9' as never), transparentArmsBack]]), 16, 5000);
+
+    // All other rig channels should remain in parity.
+    expect(transparentArmsBack.rigComposition?.parts.torso.rotation)
+      .toBe(visibleArmsBack.rigComposition?.parts.torso.rotation);
+    expect(transparentArmsBack.rigComposition?.parts.head.rotation)
+      .toBe(visibleArmsBack.rigComposition?.parts.head.rotation);
+    // Transparent arms-back rigs intentionally suppress the sway channel.
+    expect(transparentArmsBack.rigComposition?.parts['arms-back'].rotation).toBeCloseTo(0, 10);
+    expect(Math.abs(visibleArmsBack.rigComposition!.parts['arms-back'].rotation)).toBeGreaterThan(0);
   });
 });
 
