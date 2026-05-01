@@ -314,6 +314,8 @@ export type SoldierTemplate = {
   appearance?: HumanAppearance;
   /** Optional faction/class-authored wear decals (scratches/tears/scorch). */
   wearDecals?: Partial<Record<'scratch' | 'tear' | 'scorch', string>>;
+  /** Optional posture hint consumed by renderer animation modulation. */
+  posture?: PostureProfile;
 };
 
 export type EnemyTemplate = {
@@ -368,7 +370,12 @@ export type EnemyTemplate = {
   appearance?: HumanAppearance;
   /** Optional faction/class-authored wear decals (scratches/tears/scorch). */
   wearDecals?: Partial<Record<'scratch' | 'tear' | 'scorch', string>>;
+  /** Optional posture hint consumed by renderer animation modulation. */
+  posture?: PostureProfile;
 };
+
+
+export type PostureProfile = 'upright' | 'hunched' | 'floating' | 'ethereal';
 
 export type Faction = 'player' | 'enemy';
 
