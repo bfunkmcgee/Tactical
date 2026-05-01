@@ -3,6 +3,7 @@ import type {
   GridMap, LogEntry, MissionObjective, TurnPhase, Unit, UnitId, Utility,
   Vec2, ShotPreview, Weapon, WeaponClass,
 } from '../game/types';
+import { resolveFireStyleClass, type FireStyleClass } from '../game/rendering/units/fireStyles';
 import { RUINED_MARKET, pickRandomMap } from '../game/maps';
 import {
   useContent, getSoldierTemplate, getEnemyTemplate, getWeapon,
@@ -66,7 +67,7 @@ export type FireEvent = {
   shooterPos: Vec2;
   /** Grid coord of the shot's target. */
   targetPos: Vec2;
-  fireClass: WeaponClass;
+  fireClass: FireStyleClass;
 };
 
 export type CombatState = {
@@ -179,11 +180,11 @@ export type CombatState = {
 // Runtime id counters now live in engine/runtimeIds.ts (module-scoped,
 // per-mission reset via resetMissionIds() inside buildInitialCombatState).
 
-function fireClassFor(u: Unit, weapon: Weapon | null): WeaponClass {
+function fireClassFor(u: Unit, weapon: Weapon | null): FireStyleClass {
   if (weapon) return weapon.class;
   if (u.faction === 'enemy') {
     const tmpl = useContent().enemyTemplates[u.templateId];
-    return tmpl?.fireClass ?? 'rifle';
+    return resolveFireStyleClass({ fireClass: tmpl?.fireClass, enemyTemplate: tmpl });
   }
   return 'rifle';
 }

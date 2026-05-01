@@ -365,7 +365,11 @@ export default function CharacterAnimationPreviewer() {
               onClick={() => setFireContext('sidearm')}
               style={{ borderColor: fireContext === 'sidearm' ? 'var(--accent)' : undefined }}
             >Use Sidearm</button>
-            <button onClick={trigFire}>Fire</button>
+            <button
+              onClick={() => setFireContext('melee')}
+              style={{ borderColor: fireContext === 'melee' ? 'var(--accent)' : undefined }}
+            >Use Melee Strike</button>
+            <button onClick={trigFire}>{fireContext === 'melee' ? 'Strike' : 'Fire'}</button>
             <button onClick={trigHit}>Hit</button>
             <button onClick={trigDeath}>Death</button>
             <button onClick={trigReset}>Reset</button>

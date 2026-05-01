@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { WEAPON_HOLD } from '../../game/rendering/units/fireStyles';
+import { MELEE_STYLE, WEAPON_HOLD } from '../../game/rendering/units/fireStyles';
 import {
   applyPreviewWeaponClass,
   resolvePreviewWeaponClass,
@@ -15,6 +15,10 @@ describe('resolvePreviewWeaponClass', () => {
 
   it('uses the selected sidearm class when sidearm context is active', () => {
     expect(resolvePreviewWeaponClass({ context: 'sidearm', primary, sidearm })).toBe('pistol');
+  });
+
+  it('supports explicit melee preview context', () => {
+    expect(resolvePreviewWeaponClass({ context: 'melee', primary, sidearm })).toBe('melee');
   });
 
   it('falls back gracefully when selected context weapon is missing', () => {
@@ -48,4 +52,18 @@ describe('applyPreviewWeaponClass', () => {
       WEAPON_HOLD.pistol.armsAnchor!.y,
     );
   });
+});
+
+
+it('applies melee preview style without firearm muzzle assumptions', () => {
+  const node = {
+    fireStyle: { totalMs: 0 },
+    weaponRestY: 0,
+    muzzleOffset: { x: 0, y: 0 },
+    weaponWrap: { position: { set: vi.fn() } },
+  } as never;
+
+  applyPreviewWeaponClass(node, 'melee');
+  expect(node.fireStyle).toBe(MELEE_STYLE);
+  expect(node.fireStyle.flashScale).toBe(0);
 });

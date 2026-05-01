@@ -1,5 +1,5 @@
 import type { FireEvent } from '../../../state/combatStore';
-import type { UnitId, WeaponClass } from '../../types';
+import type { EnemyTemplate, UnitId, WeaponClass } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import type { UnitNode } from './UnitNode';
 
@@ -30,6 +30,9 @@ export type FireStyle = {
   weaponLiftPx: number;
   flashScale: number;     // size multiplier for drawMuzzleFlash.
 };
+
+
+export type FireStyleClass = WeaponClass | 'melee' | 'default';
 
 /**
  * Rifle: Ranger brings the carbine up to cheekweld (big lift + rotation)
@@ -113,6 +116,31 @@ export const WEAPON_HOLD: Record<WeaponClass | 'default', WeaponHold> = {
   default: { gripAnchor: { x: 0.50, y: 0.56 },     scale: 0.42, muzzleOffset: { x: 22, y: -2 }, restY: -19.6 },
 };
 
+
+export const MELEE_STYLE: FireStyle = {
+  totalMs: 520,
+  windupMs: 220,
+  shotSpacingMs: 0,
+  shotWindowMs: 130,
+  shots: 1,
+  windupRad: 0.92,
+  kickRad: 0.18,
+  recoilPx: 7,
+  weaponLiftPx: 0,
+  flashScale: 0,
+};
+
+export function resolveFireStyleClass(args: { fireClass?: WeaponClass; enemyTemplate?: EnemyTemplate }): FireStyleClass {
+  if (args.enemyTemplate?.kind === 'melee') return 'melee';
+  if (args.fireClass) return args.fireClass;
+  return 'default';
+}
+
+export function resolveFireStyle(styleClass: FireStyleClass): FireStyle {
+  if (styleClass === 'melee') return MELEE_STYLE;
+  return FIRE_STYLES[styleClass] ?? FIRE_STYLES.default;
+}
+
 /**
  * Drain pending FireEvents and trigger the correct animation on each
  * shooter's node. Events are authoritative (they carry the actual
@@ -129,7 +157,7 @@ export function applyFireEvents(nodes: Map<UnitId, UnitNode>, events: FireEvent[
     const len = Math.hypot(dx, dy) || 1;
     node.fireTargetDir = { x: dx / len, y: dy / len };
     node.fireClass = evt.fireClass ?? "default";
-    node.fireStyle = FIRE_STYLES[evt.fireClass] ?? FIRE_STYLES.default;
+    node.fireStyle = resolveFireStyle(evt.fireClass);
     node.fireAnimMs = node.fireStyle.totalMs;
     if (Math.abs(dx) > 0.5) {
       const desiredFacing = dx > 0 ? 1 : -1;
