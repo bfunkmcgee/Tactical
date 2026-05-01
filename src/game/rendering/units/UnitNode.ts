@@ -2,7 +2,7 @@ import { Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js
 import { useCombatStore } from '../../../state/combatStore';
 import { getArmor, getClothing, getKit, getMod, useContent } from '../../../content/registry';
 import { WEAPON_ANCHORS } from '../../../content/rigs/weapons';
-import type { Unit, UnitId, Vec2, WeaponClass } from '../../types';
+import type { PostureProfile, Unit, UnitId, Vec2, WeaponClass } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
 import { HIT_FLASH_MS, MOVE_TWEEN_MS, MUZZLE_OFFSET } from './constants';
@@ -94,6 +94,7 @@ export type UnitNode = {
   /** Multiplier for the rig `arms-back` sway animation channel.
    *  1 = full sway, 0 = disabled (used for transparent/no-art arms-back). */
   armsBackSwayFactor: number;
+  posture?: PostureProfile;
 };
 
 /**
@@ -523,6 +524,8 @@ export function createUnitNode(u: Unit): UnitNode {
     ? resolveWeaponHold(u).muzzleOffset
     : MUZZLE_OFFSET;
   const armsBackSwayFactor = (rigComposition && hasTransparentArmsBackArt(u)) ? 0 : 1;
+  const posture = useContent().soldierTemplates[u.templateId]?.posture
+    ?? useContent().enemyTemplates[u.templateId]?.posture;
 
   return {
     container, shadow, body, sprite, fallback, weaponWrap, weaponSprite, armsSprite,
@@ -552,6 +555,7 @@ export function createUnitNode(u: Unit): UnitNode {
     rigComposition,
     lastLoadoutVersion: u.loadoutVersion,
     armsBackSwayFactor,
+    posture,
   };
 }
 

@@ -5,6 +5,31 @@ import type { UnitNode } from './UnitNode';
 
 export const IDLE_MOTION_ENABLED = true;
 
+type PostureTuning = {
+  walkBob: number;
+  walkLean: number;
+  idleSway: number;
+  deathSlump: number;
+};
+
+const DEFAULT_POSTURE_TUNING: PostureTuning = {
+  walkBob: 1,
+  walkLean: 1,
+  idleSway: 1,
+  deathSlump: 1,
+};
+
+const POSTURE_TUNING: Record<string, PostureTuning> = {
+  upright: DEFAULT_POSTURE_TUNING,
+  hunched: { walkBob: 0.82, walkLean: 1.22, idleSway: 1.18, deathSlump: 1.2 },
+  floating: { walkBob: 0.28, walkLean: 0.6, idleSway: 1.4, deathSlump: 0.62 },
+  ethereal: { walkBob: 0.28, walkLean: 0.6, idleSway: 1.4, deathSlump: 0.62 },
+};
+
+function postureTuning(profile?: string): PostureTuning {
+  return profile ? (POSTURE_TUNING[profile] ?? DEFAULT_POSTURE_TUNING) : DEFAULT_POSTURE_TUNING;
+}
+
 /**
  * Per-frame animation update. Reads each node's pending timers and builds
  * a composite body transform + muzzle-flash draw for this frame.
@@ -45,6 +70,7 @@ export function tickUnitAnimations(
 
     const alive = node.deathMs === null;
     const moving = node.moveDurationMs > 0;
+    const posture = postureTuning(node.posture);
 
     // ----- Walk cycle (while moving): lean + two-step bob + squash on foot-plants.
     // walkSway is an independent weapon rotation that counter-balances the lean.
@@ -52,8 +78,8 @@ export function tickUnitAnimations(
     if (moving && alive) {
       const raw = node.moveMs / node.moveDurationMs;
       // Two steps per tile → 4 half-cycles.
-      walkLean = Math.sin(raw * Math.PI * 2) * 0.08; // ±4.6°
-      walkBob = -Math.abs(Math.sin(raw * Math.PI * 4)) * 2.5; // body lifts on stride peak
+      walkLean = Math.sin(raw * Math.PI * 2) * 0.08 * posture.walkLean; // ±4.6° baseline
+      walkBob = -Math.abs(Math.sin(raw * Math.PI * 4)) * 2.5 * posture.walkBob; // body lifts on stride peak
       walkScaleY = 1 - Math.abs(Math.sin(raw * Math.PI * 4 - Math.PI / 2)) * 0.05; // squash on plant
       walkSway = -walkLean * 0.6; // weapon lags/opposes the body swing
     }
@@ -73,8 +99,8 @@ export function tickUnitAnimations(
       const fireIdleFade = node.fireAnimMs > 0 ? 0.2 : 1;
       idleBreathY = Math.sin(breathT) * breathAmp * fireIdleFade;
       idleBreathScaleY = Math.sin(breathT + Math.PI / 2) * 0.01 * fireIdleFade; // ±0.01
-      idleShoulderSway = Math.sin(swayT) * 0.015 * fireIdleFade;
-      idleWeaponSway = Math.sin(swayT + 0.85) * 0.012 * fireIdleFade;
+      idleShoulderSway = Math.sin(swayT) * 0.015 * fireIdleFade * posture.idleSway;
+      idleWeaponSway = Math.sin(swayT + 0.85) * 0.012 * fireIdleFade * posture.idleSway;
     }
 
     // ----- Fire sequence: windup → one-or-more shots → return.
@@ -266,7 +292,7 @@ export function tickUnitAnimations(
         p.head.rotation = 0;
         p['arms-back'].rotation = 0;
       }
-      node.body.position.y = t * 14;              // slump to the ground
+      node.body.position.y = t * 14 * posture.deathSlump;              // slump to the ground
       node.body.rotation = facingSign * 0.9 * t; // tip over 50°, feels flatter
       // Weapon drops below the grip as the character collapses.
       if (node.weaponWrap) {

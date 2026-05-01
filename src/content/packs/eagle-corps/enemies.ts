@@ -44,6 +44,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     color: '#9aa054', // sickly yellow-green
     fireClass: 'shotgun', // short-barrel scrap blunderbuss — wide cone blast.
     archetype: 'flanker', // skirmisher; nudges around walls to break the squad's cover
+    posture: 'hunched',
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,
@@ -66,6 +67,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     // hero is fair game — no need to wait for a cluster.
     grenade: { dmgMin: 3, dmgMax: 5, radius: 2, range: 6 },
     archetype: 'grenadier',
+    posture: 'hunched',
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,
@@ -85,6 +87,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     fireClass: 'heavy',
     burstShots: 4, // scrap MG rips a 4-round burst; each round rolled separately.
     archetype: 'sniper', // long-sightline anchor; overwatches mid-range, refuses to advance into the open
+    posture: 'upright',
     appearance: {
       rig: 'human',
       skinTone: 0xffffff,
@@ -103,6 +106,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
     color: '#a03818',  // burnt-orange rage paint.
     fireClass: 'pistol',   // short single-swing animation; no burst.
     archetype: 'berserker', // ignores cover bias when picking move tiles — sprints to the squad
+    posture: 'hunched',
     // Berserkers reuse the goblin silhouette (same as the legacy bespoke
     // theme); a warm red-orange skinTone wash pushes the goblin green
     // toward rage-paint. Dedicated berserker art can land in a content
