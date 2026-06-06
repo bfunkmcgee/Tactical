@@ -342,6 +342,10 @@ describe('combatStore: snapshotSquadCarry', () => {
       ammoPrimary: 1,
       ammoSidearm: 2,
       utilityCharges: [1, 0],
+      // Persistent mission-wear fields: no prior grime, and wear derives from
+      // the HP deficit (hp 3 / hpMax 15 → 80% worn).
+      dirt: 0,
+      wear: 80,
     });
   });
 
