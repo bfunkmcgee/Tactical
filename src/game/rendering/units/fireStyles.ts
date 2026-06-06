@@ -1,5 +1,6 @@
 import type { FireEvent } from '../../../state/combatStore';
 import type { EnemyTemplate, FireStyleClass, UnitId, WeaponClass } from '../../types';
+import { GRIP_ANCHOR } from './constants';
 import { gridToScreen } from '../isoProjection';
 import type { UnitNode } from './UnitNode';
 
@@ -118,8 +119,8 @@ export const WEAPON_HOLD: Record<WeaponClass | 'default', WeaponHold> = {
   heavy:   { gripAnchor: { x: 0.45, y: 65 / 128 }, scale: 0.50, muzzleOffset: { x: 24.9, y: 0.5 }, restY: -22 },
   // 'default' mirrors the pre-WEAPON_HOLD shipping numbers exactly so any
   // unit without a resolvable class falls through bug-compatible:
-  // gripAnchor = (0.5, 0.56), scale = 0.42, restY = (0.56 - 1) * 128 * 0.42 + 4.
-  default: { gripAnchor: { x: 0.50, y: 0.56 },     scale: 0.42, muzzleOffset: { x: 22, y: -2 }, restY: -19.6 },
+  // gripAnchor = GRIP_ANCHOR (0.5, 0.56), scale = 0.42, restY = (0.56 - 1) * 128 * 0.42 + 4.
+  default: { gripAnchor: { ...GRIP_ANCHOR },        scale: 0.42, muzzleOffset: { x: 22, y: -2 }, restY: -19.6 },
 };
 
 
