@@ -6,6 +6,8 @@ import { spriteCache } from '../game/rendering/context';
 import { useContent, getArmor, getClothing, getKit } from '../content/registry';
 import type { HumanAppearance, Loadout } from '../game/types';
 
+const errText = (e: unknown) => (e instanceof Error ? (e.stack ?? e.message) : String(e));
+
 /**
  * Lightweight Pixi canvas that renders a single rig-composed character
  * from a HumanAppearance + optional Loadout. Used by the character
@@ -44,6 +46,30 @@ export default function RigPreview({
   // preview re-composes internally.
   const appRef = useRef<Application | null>(null);
   const rootRef = useRef<Container | null>(null);
+  // Latest props, so the WebGL-context-restore handler can rebuild with the
+  // current appearance/loadout rather than the mount-time snapshot.
+  const propsRef = useRef({ appearance, loadout });
+  propsRef.current = { appearance, loadout };
+
+  // On-screen failure surface (no on-device console on mobile). Only appears
+  // on an actual error / context loss.
+  const surface = (msg: string) => {
+    const host = hostRef.current;
+    if (!host) return;
+    let el = host.querySelector<HTMLDivElement>('[data-rig-diag]');
+    if (!el) {
+      el = document.createElement('div');
+      el.dataset.rigDiag = '';
+      el.style.cssText =
+        'position:absolute;left:2px;right:2px;top:2px;z-index:9;' +
+        'background:rgba(130,24,24,.92);color:#fff;font:9px/1.3 monospace;' +
+        'padding:3px 4px;border-radius:4px;white-space:pre-wrap;pointer-events:none';
+      host.appendChild(el);
+    }
+    el.textContent = msg;
+  };
+  const clearSurface = () =>
+    hostRef.current?.querySelector('[data-rig-diag]')?.remove();
 
   // Mount once. Preload whatever rig + outfit + hair + armor + clothing
   // URLs the active pack declares so the first render has textures in
@@ -66,6 +92,19 @@ export default function RigPreview({
       if (destroyed) { app.destroy(true); return; }
       host.appendChild(app.canvas);
       appRef.current = app;
+
+      // Multiple Pixi canvases (this preview, the roster portraits, the combat
+      // stage) share GPU contexts; a mobile GPU may drop one. Surface it and
+      // rebuild on restore instead of staying black.
+      app.canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        surface('preview: WebGL context lost\n(GPU dropped this canvas). restoring…');
+      });
+      app.canvas.addEventListener('webglcontextrestored', () => {
+        const w = app.stage.children[0] as Container | undefined;
+        if (w) rebuild(w, propsRef.current.appearance, propsRef.current.loadout);
+        clearSurface();
+      });
 
       // Preload all rig-path textures from the active pack. Each file
       // gets cached under the key shape buildHumanRigBody expects
@@ -202,27 +241,39 @@ export default function RigPreview({
   }
 
   function rebuild(world: Container, appr: HumanAppearance, ld: Loadout | undefined): void {
-    // Tear down the previous composition.
-    if (rootRef.current) {
-      world.removeChild(rootRef.current);
-      rootRef.current.destroy({ children: true });
-      rootRef.current = null;
+    // Build the NEW composition first. Only once it succeeds do we tear down
+    // and swap out the old one — so a failed build can't leave the canvas
+    // black (the previous composition stays on screen instead), and the
+    // `destroy({ children: true })` only releases sprites, never the shared
+    // spriteCache textures (texture defaults to false in Pixi v8).
+    let comp: ReturnType<typeof buildHumanRigBody>;
+    try {
+      comp = buildHumanRigBody(HUMAN_RIG, appr, ld, spriteCache, {
+        armorOf: (id) => { try { return getArmor(id); } catch { return undefined; } },
+        clothingOf: getClothing,
+        hairStyleOf: (id) => useContent().hairStyles?.[id],
+        baseOutfitOf: (id) => useContent().baseOutfits?.[id],
+        kitOf: (id) => { try { return getKit(id); } catch { return undefined; } },
+      });
+    } catch (err) {
+      surface('Preview build failed:\n' + errText(err));
+      return; // keep the previous composition visible
     }
-    const comp = buildHumanRigBody(HUMAN_RIG, appr, ld, spriteCache, {
-      armorOf: (id) => { try { return getArmor(id); } catch { return undefined; } },
-      clothingOf: getClothing,
-      hairStyleOf: (id) => useContent().hairStyles?.[id],
-      baseOutfitOf: (id) => useContent().baseOutfits?.[id],
-      kitOf: (id) => { try { return getKit(id); } catch { return undefined; } },
-    });
+    const prev = rootRef.current;
     world.addChild(comp.root);
     rootRef.current = comp.root;
+    if (prev) {
+      world.removeChild(prev);
+      prev.destroy({ children: true });
+    }
+    clearSurface();
   }
 
   return (
     <div
       ref={hostRef}
       style={{
+        position: 'relative',
         width, height,
         border: '1px solid var(--bg-3)',
         borderRadius: 'var(--r-md)',
