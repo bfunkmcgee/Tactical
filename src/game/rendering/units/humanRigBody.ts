@@ -76,7 +76,7 @@ export interface RigBodyDeps {
  * sprite — the rig's joint offsets land at the same screen coordinates
  * the old monolithic sprites used.
  */
-const SPRITE_SCALE = 0.42;
+export const SPRITE_SCALE = 0.42;
 
 /**
  * Phase 6d z-bucket vocabulary. Root's children sort by these values so

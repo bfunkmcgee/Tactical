@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MELEE_STYLE, WEAPON_HOLD } from '../../game/rendering/units/fireStyles';
+import { GRIP_ANCHOR } from '../../game/rendering/units/constants';
+import { SPRITE_SCALE } from '../../game/rendering/units/humanRigBody';
 import type { UnitNode } from '../../game/rendering/units/UnitNode';
 import {
   applyPreviewWeaponClass,
@@ -30,7 +32,7 @@ describe('resolvePreviewWeaponClass', () => {
 });
 
 describe('applyPreviewWeaponClass', () => {
-  it('applies pistol hold cues including one-hand arms anchor and rest height', () => {
+  it('applies pistol hold cues with the body-scaled front arm anchored at the grip pivot', () => {
     const node = {
       fireStyle: { totalMs: 0 },
       weaponRestY: 0,
@@ -48,10 +50,10 @@ describe('applyPreviewWeaponClass', () => {
       WEAPON_HOLD.pistol.gripAnchor.x,
       WEAPON_HOLD.pistol.gripAnchor.y,
     );
-    expect(node.armsSprite!.anchor.set).toHaveBeenCalledWith(
-      WEAPON_HOLD.pistol.armsAnchor!.x,
-      WEAPON_HOLD.pistol.armsAnchor!.y,
-    );
+    // Pistol no longer carries a bespoke arms pose: the front arm falls back
+    // to its own drawn hand (GRIP_ANCHOR) at body scale so it sits on the grip.
+    expect(node.armsSprite!.anchor.set).toHaveBeenCalledWith(GRIP_ANCHOR.x, GRIP_ANCHOR.y);
+    expect(node.armsSprite!.scale.set).toHaveBeenCalledWith(SPRITE_SCALE);
   });
 });
 

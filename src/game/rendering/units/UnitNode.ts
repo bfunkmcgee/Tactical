@@ -5,9 +5,9 @@ import { WEAPON_ANCHORS } from '../../../content/rigs/weapons';
 import type { FireStyleClass, PostureProfile, Unit, UnitId, Vec2 } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
-import { HIT_FLASH_MS, MOVE_TWEEN_MS, MUZZLE_OFFSET } from './constants';
+import { GRIP_ANCHOR, HIT_FLASH_MS, MOVE_TWEEN_MS, MUZZLE_OFFSET } from './constants';
 import { FIRE_STYLES, WEAPON_HOLD, type FireStyle, type WeaponHold } from './fireStyles';
-import { buildHumanRigBody, overlayCacheKey, skinMaskCacheKey, type RigBodyComposition } from './humanRigBody';
+import { buildHumanRigBody, overlayCacheKey, skinMaskCacheKey, SPRITE_SCALE, type RigBodyComposition } from './humanRigBody';
 import { loadSkinMaskDataUrl } from './skinMask';
 import { allRigs, rigById, rigPartSvg } from '../../../content/rigs';
 import { DESERT_BIOME, REFINERY_BIOME, URBAN_BIOME } from '../biomes';
@@ -411,8 +411,15 @@ export function createUnitNode(u: Unit): UnitNode {
 
     if (weaponTex) {
       const hold = resolveWeaponHold(u);
-      const armsAnchor = hold.armsAnchor ?? hold.gripAnchor;
-      const armsScale = hold.armsScale ?? hold.scale;
+      // The front arm is a body part, not part of the weapon: it must pivot
+      // around the hand it's DRAWN with (GRIP_ANCHOR = the arm SVG's stated
+      // grip at ~48,72) and render at the body's SPRITE_SCALE so it matches
+      // the back arm / torso. Defaulting these to the weapon's gripAnchor /
+      // scale (as before) anchored the hand to the gun's grip-height and
+      // resized the arm per weapon — leaving the hand floating off the grip
+      // and the front arm a different size than the rest of the rig.
+      const armsAnchor = hold.armsAnchor ?? GRIP_ANCHOR;
+      const armsScale = hold.armsScale ?? SPRITE_SCALE;
 
       weaponWrap = new Container();
       weaponRestY = hold.restY;
@@ -598,8 +605,11 @@ function rebuildRigOverlays(node: UnitNode, u: Unit): void {
   // the primary weapon class re-resolves the hold.
   if (node.weaponWrap) {
     const hold = resolveWeaponHold(u);
-    const armsAnchor = hold.armsAnchor ?? hold.gripAnchor;
-    const armsScale = hold.armsScale ?? hold.scale;
+    // Same defaults as createUnitNode: the front arm is a body part, so it
+    // pivots around its own drawn hand (GRIP_ANCHOR) at body scale, not the
+    // weapon's grip/scale.
+    const armsAnchor = hold.armsAnchor ?? GRIP_ANCHOR;
+    const armsScale = hold.armsScale ?? SPRITE_SCALE;
     node.armsSprite = fresh.armsFront;
     node.armsSprite.anchor.set(armsAnchor.x, armsAnchor.y);
     node.armsSprite.scale.set(armsScale);

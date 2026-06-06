@@ -87,11 +87,14 @@ export type WeaponHold = {
    *  pistol can hang low at the hip while a heavy rides shouldered.
    *  Replaces the formula UnitNode used to inline. */
   restY: number;
-  /** Optional per-class arms-front pose nudge — overrides gripAnchor
-   *  for the arms only. Pistol uses this to read as one-hand
-   *  (anchor x shifted off-center). Defaults to gripAnchor. */
+  /** Optional per-class arms-front pivot override. The front arm is a body
+   *  part drawn with its hand at GRIP_ANCHOR (~48,72), so it defaults to
+   *  GRIP_ANCHOR — which lands the drawn hand on the weapon's grip. Only set
+   *  this if a weapon needs a bespoke arm pose. */
   armsAnchor?: { x: number; y: number };
-  /** Optional per-class arms-front scale. Defaults to scale. */
+  /** Optional per-class arms-front scale. Defaults to SPRITE_SCALE (the body
+   *  scale) so the front arm matches the back arm / torso rather than the
+   *  weapon's bulk. Only set this for a bespoke arm. */
   armsScale?: number;
 };
 
@@ -104,12 +107,11 @@ export const WEAPON_HOLD: Record<WeaponClass | 'default', WeaponHold> = {
   shotgun: { gripAnchor: { x: 0.50, y: 64 / 128 }, scale: 0.44, muzzleOffset: { x: 19, y: -1 }, restY: -26 },
   // Hip-to-shoulder spray: compact profile sits below rifle and flashes slightly closer to body.
   smg:     { gripAnchor: { x: 0.50, y: 70 / 128 }, scale: 0.38, muzzleOffset: { x: 14, y: -1 }, restY: -21 },
-  // Hip-fire sidearm: one-hand dominant frame, with off-center arm pose to avoid idle two-hand read.
-  pistol:  { gripAnchor: { x: 0.50, y: 70 / 128 }, scale: 0.32, muzzleOffset: { x: 11, y:  0 }, restY: -14,
-             armsAnchor: { x: 0.40, y: 69 / 128 }, armsScale: 0.31 },
+  // Hip-fire sidearm: compact, low-slung. Arm uses the shared body-scaled
+  // front arm (default GRIP_ANCHOR / SPRITE_SCALE) so the hand sits on the grip.
+  pistol:  { gripAnchor: { x: 0.50, y: 70 / 128 }, scale: 0.32, muzzleOffset: { x: 11, y:  0 }, restY: -14 },
   // Shoulder-fire support weapon: high mount and slightly lower grip pivot to emphasize carried mass.
-  heavy:   { gripAnchor: { x: 0.45, y: 65 / 128 }, scale: 0.50, muzzleOffset: { x: 22, y: -2 }, restY: -22,
-             armsAnchor: { x: 0.40, y: 65 / 128 }, armsScale: 0.50 },
+  heavy:   { gripAnchor: { x: 0.45, y: 65 / 128 }, scale: 0.50, muzzleOffset: { x: 22, y: -2 }, restY: -22 },
   // 'default' mirrors the pre-WEAPON_HOLD shipping numbers exactly so any
   // unit without a resolvable class falls through bug-compatible:
   // gripAnchor = (0.5, 0.56), scale = 0.42, restY = (0.56 - 1) * 128 * 0.42 + 4.
