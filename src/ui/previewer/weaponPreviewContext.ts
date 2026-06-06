@@ -1,5 +1,7 @@
 import type { UnitNode } from '../../game/rendering/units/UnitNode';
 import { FIRE_STYLES, MELEE_STYLE, WEAPON_HOLD, type FireStyleClass } from '../../game/rendering/units/fireStyles';
+import { GRIP_ANCHOR } from '../../game/rendering/units/constants';
+import { SPRITE_SCALE } from '../../game/rendering/units/humanRigBody';
 import type { Weapon, WeaponClass } from '../../game/types';
 
 export type PreviewWeaponContext = 'primary' | 'sidearm' | 'melee';
@@ -29,8 +31,10 @@ export function applyPreviewWeaponClass(node: UnitNode, weaponClass: FireStyleCl
   }
 
   if (node.armsSprite) {
-    const armsAnchor = hold.armsAnchor ?? hold.gripAnchor;
-    const armsScale = hold.armsScale ?? hold.scale;
+    // Front arm pivots around its own drawn hand (GRIP_ANCHOR) at body scale,
+    // not the weapon's grip/scale — matches the in-game renderer (UnitNode).
+    const armsAnchor = hold.armsAnchor ?? GRIP_ANCHOR;
+    const armsScale = hold.armsScale ?? SPRITE_SCALE;
     node.armsSprite.anchor.set(armsAnchor.x, armsAnchor.y);
     node.armsSprite.scale.set(armsScale);
   }
