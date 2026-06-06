@@ -9,6 +9,12 @@ import { drawEnvProps } from './drawProps';
 import { drawFloorDecals } from './drawDecals';
 import { drawEastExtender, drawSouthExtender, drawBrokenCoverShape } from './extenders';
 
+// Escape hatch: append `?proc=1` to the URL to force the procedural floor
+// fallback and skip painted-floor sprites entirely. Useful for diagnosing /
+// working around devices where the painted PNG floor tiles don't render.
+const FORCE_PROCEDURAL_FLOORS =
+  typeof location !== 'undefined' && /[?&]proc=1\b/.test(location.search);
+
 const DEFAULT_PAINTED_FLOOR = {
   sourceWidth: 1056,
   sourceHeight: 528,
@@ -175,7 +181,7 @@ export function drawMap(layer: Container, map: GridMap) {
       // base layer. Walls + cover + non-painted floors keep the full
       // procedural path through `g`.
       let paintedFloor = false;
-      if (t.kind === 'floor' && biome.paintedFloors && biome.paintedFloors.length > 0) {
+      if (t.kind === 'floor' && !FORCE_PROCEDURAL_FLOORS && biome.paintedFloors && biome.paintedFloors.length > 0) {
         const renderCfg = biome.paintedFloorRendering ?? DEFAULT_PAINTED_FLOOR;
         const idx = tileHash % biome.paintedFloors.length;
         const tex = spriteCache.get(biome.paintedFloors[idx].cacheKey);
