@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Fantasy-modern turn-based tactical game (mobile web MVP).",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
