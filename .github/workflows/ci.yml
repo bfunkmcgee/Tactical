@@ -17,9 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Node 22: the test suite imports pixi.js under vitest's `node`
+      # environment, and pixi's import-time browser detection reads the
+      # global `navigator` — which only exists on Node >= 21. Node 20 has
+      # no global navigator, so the rendering tests crash at import there.
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
