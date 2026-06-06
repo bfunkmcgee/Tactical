@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type {
   GridMap, LogEntry, MissionObjective, TurnPhase, Unit, UnitId, Utility,
-  Vec2, ShotPreview, Weapon, WeaponClass,
+  Vec2, ShotPreview, Weapon,
 } from '../game/types';
 import { resolveFireStyleClass, type FireStyleClass } from '../game/rendering/units/fireStyles';
 import { RUINED_MARKET, pickRandomMap } from '../game/maps';

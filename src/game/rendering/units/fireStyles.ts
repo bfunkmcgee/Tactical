@@ -1,5 +1,5 @@
 import type { FireEvent } from '../../../state/combatStore';
-import type { EnemyTemplate, UnitId, WeaponClass } from '../../types';
+import type { EnemyTemplate, FireStyleClass, UnitId, WeaponClass } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import type { UnitNode } from './UnitNode';
 
@@ -32,7 +32,7 @@ export type FireStyle = {
 };
 
 
-export type FireStyleClass = WeaponClass | 'melee' | 'default';
+export type { FireStyleClass };
 
 /**
  * Rifle: Ranger brings the carbine up to cheekweld (big lift + rotation)

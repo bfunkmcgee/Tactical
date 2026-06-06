@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MELEE_STYLE, WEAPON_HOLD } from '../../game/rendering/units/fireStyles';
+import type { UnitNode } from '../../game/rendering/units/UnitNode';
 import {
   applyPreviewWeaponClass,
   resolvePreviewWeaponClass,
@@ -37,17 +38,17 @@ describe('applyPreviewWeaponClass', () => {
       weaponWrap: { position: { set: vi.fn() } },
       weaponSprite: { anchor: { set: vi.fn() }, scale: { set: vi.fn() } },
       armsSprite: { anchor: { set: vi.fn() }, scale: { set: vi.fn() } },
-    } as never;
+    } as unknown as UnitNode;
 
     applyPreviewWeaponClass(node, 'pistol');
 
     expect(node.weaponRestY).toBe(WEAPON_HOLD.pistol.restY);
-    expect(node.weaponWrap.position.set).toHaveBeenCalledWith(0, WEAPON_HOLD.pistol.restY);
-    expect(node.weaponSprite.anchor.set).toHaveBeenCalledWith(
+    expect(node.weaponWrap!.position.set).toHaveBeenCalledWith(0, WEAPON_HOLD.pistol.restY);
+    expect(node.weaponSprite!.anchor.set).toHaveBeenCalledWith(
       WEAPON_HOLD.pistol.gripAnchor.x,
       WEAPON_HOLD.pistol.gripAnchor.y,
     );
-    expect(node.armsSprite.anchor.set).toHaveBeenCalledWith(
+    expect(node.armsSprite!.anchor.set).toHaveBeenCalledWith(
       WEAPON_HOLD.pistol.armsAnchor!.x,
       WEAPON_HOLD.pistol.armsAnchor!.y,
     );
@@ -61,7 +62,7 @@ it('applies melee preview style without firearm muzzle assumptions', () => {
     weaponRestY: 0,
     muzzleOffset: { x: 0, y: 0 },
     weaponWrap: { position: { set: vi.fn() } },
-  } as never;
+  } as unknown as UnitNode;
 
   applyPreviewWeaponClass(node, 'melee');
   expect(node.fireStyle).toBe(MELEE_STYLE);

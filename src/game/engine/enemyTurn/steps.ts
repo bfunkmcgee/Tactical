@@ -257,7 +257,7 @@ function resolveThrow(state: CombatState, step: EnemyStep & { kind: 'throw' }, d
     shooterId: actor.id,
     shooterPos: actor.pos,
     targetPos: step.center,
-    fireClass: 'heavy' as WeaponClass,
+    fireClass: 'heavy',
   } satisfies FireEvent];
   const victimCount = blast.damageByUnit.size;
   const shredded = blast.tilesChanged;

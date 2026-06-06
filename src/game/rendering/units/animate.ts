@@ -170,7 +170,11 @@ export function tickUnitAnimations(
     // ----- Normalize/clamp additive channels before they touch sprites.
     // Limits are mirrored via facingSign/facingBlend so left/right facings
     // keep identical anatomical envelopes.
-    const classLimits = WEAPON_ANIMATION_LIMITS[node.fireClass ?? 'default'] ?? WEAPON_ANIMATION_LIMITS.default;
+    // `node.fireClass` may be 'melee' (no firearm limits row) — fall back to
+    // the default envelope for those, same as the renderer's other lookups.
+    const classLimits = WEAPON_ANIMATION_LIMITS[
+      (node.fireClass ?? 'default') as keyof typeof WEAPON_ANIMATION_LIMITS
+    ] ?? WEAPON_ANIMATION_LIMITS.default;
     const clampedBodyPitch = clampSymmetric(bodyPitch, ANIMATION_LIMITS.torsoRotationRad);
     const clampedWeaponAim = clampSymmetric(weaponAim, classLimits.rotationRad);
     const clampedWeaponLift = clampSymmetric(weaponLift, classLimits.liftPx);

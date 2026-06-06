@@ -35,6 +35,14 @@ export type GridMap = {
 
 export type WeaponClass = 'rifle' | 'smg' | 'shotgun' | 'sniper' | 'pistol' | 'heavy';
 
+/**
+ * Fire-choreography class. Superset of WeaponClass that also covers melee
+ * attackers (no firearm class) and a `default` fallback for units without a
+ * resolvable weapon. Carried by fire events, the renderer's per-unit fire
+ * state, and the shot combat-event so melee attacks animate correctly.
+ */
+export type FireStyleClass = WeaponClass | 'melee' | 'default';
+
 export type Weapon = {
   id: string;
   name: string;

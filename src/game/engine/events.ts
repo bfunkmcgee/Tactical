@@ -1,4 +1,4 @@
-import type { MissionObjective, UnitId, Vec2, WeaponClass } from '../types';
+import type { FireStyleClass, MissionObjective, UnitId, Vec2 } from '../types';
 import { nextLogId } from './runtimeIds';
 
 /**
@@ -28,7 +28,7 @@ export type CombatEvent =
   | { t: 'mission-start'; seed: number; missionId: string; objectiveKind: MissionObjective['kind'] }
   | { t: 'turn-start'; side: 'player' | 'enemy'; turnIndex: number }
   | { t: 'move'; unitId: UnitId; from: Vec2; to: Vec2; apSpent: number }
-  | { t: 'shot'; shooterId: UnitId; targetId: UnitId; weaponClass: WeaponClass;
+  | { t: 'shot'; shooterId: UnitId; targetId: UnitId; weaponClass: FireStyleClass;
       hit: boolean; damage: number; critical: boolean; hits: number; burstRounds: number }
   | { t: 'ability'; unitId: UnitId; abilityId: string; target?: UnitId | Vec2 }
   | { t: 'utility'; unitId: UnitId; utilityId: string; center: Vec2 }

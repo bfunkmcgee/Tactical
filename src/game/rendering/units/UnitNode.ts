@@ -2,7 +2,7 @@ import { Assets, Container, Graphics, Sprite, Text, type Texture } from 'pixi.js
 import { useCombatStore } from '../../../state/combatStore';
 import { getArmor, getClothing, getKit, getMod, useContent } from '../../../content/registry';
 import { WEAPON_ANCHORS } from '../../../content/rigs/weapons';
-import type { PostureProfile, Unit, UnitId, Vec2, WeaponClass } from '../../types';
+import type { FireStyleClass, PostureProfile, Unit, UnitId, Vec2 } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
 import { HIT_FLASH_MS, MOVE_TWEEN_MS, MUZZLE_OFFSET } from './constants';
@@ -74,7 +74,7 @@ export type UnitNode = {
   hitFlashMs: number;
   fireAnimMs: number;                   // countdown for fire sequence.
   fireStyle: FireStyle;                 // per-weapon-class choreography.
-  fireClass?: WeaponClass | "default";
+  fireClass?: FireStyleClass;
   fireTargetDir: { x: number; y: number }; // unit vector toward the shot target.
   aimYaw?: number;
   aimX?: number;
