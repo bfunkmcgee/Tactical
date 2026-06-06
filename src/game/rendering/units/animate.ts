@@ -78,9 +78,9 @@ export function tickUnitAnimations(
     if (moving && alive) {
       const raw = node.moveMs / node.moveDurationMs;
       // Two steps per tile → 4 half-cycles.
-      walkLean = Math.sin(raw * Math.PI * 2) * 0.08 * posture.walkLean; // ±4.6° baseline
-      walkBob = -Math.abs(Math.sin(raw * Math.PI * 4)) * 2.5 * posture.walkBob; // body lifts on stride peak
-      walkScaleY = 1 - Math.abs(Math.sin(raw * Math.PI * 4 - Math.PI / 2)) * 0.05; // squash on plant
+      walkLean = Math.sin(raw * Math.PI * 2) * 0.092 * posture.walkLean; // ±5.3° baseline
+      walkBob = -Math.abs(Math.sin(raw * Math.PI * 4)) * 3.4 * posture.walkBob; // body lifts on stride peak
+      walkScaleY = 1 - Math.abs(Math.sin(raw * Math.PI * 4 - Math.PI / 2)) * 0.06; // squash on plant
       walkSway = -walkLean * 0.6; // weapon lags/opposes the body swing
     }
 
@@ -92,15 +92,18 @@ export function tickUnitAnimations(
     let idleShoulderSway = 0;
     let idleWeaponSway = 0;
     if (IDLE_MOTION_ENABLED && !moving && alive) {
-      const breathT = nowMs * 0.0011 + node.bobPhase;
+      const breathT = nowMs * 0.0012 + node.bobPhase;
       const swayT = nowMs * 0.0009 + node.bobPhase * 0.7;
-      const breathAmp = 0.3 + ((Math.sin(node.bobPhase * 1.7) + 1) * 0.25); // 0.3..0.8 px
+      const breathAmp = 0.9 + ((Math.sin(node.bobPhase * 1.7) + 1) * 0.4); // 0.9..1.7 px
       // Keep idle additive but subordinate to firing.
       const fireIdleFade = node.fireAnimMs > 0 ? 0.2 : 1;
-      idleBreathY = Math.sin(breathT) * breathAmp * fireIdleFade;
-      idleBreathScaleY = Math.sin(breathT + Math.PI / 2) * 0.01 * fireIdleFade; // ±0.01
-      idleShoulderSway = Math.sin(swayT) * 0.015 * fireIdleFade * posture.idleSway;
-      idleWeaponSway = Math.sin(swayT + 0.85) * 0.012 * fireIdleFade * posture.idleSway;
+      // Primary breath + a smaller second harmonic so the chest rise reads
+      // organic instead of a pure metronome sine.
+      idleBreathY = (Math.sin(breathT) * 0.82 + Math.sin(breathT * 2 + node.bobPhase) * 0.18)
+        * breathAmp * fireIdleFade;
+      idleBreathScaleY = Math.sin(breathT + Math.PI / 2) * 0.016 * fireIdleFade; // ±0.016
+      idleShoulderSway = Math.sin(swayT) * 0.028 * fireIdleFade * posture.idleSway;
+      idleWeaponSway = Math.sin(swayT + 0.85) * 0.022 * fireIdleFade * posture.idleSway;
     }
 
     // ----- Fire sequence: windup → one-or-more shots → return.
@@ -153,11 +156,13 @@ export function tickUnitAnimations(
           bodyPushY = -node.fireTargetDir.y * style.recoilPx * kick;
         }
       } else {
-        // Return: weapon eases back to low-ready, body settles.
-        const p = (elapsed - returnStart) / returnMs;
-        const ret = 1 - easeOutQuad(Math.min(1, p));
+        // Return: weapon eases back to low-ready with a small damped settle
+        // so it arrives with weight instead of gliding to a dead stop.
+        const p = Math.min(1, (elapsed - returnStart) / returnMs);
+        const ret = 1 - easeOutQuad(p);
+        const settle = Math.sin(p * Math.PI * 1.5) * (1 - p) * 0.16; // brief dip past rest, decays out
         weaponAim = -style.windupRad * facingBlend * ret * 0.5;
-        weaponLift = -style.weaponLiftPx * ret;
+        weaponLift = -style.weaponLiftPx * ret + style.weaponLiftPx * settle;
       }
       weaponAim += (node.aimYaw ?? 0) * facingBlend;
       weaponLift += -(node.aimX ?? 0);
