@@ -46,7 +46,29 @@ export default function PixiStage() {
     const app = new Application();
     let destroyed = false;
 
+    // On-screen diagnostic surface — Chrome on Android has no on-device
+    // console, so render-loop failures (thrown errors / WebGL context loss)
+    // are shown in a DOM banner over the canvas instead of silently going
+    // black. Harmless in the happy path (never appears).
+    const errText = (e: unknown) =>
+      e instanceof Error ? (e.stack ?? e.message) : String(e);
+    const surface = (msg: string) => {
+      if (destroyed) return;
+      let el = host.querySelector<HTMLDivElement>('[data-pixi-diag]');
+      if (!el) {
+        el = document.createElement('div');
+        el.dataset.pixiDiag = '';
+        el.style.cssText =
+          'position:absolute;left:8px;right:8px;top:96px;z-index:9999;' +
+          'background:rgba(130,24,24,.92);color:#fff;font:12px/1.45 monospace;' +
+          'padding:8px 10px;border-radius:8px;white-space:pre-wrap;pointer-events:none';
+        host.appendChild(el);
+      }
+      el.textContent = msg;
+    };
+
     (async () => {
+     try {
       await app.init({
         resizeTo: host,
         background: '#0e1a20',
@@ -106,9 +128,13 @@ export default function PixiStage() {
       ensureSpritesLoaded(useContent()).then(() => {
         if (destroyed) return;
         spritesReady = true;
-        drawMap(tileLayer, useCombatStore.getState().map);
-        syncUnits(unitLayer, unitNodes, useCombatStore.getState());
-      });
+        try {
+          drawMap(tileLayer, useCombatStore.getState().map);
+          syncUnits(unitLayer, unitNodes, useCombatStore.getState());
+        } catch (err) {
+          surface('Unit/floor build failed:\n' + errText(err));
+        }
+      }).catch((err) => surface('Sprite preload failed:\n' + errText(err)));
 
       const detachInput = attachInputController({
         canvas: app.canvas, cam, applyCam, onTap: handleTap,
@@ -147,8 +173,12 @@ export default function PixiStage() {
           drawMap(tileLayer, s.map);
           atmosphere?.setTileset(s.map.tileset);
         }
-        redrawOverlays(overlayLayer, s);
-        if (spritesReady) syncUnits(unitLayer, unitNodes, s, fx.spawnBlood);
+        try {
+          redrawOverlays(overlayLayer, s);
+          if (spritesReady) syncUnits(unitLayer, unitNodes, s, fx.spawnBlood);
+        } catch (err) {
+          surface('Unit sync error:\n' + errText(err));
+        }
         // Drain shot events to trigger fire animations with authoritative
         // target + weapon class. Must run AFTER syncUnits so nodes exist
         // for any shooter just spawned by initMission.
@@ -166,6 +196,27 @@ export default function PixiStage() {
       redrawOverlays(overlayLayer, initialState);
       if (spritesReady) syncUnits(unitLayer, unitNodes, initialState);
 
+      // WebGL context loss (e.g. a mobile GPU dropping the oldest context when
+      // several Pixi canvases — this stage plus the roster/header rig previews
+      // — are alive at once) blanks the whole canvas. Surface it, and redraw on
+      // restore so the map/units come back instead of staying black.
+      app.canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault(); // let the browser restore rather than give up
+        surface('WebGL context lost — the GPU dropped this canvas (too many\nWebGL contexts or GPU memory). Waiting to restore…');
+      });
+      app.canvas.addEventListener('webglcontextrestored', () => {
+        try {
+          const s = useCombatStore.getState();
+          drawMap(tileLayer, s.map);
+          redrawOverlays(overlayLayer, s);
+          if (spritesReady) syncUnits(unitLayer, unitNodes, s);
+          host.querySelector('[data-pixi-diag]')?.remove();
+        } catch (err) {
+          surface('Restore failed:\n' + errText(err));
+        }
+      });
+
+      let tickErrored = false;
       app.ticker.add((ticker) => {
         const dtMs = ticker.deltaMS;
         const now = performance.now();
@@ -179,7 +230,14 @@ export default function PixiStage() {
           shakeOffset.x = 0; shakeOffset.y = 0;
           applyCam();
         }
-        tickUnitAnimations(unitLayer, unitNodes, dtMs, now);
+        // Guard the per-frame unit tick so one bad unit/transform can't throw
+        // out of the ticker and leave the whole canvas frozen/black. Surface
+        // the first error only (don't spam every frame).
+        try {
+          tickUnitAnimations(unitLayer, unitNodes, dtMs, now);
+        } catch (err) {
+          if (!tickErrored) { tickErrored = true; surface('Animation tick error:\n' + errText(err)); }
+        }
         fx.tick(dtMs, now);
         atmosphere?.tick(dtMs);
       });
@@ -189,6 +247,9 @@ export default function PixiStage() {
         detachInput();
         atmosphere?.destroy();
       };
+     } catch (err) {
+       surface('Render init failed:\n' + errText(err));
+     }
     })();
 
     return () => {
