@@ -10,8 +10,10 @@ import type { EnemyTemplate } from '../../../game/types';
  * paired `_arms.svg` that also contained the head + helmet); post follow-up,
  * each enemy now ships a proper 4-part split (`legs`, `torso`, `head`,
  * `arms-front`) under `public/styles/flat/enemies/<name>/`. The
- * arms-back slot stays transparent — these creatures fire from the
- * front so the "back arm sway" animation channel has no art to carry.
+ * arms-back slot stays transparent (the part override points at
+ * rig_transparent.svg) — these creatures fire from the front, so each
+ * appearance sets `armsBackHidden: true` to tell the renderer to suppress
+ * the "back arm sway" channel (there's no art to carry it).
  * Per-part animation (legs squash on foot-plant, torso lean, head
  * counter-lean, weapon aim rotating only the arms) now works on
  * enemies exactly the way it does on heroes.
@@ -49,6 +51,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
       rig: 'human',
       skinTone: 0xffffff,
       partOverrides: enemyOverrides('goblin', 'goblin'),
+      armsBackHidden: true,
     },
   },
   rust_orc: {
@@ -72,6 +75,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
       rig: 'human',
       skinTone: 0xffffff,
       partOverrides: enemyOverrides('orc', 'orc'),
+      armsBackHidden: true,
     },
   },
   rust_troll: {
@@ -92,6 +96,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
       rig: 'human',
       skinTone: 0xffffff,
       partOverrides: enemyOverrides('troll', 'troll'),
+      armsBackHidden: true,
     },
   },
   rust_berserker: {
@@ -115,6 +120,7 @@ export const ENEMIES: Record<string, EnemyTemplate> = {
       rig: 'human',
       skinTone: 0xffa888,
       partOverrides: enemyOverrides('goblin', 'goblin'),
+      armsBackHidden: true,
     },
   },
 };

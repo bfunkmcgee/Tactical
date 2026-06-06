@@ -18,7 +18,8 @@ export const MUZZLE_OFFSET = { x: 22, y: -2 };
 
 import type { WeaponClass } from '../../types';
 
-/** Guardrails for additive animation channels before they are applied to sprites. */
+/** Guardrails for additive animation channels before they are applied to sprites.
+ *  (Per-class weapon caps live in WEAPON_ANIMATION_LIMITS below.) */
 export const ANIMATION_LIMITS = {
   // Torso rotation cap keeps the chest readable during stacked walk+recoil.
   torsoRotationRad: 0.14,
@@ -26,10 +27,6 @@ export const ANIMATION_LIMITS = {
   headCounterRotationRad: 0.08,
   // Back arm sway cap keeps the shoulder from over-opening.
   armsBackSwayRad: 0.09,
-  // Weapon rotation cap protects silhouette legibility at extreme aim+kick stacks.
-  weaponAimRad: 0.32,
-  // Weapon lift cap keeps shoulder elevation inside believable range.
-  weaponLiftPx: 8.5,
 } as const;
 
 

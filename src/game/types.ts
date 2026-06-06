@@ -292,6 +292,13 @@ export interface HumanAppearance {
    */
   baseOutfit?: string;
   /**
+   * True when the rig's `arms-back` part is intentionally empty (the part
+   * override points at the transparent placeholder). Front-firing enemies set
+   * this so the renderer suppresses the back-arm sway channel — there's no art
+   * to carry it. Defaults to false (heroes and visible-back-arm enemies sway).
+   */
+  armsBackHidden?: boolean;
+  /**
    * Optional per-part SVG overrides. When a rig part id appears here,
    * the renderer uses the URL instead of the shared rig-part default.
    * Lets signature characters (Eagle Corps heroes, rig-composed enemies)

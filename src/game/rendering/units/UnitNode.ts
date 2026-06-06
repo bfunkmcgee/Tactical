@@ -334,11 +334,6 @@ function cascadeArmsAnchor(armsSprite: Sprite, anchor: { x: number; y: number })
   }
 }
 
-function hasTransparentArmsBackArt(u: Unit): boolean {
-  const partPath = u.appearance?.partOverrides?.['arms-back'];
-  return typeof partPath === 'string' && partPath.endsWith('/rig_transparent.svg');
-}
-
 export function createUnitNode(u: Unit): UnitNode {
   const container = new Container();
 
@@ -455,16 +450,16 @@ export function createUnitNode(u: Unit): UnitNode {
       // un-authored anchors all silently no-op.
       //
       // WEAPON_ANCHORS offsets were authored against the legacy global
-      // GRIP_ANCHOR (0.5, 0.56). When the per-class anchor moves, the
-      // child's local-frame (0,0) moves with it — compensate by
-      // subtracting the per-class anchor delta in unscaled SVG pixels.
+      // GRIP_ANCHOR. When the per-class anchor moves, the child's local-frame
+      // (0,0) moves with it — compensate by subtracting the per-class anchor
+      // delta (vs GRIP_ANCHOR) in unscaled SVG pixels.
       const primary = u.loadout?.primaryId
         ? useContent().weapons[u.loadout.primaryId]
         : undefined;
       if (primary) {
         const anchors = WEAPON_ANCHORS[primary.class];
-        const dx = (hold.gripAnchor.x - 0.5) * 96;
-        const dy = (hold.gripAnchor.y - 0.56) * 128;
+        const dx = (hold.gripAnchor.x - GRIP_ANCHOR.x) * 96;
+        const dy = (hold.gripAnchor.y - GRIP_ANCHOR.y) * 128;
         for (const [modSlot, modId] of Object.entries(u.loadout?.primaryMods ?? {})) {
           if (!modId) continue;
           let mod;
@@ -530,7 +525,7 @@ export function createUnitNode(u: Unit): UnitNode {
   const muzzleOffset = (rigComposition && weaponWrap)
     ? resolveWeaponHold(u).muzzleOffset
     : MUZZLE_OFFSET;
-  const armsBackSwayFactor = (rigComposition && hasTransparentArmsBackArt(u)) ? 0 : 1;
+  const armsBackSwayFactor = (rigComposition && u.appearance?.armsBackHidden) ? 0 : 1;
   const posture = useContent().soldierTemplates[u.templateId]?.posture
     ?? useContent().enemyTemplates[u.templateId]?.posture;
 
