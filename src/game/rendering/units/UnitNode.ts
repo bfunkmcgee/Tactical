@@ -107,12 +107,23 @@ export type UnitNode = {
 export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): Promise<void> {
   const weaponResolve = pack.theme?.weaponPath;
   const templates = [...Object.keys(pack.soldierTemplates), ...Object.keys(pack.enemyTemplates)];
+  // Per-asset load cap: if a single texture never settles (some Android Chrome
+  // builds hang decoding certain SVGs), time it out so the Promise.all below
+  // can't block the whole game forever. A timed-out asset is left uncached and
+  // falls through to its render-time fallback (empty sprite / procedural floor).
+  const LOAD_TIMEOUT_MS = 6000;
+  const withTimeout = <T>(p: Promise<T>, label: string): Promise<T> =>
+    Promise.race([
+      p,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error(`asset load timed out: ${label}`)), LOAD_TIMEOUT_MS)),
+    ]);
   const loads: Array<Promise<void>> = [];
   const pushLoad = (key: string, url: string | undefined) => {
     if (!url || spriteCache.has(key)) return;
     loads.push((async () => {
       try {
-        const tex = await Assets.load<Texture>(url);
+        const tex = await withTimeout(Assets.load<Texture>(url), `${key} (${url})`);
         spriteCache.set(key, tex);
       } catch (err) {
         console.warn(`[sprites] failed to load ${key} from ${url}`, err);
@@ -256,9 +267,9 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
       if (spriteCache.has(skinMaskCacheKey(url))) continue;
       loads.push((async () => {
         try {
-          const dataUrl = await loadSkinMaskDataUrl(url);
+          const dataUrl = await withTimeout(loadSkinMaskDataUrl(url), `skin-mask ${url}`);
           if (!dataUrl) return;
-          const tex = await Assets.load<Texture>(dataUrl);
+          const tex = await withTimeout(Assets.load<Texture>(dataUrl), `skin-mask tex ${url}`);
           spriteCache.set(skinMaskCacheKey(url), tex);
         } catch (err) {
           console.warn(`[sprites] skin-mask extract failed for ${url}`, err);
