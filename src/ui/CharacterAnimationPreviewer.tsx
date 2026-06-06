@@ -76,6 +76,9 @@ export default function CharacterAnimationPreviewer() {
 
     (async () => {
       await app.init({
+        // Force WebGL — Pixi v8's WebGPU default renders black on many Android
+        // GPUs (see PixiStage).
+        preference: 'webgl',
         resizeTo: host,
         background: '#0e1a20',
         antialias: true,

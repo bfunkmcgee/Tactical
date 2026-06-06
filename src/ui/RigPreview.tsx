@@ -83,6 +83,10 @@ export default function RigPreview({
 
     (async () => {
       await app.init({
+        // Force WebGL (see PixiStage) — Pixi v8's WebGPU default renders black
+        // on many Android GPUs, which also blanked the roster/header portraits
+        // that snapshot through this preview.
+        preference: 'webgl',
         width, height,
         background: '#1a1a22',
         antialias: true,
