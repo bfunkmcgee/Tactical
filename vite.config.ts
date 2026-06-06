@@ -2,10 +2,18 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// The PWA plugin's service-worker generation (workbox + terser) can fail on
+// some environments (e.g. Termux/Android). It's an optional offline/install
+// nicety — the game runs fine without it. Set VITE_NO_PWA=1 to skip it:
+//   VITE_NO_PWA=1 npm run build
+// (ambient `process` decl avoids pulling all of @types/node into tsc's types)
+declare const process: { env: Record<string, string | undefined> };
+const enablePWA = process.env.VITE_NO_PWA !== '1';
+
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
+    ...(enablePWA ? [VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
@@ -22,7 +30,7 @@ export default defineConfig({
           { src: 'favicon.svg', sizes: '512x512', type: 'image/svg+xml' },
         ],
       },
-    }),
+    })] : []),
   ],
   server: { host: true, port: 5173 },
   test: {
