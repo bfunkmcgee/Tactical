@@ -75,6 +75,10 @@ export default function PixiStage() {
     (async () => {
      try {
       await app.init({
+        // Force WebGL. Pixi v8 otherwise prefers WebGPU, whose driver support
+        // is spotty on mobile (notably Android Chrome) and renders the canvas /
+        // textures black on affected GPUs. WebGL is universally supported.
+        preference: 'webgl',
         resizeTo: host,
         background: '#0e1a20',
         antialias: true,
@@ -251,7 +255,8 @@ export default function PixiStage() {
           lastDebug = now;
           const floorSprites = tileLayer.children[0] as Container | undefined;
           surface(
-            `dpr ${window.devicePixelRatio} · screen ${Math.round(app.screen.width)}x${Math.round(app.screen.height)}\n` +
+            `renderer type ${app.renderer.type} (1=webgl 2=webgpu) · dpr ${window.devicePixelRatio}\n` +
+            `screen ${Math.round(app.screen.width)}x${Math.round(app.screen.height)}\n` +
             `world x${Math.round(world.x)} y${Math.round(world.y)} scale ${world.scale.x.toFixed(2)} vis ${world.visible} a ${world.alpha}\n` +
             `tileLayer kids ${tileLayer.children.length} · floorSprites ${floorSprites?.children?.length ?? '-'}\n` +
             `unitLayer ${unitLayer.children.length} · overlay ${overlayLayer.children.length} · ready ${spritesReady}`,
