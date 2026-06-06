@@ -111,7 +111,7 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
   // builds hang decoding certain SVGs), time it out so the Promise.all below
   // can't block the whole game forever. A timed-out asset is left uncached and
   // falls through to its render-time fallback (empty sprite / procedural floor).
-  const LOAD_TIMEOUT_MS = 6000;
+  const LOAD_TIMEOUT_MS = 2500;
   const withTimeout = <T>(p: Promise<T>, label: string): Promise<T> =>
     Promise.race([
       p,
