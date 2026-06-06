@@ -66,6 +66,11 @@ export default function PixiStage() {
       }
       el.textContent = msg;
     };
+    // Append `?debug=1` to dump live render state (screen / camera / layer
+    // child counts) into the banner — lets us see *why* the canvas is blank
+    // (empty layer vs. zeroed camera vs. invisible painted tiles) with no
+    // on-device console.
+    const debug = typeof location !== 'undefined' && /[?&]debug=1\b/.test(location.search);
 
     (async () => {
      try {
@@ -217,6 +222,7 @@ export default function PixiStage() {
       });
 
       let tickErrored = false;
+      let lastDebug = 0;
       app.ticker.add((ticker) => {
         const dtMs = ticker.deltaMS;
         const now = performance.now();
@@ -240,6 +246,17 @@ export default function PixiStage() {
         }
         fx.tick(dtMs, now);
         atmosphere?.tick(dtMs);
+
+        if (debug && now - lastDebug > 500) {
+          lastDebug = now;
+          const floorSprites = tileLayer.children[0] as Container | undefined;
+          surface(
+            `dpr ${window.devicePixelRatio} · screen ${Math.round(app.screen.width)}x${Math.round(app.screen.height)}\n` +
+            `world x${Math.round(world.x)} y${Math.round(world.y)} scale ${world.scale.x.toFixed(2)} vis ${world.visible} a ${world.alpha}\n` +
+            `tileLayer kids ${tileLayer.children.length} · floorSprites ${floorSprites?.children?.length ?? '-'}\n` +
+            `unitLayer ${unitLayer.children.length} · overlay ${overlayLayer.children.length} · ready ${spritesReady}`,
+          );
+        }
       });
 
       (app as unknown as { __cleanup?: () => void }).__cleanup = () => {
