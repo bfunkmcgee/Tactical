@@ -33,6 +33,15 @@ export default defineConfig({
     })] : []),
   ],
   server: { host: true, port: 5173 },
+  build: {
+    // Bundle everything into a single JS file instead of code-splitting into
+    // ~15 lazy chunks (Pixi v8 dynamically imports its renderer, filters, etc.).
+    // On constrained setups (a phone serving the build via `npx serve`), those
+    // parallel chunk fetches can drop, and a failed dynamic import of e.g.
+    // WebGLRenderer-*.js takes the whole renderer down ("Failed to fetch
+    // dynamically imported module"). One file = one request = no such failure.
+    rollupOptions: { output: { inlineDynamicImports: true } },
+  },
   test: {
     environment: 'node',
     globals: true,
