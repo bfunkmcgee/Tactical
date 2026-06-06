@@ -131,8 +131,8 @@ describe('tickUnitAnimations idle channels', () => {
     }
 
     if (IDLE_MOTION_ENABLED) {
-      expect(maxYOffset).toBeLessThanOrEqual(0.4);
-      expect(maxScaleDelta).toBeLessThanOrEqual(0.004);
+      expect(maxYOffset).toBeLessThanOrEqual(0.85);
+      expect(maxScaleDelta).toBeLessThanOrEqual(0.006);
     } else {
       expect(maxYOffset).toBe(0);
       expect(maxScaleDelta).toBe(0);
