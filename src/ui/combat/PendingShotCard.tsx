@@ -24,9 +24,11 @@ export default function PendingShotCard({
       className="panel"
       style={{
         position: 'fixed', left: '50%', transform: 'translateX(-50%)',
-        bottom: 'calc(var(--safe-bottom) + 152px)', zIndex: 11,
+        bottom: 'calc(var(--safe-bottom) + var(--s-2) + var(--control-deck-h) + var(--s-1))',
+        zIndex: 11,
         minWidth: 260, maxWidth: 320, padding: 'var(--s-3)', pointerEvents: 'auto',
         borderColor: 'var(--danger)',
+        animation: 'deckCardGlow 1.6s ease-in-out infinite',
       }}
     >
       <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
@@ -60,7 +62,7 @@ export default function PendingShotCard({
       <div className="row" style={{ gap: 'var(--s-2)' }}>
         <button style={{ flex: 1 }} onClick={onCancel}>Cancel</button>
         <button className="primary" style={{ flex: 1 }} onClick={onConfirm}>
-          {usesSidearm ? 'Pistol' : 'Fire'}
+          Fire
         </button>
       </div>
     </div>

@@ -137,7 +137,7 @@ export default function ActionBar({ groups, onAction }: ActionBarProps) {
             style={{
               position: 'fixed',
               right: 'var(--s-2)',
-              bottom: 'calc(var(--safe-bottom) + 144px)',
+              bottom: 'calc(var(--safe-bottom) + var(--s-2) + var(--control-deck-h) + var(--s-1))',
               padding: 'var(--s-2)',
               gap: 'var(--s-1)',
               minWidth: 180,
