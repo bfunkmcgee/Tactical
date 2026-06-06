@@ -134,8 +134,8 @@ export default function PixiStage() {
       // demolish) — so painted floors would never appear on most
       // missions.
       let spritesReady = false;
-      ensureSpritesLoaded(useContent()).then(() => {
-        if (destroyed) return;
+      const revealBoard = () => {
+        if (spritesReady || destroyed) return;
         spritesReady = true;
         try {
           drawMap(tileLayer, useCombatStore.getState().map);
@@ -143,7 +143,14 @@ export default function PixiStage() {
         } catch (err) {
           surface('Unit/floor build failed:\n' + errText(err));
         }
-      }).catch((err) => surface('Sprite preload failed:\n' + errText(err)));
+      };
+      ensureSpritesLoaded(useContent())
+        .then(revealBoard)
+        .catch((err) => { surface('Sprite preload failed:\n' + errText(err)); revealBoard(); });
+      // Hard fallback: never let a stuck texture preload keep the board black.
+      // Reveal the map + units after 3s regardless of the asset loader; any
+      // textures still arriving stream into the cache for later unit creation.
+      setTimeout(revealBoard, 3000);
 
       const detachInput = attachInputController({
         canvas: app.canvas, cam, applyCam, onTap: handleTap,
