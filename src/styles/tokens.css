@@ -34,6 +34,14 @@
   --r-md: 10px;
   --r-lg: 16px;
 
+  /* Live-measured height of the combat ControlDeck (selected-unit header
+   * + action bar). <ControlDeck> overrides this on :root via a
+   * ResizeObserver; the floating combat overlays (pending shot/utility
+   * cards, action overflow sheet) anchor their `bottom` to it so they
+   * always sit just above the bar regardless of how many rows it wraps
+   * to on a narrow phone. This default is the ~2-row resting height. */
+  --control-deck-h: 132px;
+
   /* Safe areas */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);

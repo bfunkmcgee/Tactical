@@ -92,3 +92,15 @@ p  { margin: 0; color: var(--fg-1); }
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.10); }
 }
+
+/* Pending shot/utility confirmation cards float above the action bar and
+ * demand a confirm/cancel decision. A gentle box-shadow glow draws the eye
+ * without a transform (the cards use `translateX(-50%)` to centre, so a
+ * scale pulse would fight it). Motion-sensitive users opt out. */
+@keyframes deckCardGlow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(232, 196, 136, 0.15), 0 6px 18px rgba(0, 0, 0, 0.45); }
+  50%      { box-shadow: 0 0 12px 2px rgba(232, 196, 136, 0.45), 0 6px 18px rgba(0, 0, 0, 0.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; }
+}

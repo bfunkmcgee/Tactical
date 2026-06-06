@@ -22,9 +22,11 @@ export default function PendingUtilityCard({
       className="panel"
       style={{
         position: 'fixed', left: '50%', transform: 'translateX(-50%)',
-        bottom: 'calc(var(--safe-bottom) + 152px)', zIndex: 11,
+        bottom: 'calc(var(--safe-bottom) + var(--s-2) + var(--control-deck-h) + var(--s-1))',
+        zIndex: 11,
         minWidth: 240, padding: 'var(--s-3)', pointerEvents: 'auto',
         borderColor: 'var(--accent-2)',
+        animation: 'deckCardGlow 1.6s ease-in-out infinite',
       }}
     >
       <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>

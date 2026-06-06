@@ -119,7 +119,7 @@ export default function MissionLog({ entries }: MissionLogProps) {
           }}
           aria-label="Close mission log"
           style={{
-            width: 44, height: 32, padding: 0,
+            width: 44, height: 44, padding: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'transparent',
             border: 'none',

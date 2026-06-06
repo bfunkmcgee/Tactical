@@ -38,17 +38,20 @@ export default function CombatTopBar({
         zIndex: 10,
       }}
     >
-      <div className="panel stack" style={{ padding: '6px 10px', fontSize: 13, pointerEvents: 'auto', gap: 2 }}>
+      <div className="panel stack" style={{
+        padding: '6px 10px', fontSize: 13, pointerEvents: 'auto', gap: 2,
+        minWidth: 0, maxWidth: '100%',
+      }}>
         <div className="row" style={{ gap: 8, alignItems: 'center' }}>
           <strong>Round {round}</strong>
           <span>· {phaseLabel(phase)}</span>
-          {/* TODO: bump mute chip to 44x44 floor (out of scope for HUD refine pass). */}
           <button
             onClick={() => { setMuted(soundEngine.toggleMute()); }}
             aria-label={muted ? 'Unmute' : 'Mute'}
             style={{
-              padding: '2px 8px', minHeight: 22, minWidth: 28,
-              fontSize: 13, background: 'transparent',
+              padding: 0, minHeight: 44, minWidth: 44,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 15, background: 'transparent',
               border: '1px solid var(--bg-3)',
               color: muted ? 'var(--fg-2)' : 'var(--accent)',
             }}
