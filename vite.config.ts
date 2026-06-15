@@ -1,16 +1,38 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { execSync } from 'node:child_process';
 
 // The PWA plugin's service-worker generation (workbox + terser) can fail on
 // some environments (e.g. Termux/Android). It's an optional offline/install
 // nicety — the game runs fine without it. Set VITE_NO_PWA=1 to skip it:
 //   VITE_NO_PWA=1 npm run build
-// (ambient `process` decl avoids pulling all of @types/node into tsc's types)
+// (ambient decls — see src/vite-env.d.ts — avoid pulling all of @types/node
+// into tsc's types)
 declare const process: { env: Record<string, string | undefined> };
 const enablePWA = process.env.VITE_NO_PWA !== '1';
 
+// Deploy base. Local dev / a root host stays '/'; the GitHub Pages project
+// site is served from '/<repo>/' and sets VITE_BASE accordingly so asset URLs
+// resolve under the sub-path (see src/game/rendering/assetUrl.ts).
+const base = process.env.VITE_BASE ?? '/';
+
+// Build identity stamp: short git hash + build time. Rendered on-device so a
+// running bundle can be matched against `git rev-parse --short HEAD` — no more
+// guessing whether the phone is serving a stale build.
+const buildId = (() => {
+  const when = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  try {
+    const hash = execSync('git rev-parse --short HEAD').toString().trim();
+    return `${hash} · ${when}`;
+  } catch {
+    return `nogit · ${when}`;
+  }
+})();
+
 export default defineConfig({
+  base,
+  define: { __BUILD_ID__: JSON.stringify(buildId) },
   plugins: [
     react(),
     ...(enablePWA ? [VitePWA({

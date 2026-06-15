@@ -46,18 +46,25 @@ export default function PixiStage() {
     const app = new Application();
     let destroyed = false;
 
-    // On-screen diagnostic surface — Chrome on Android has no on-device
-    // console, so render-loop failures (thrown errors / WebGL context loss)
-    // are shown in a DOM banner over the canvas instead of silently going
-    // black. Harmless in the happy path (never appears).
+    // On-screen diagnostics — Chrome on Android has no on-device console, so
+    // render-loop failures (thrown errors / WebGL context loss) are shown in a
+    // DOM banner over the canvas instead of silently going black.
+    //
+    // TWO separate nodes, deliberately:
+    //   • the STICKY ERROR banner ([data-pixi-err], top) persists until the
+    //     context restores or the component unmounts.
+    //   • the DEBUG DUMP ([data-pixi-debug], bottom) is rewritten every 500ms.
+    // They used to share one node, so the debug dump *erased* every context-loss
+    // / error message within half a second — which is exactly why prior
+    // investigations never caught the WebGL context-loss event. Keep them apart.
     const errText = (e: unknown) =>
       e instanceof Error ? (e.stack ?? e.message) : String(e);
     const surface = (msg: string) => {
       if (destroyed) return;
-      let el = host.querySelector<HTMLDivElement>('[data-pixi-diag]');
+      let el = host.querySelector<HTMLDivElement>('[data-pixi-err]');
       if (!el) {
         el = document.createElement('div');
-        el.dataset.pixiDiag = '';
+        el.dataset.pixiErr = '';
         el.style.cssText =
           'position:absolute;left:8px;right:8px;top:96px;z-index:9999;' +
           'background:rgba(130,24,24,.92);color:#fff;font:12px/1.45 monospace;' +
@@ -67,10 +74,24 @@ export default function PixiStage() {
       el.textContent = msg;
     };
     // Append `?debug=1` to dump live render state (screen / camera / layer
-    // child counts) into the banner — lets us see *why* the canvas is blank
-    // (empty layer vs. zeroed camera vs. invisible painted tiles) with no
-    // on-device console.
+    // child counts) into a SEPARATE bottom banner — lets us see *why* the
+    // canvas is blank (empty layer vs. zeroed camera vs. invisible painted
+    // tiles) with no on-device console, without clobbering the error banner.
     const debug = typeof location !== 'undefined' && /[?&]debug=1\b/.test(location.search);
+    const debugDump = (msg: string) => {
+      if (destroyed) return;
+      let el = host.querySelector<HTMLDivElement>('[data-pixi-debug]');
+      if (!el) {
+        el = document.createElement('div');
+        el.dataset.pixiDebug = '';
+        el.style.cssText =
+          'position:absolute;left:8px;right:8px;bottom:8px;z-index:9998;' +
+          'background:rgba(12,28,40,.92);color:#9fe;font:11px/1.4 monospace;' +
+          'padding:6px 8px;border-radius:8px;white-space:pre-wrap;pointer-events:none';
+        host.appendChild(el);
+      }
+      el.textContent = `build ${__BUILD_ID__}\n${msg}`;
+    };
 
     (async () => {
      try {
@@ -226,7 +247,7 @@ export default function PixiStage() {
           drawMap(tileLayer, s.map);
           redrawOverlays(overlayLayer, s);
           if (spritesReady) syncUnits(unitLayer, unitNodes, s);
-          host.querySelector('[data-pixi-diag]')?.remove();
+          host.querySelector('[data-pixi-err]')?.remove();
         } catch (err) {
           surface('Restore failed:\n' + errText(err));
         }
@@ -261,7 +282,7 @@ export default function PixiStage() {
         if (debug && now - lastDebug > 500) {
           lastDebug = now;
           const floorSprites = tileLayer.children[0] as Container | undefined;
-          surface(
+          debugDump(
             `renderer type ${app.renderer.type} (1=webgl 2=webgpu) · dpr ${window.devicePixelRatio}\n` +
             `screen ${Math.round(app.screen.width)}x${Math.round(app.screen.height)}\n` +
             `world x${Math.round(world.x)} y${Math.round(world.y)} scale ${world.scale.x.toFixed(2)} vis ${world.visible} a ${world.alpha}\n` +

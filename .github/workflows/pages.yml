@@ -1,0 +1,66 @@
+name: Deploy to GitHub Pages
+
+# Publishes the built app to GitHub Pages so it can be opened on a phone at a
+# canonical URL — no Termux, no `npx serve`, no port/cache confusion. This is
+# the diagnostic host: pair it with the on-screen build stamp (`?debug=1`) to
+# confirm the device is running exactly this commit.
+#
+# One-time setup by the repo owner: Settings → Pages → Source = "GitHub Actions".
+
+on:
+  push:
+    branches: [main, claude/ui-improvements-analysis-P7PMd]
+  workflow_dispatch:
+
+# Least-privilege tokens required by actions/deploy-pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deploys at once; let an in-flight deploy finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build (Pages base)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22 — same rationale as ci.yml (pixi's import-time browser
+      # detection reads global `navigator`, present only on Node >= 21).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        # VITE_BASE must match the project-site sub-path (`/<repo>/`) so the
+        # runtime asset loads resolve (see src/game/rendering/assetUrl.ts).
+        # PWA is disabled: a cached service worker would defeat the whole
+        # point of a canonical, always-fresh diagnostic URL.
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_NO_PWA: '1'
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

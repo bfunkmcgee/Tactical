@@ -25,6 +25,8 @@
  * at a specific tone still work — tinting multiplies the authored
  * color by skinTone — but produces a darker result than pure white.
  */
+import { resolveAssetUrl } from '../assetUrl';
+
 /**
  * DOM-Element children iterator — walks `childNodes` and filters to
  * nodeType 1 (Element). Keeps the implementation compatible across
@@ -104,7 +106,7 @@ export function extractSkinMaskSvg(svgText: string): string | null {
  * under a second cache key.
  */
 export async function loadSkinMaskDataUrl(url: string): Promise<string | null> {
-  const res = await fetch(url);
+  const res = await fetch(resolveAssetUrl(url));
   if (!res.ok) return null;
   const text = await res.text();
   const masked = extractSkinMaskSvg(text);

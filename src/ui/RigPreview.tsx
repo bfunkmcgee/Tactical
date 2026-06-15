@@ -3,6 +3,7 @@ import { Application, Assets, Container, type Texture } from 'pixi.js';
 import { buildHumanRigBody } from '../game/rendering/units/humanRigBody';
 import { HUMAN_RIG } from '../content/rigs';
 import { spriteCache } from '../game/rendering/context';
+import { resolveAssetUrl } from '../game/rendering/assetUrl';
 import { useContent, getArmor, getClothing, getKit } from '../content/registry';
 import type { HumanAppearance, Loadout } from '../game/types';
 
@@ -120,7 +121,7 @@ export default function RigPreview({
         if (!url || spriteCache.has(key)) return;
         loads.push((async () => {
           try {
-            const tex = await Assets.load<Texture>(url);
+            const tex = await Assets.load<Texture>(resolveAssetUrl(url));
             spriteCache.set(key, tex);
           } catch (err) {
             console.warn(`[rig-preview] failed to load ${key} from ${url}`, err);

@@ -80,6 +80,17 @@ export default function MainMenu() {
           </div>
         )}
       </div>
+
+      {/* Build stamp — short git hash + build time, injected at build time.
+          Lets an on-device build be matched against `git rev-parse --short
+          HEAD` so a stale cached bundle can't masquerade as the latest code. */}
+      <div style={{
+        position: 'fixed', right: 6, bottom: 4, zIndex: 1,
+        font: '10px/1.2 monospace', color: 'var(--fg-2)', opacity: 0.5,
+        pointerEvents: 'none', userSelect: 'all',
+      }}>
+        build {__BUILD_ID__}
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { WEAPON_ANCHORS } from '../../../content/rigs/weapons';
 import type { FireStyleClass, PostureProfile, Unit, UnitId, Vec2 } from '../../types';
 import { gridToScreen } from '../isoProjection';
 import { spriteCache } from '../context';
+import { resolveAssetUrl } from '../assetUrl';
 import { GRIP_ANCHOR, HIT_FLASH_MS, MOVE_TWEEN_MS, MUZZLE_OFFSET } from './constants';
 import { FIRE_STYLES, WEAPON_HOLD, type FireStyle, type WeaponHold } from './fireStyles';
 import { buildHumanRigBody, overlayCacheKey, skinMaskCacheKey, SPRITE_SCALE, type RigBodyComposition } from './humanRigBody';
@@ -123,7 +124,7 @@ export async function ensureSpritesLoaded(pack: ReturnType<typeof useContent>): 
     if (!url || spriteCache.has(key)) return;
     loads.push((async () => {
       try {
-        const tex = await withTimeout(Assets.load<Texture>(url), `${key} (${url})`);
+        const tex = await withTimeout(Assets.load<Texture>(resolveAssetUrl(url)), `${key} (${url})`);
         spriteCache.set(key, tex);
       } catch (err) {
         console.warn(`[sprites] failed to load ${key} from ${url}`, err);
